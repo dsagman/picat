@@ -1,0 +1,55 @@
+import planner.
+
+
+main =>
+
+    problem(S),
+    time(best_plan(S,Plan)),
+    println(S[1]),
+    foreach (Step in Plan)
+        println(Step)
+    end,
+    printf("Solution cost: %w\n", length(Plan)).
+ 
+
+problem(S) => 
+    % S = [[[a,b],[],[]], [[],[a,b],[]]]. % simple
+    % S = [[[a,b],[],[]], [[],[b,a],[]]].  % simple
+    S = [[[a,b,c,d,e],[],[]], [[],[c,b,a,d,e],[]]]. % difficult
+
+% final(([],[a,b],[])) => true.
+% final(State), State == ([],[a,b],[]) => true.
+final(State), 
+    problem(S),
+    State[1] == S[2] => true.
+
+
+action([[S1,S2,S3],G@[G1,G2,G3]],NextS,Action,Cost) =>
+    % how to skip moving if stack matches goal
+    % move(S1,S2,S3,NewS1,NewS2,NewS3,Action),
+    (
+    S1 = [H1|T1], NewS1 = T1,      NewS2 = [H1|S2], NewS3 = S3,      Action = $("1->2",NewS1,NewS2,NewS3);
+    S1 = [H1|T1], NewS1 = T1,      NewS2 = S2,      NewS3 = [H1|S3], Action = $("1->3",NewS1,NewS2,NewS3);
+    S2 = [H2|T2], NewS1 = S1,      NewS2 = T2,      NewS3 = [H2|S3], Action = $("2->3",NewS1,NewS2,NewS3);
+    S2 = [H2|T2], NewS1 = [H2|S1], NewS2 = T2,      NewS3 = S3,      Action = $("2->1",NewS1,NewS2,NewS3);
+    S3 = [H3|T3], NewS1 = [H3|S1], NewS2 = S2,      NewS3 = T3,      Action = $("3->1",NewS1,NewS2,NewS3);
+    S3 = [H3|T3], NewS1 = S1,      NewS2 = [H3|S2], NewS3 = T3,      Action = $("3->2",NewS1,NewS2,NewS3)
+    ),
+    Cost = 1,
+    NextS = [[NewS1,NewS2,NewS3],G].
+
+
+
+% move(S1,S2,S3,NewS1,NewS2,NewS3,Action) ?=>
+%     S1 = [H1|T1], NewS1 = T1,      NewS2 = [H1|S2], NewS3 = S3,      Action = 12.
+% move(S1,S2,S3,NewS1,NewS2,NewS3,Action) ?=>
+%     S1 = [H1|T1], NewS1 = T1,      NewS2 = S2,      NewS3 = [H1|S3], Action = 13.
+% move(S1,S2,S3,NewS1,NewS2,NewS3,Action) ?=>
+%     S2 = [H2|T2], NewS1 = S1,      NewS2 = T2,      NewS3 = [H2|S3], Action = 23.
+% move(S1,S2,S3,NewS1,NewS2,NewS3,Action) ?=>
+%     S2 = [H2|T2], NewS1 = [H2|S1], NewS2 = T2,      NewS3 = S3,      Action = 21.
+% move(S1,S2,S3,NewS1,NewS2,NewS3,Action) ?=>
+%     S3 = [H3|T3], NewS1 = [H3|S1], NewS2 = S2,      NewS3 = T3,      Action = 31.
+% move(S1,S2,S3,NewS1,NewS2,NewS3,Action) =>
+%     S3 = [H3|T3], NewS1 = S1,      NewS2 = [H3|S2], NewS3 = T3,      Action = 32.
+
