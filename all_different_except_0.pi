@@ -1,0 +1,14 @@
+import cp.
+main =>
+N = 4,
+Xs = new_list(N),
+Xs :: 0..N,
+alldifferent_except_0(Xs),
+Res = solve_all(Xs),
+foreach (R in Res)
+    println(R)
+end.
+alldifferent_except_0(Xs) =>
+foreach (I in 2..Xs.length, J in 1..I-1)
+(Xs[I] #!= 0 #/\ Xs[J] #!= 0) #=> (Xs[I] #!= Xs[J])
+end.
