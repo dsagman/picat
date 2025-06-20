@@ -1,8 +1,8 @@
-import sat.
+import cp.
 
 main =>
-    N = 8, % size of problem
-    time2(magic(N,Square)),
+    N = 13, % size of problem
+    time2(magic2(N,Square)),
     foreach(Srow in Square)
         foreach(Scol in Srow)
             printf("%*d", 5, Scol)
@@ -17,8 +17,8 @@ magic(N,Square) =>
     Square :: 1..NN,
     all_different(Square.vars()),
     foreach (I in 1..N)
-    Sum #= sum([Square[I,J] : J in 1..N]), % rows
-    Sum #= sum([Square[J,I] : J in 1..N]) % columns
+        Sum #= sum([Square[I,J] : J in 1..N]), % rows
+        Sum #= sum([Square[J,I] : J in 1..N]) % columns
     end,
     % diagonal sums
     Sum #= sum([Square[I,I] : I in 1..N]),
@@ -42,6 +42,7 @@ magic2(N,Square) =>
     Sum1 #= Sum2,
     Sum2 #= Sum3,
     Sum3 #= Sum4,
-    solve([rand_var,rand_val],Square),
+    % solve([rand_var,rand_val],Square),
+    solve(Square),
     print([Sum1,Sum2,Sum3,Sum4]).
 

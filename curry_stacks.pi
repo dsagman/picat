@@ -1,8 +1,6 @@
 import planner.
 
-
 main =>
-
     problem(S),
     time(best_plan(S,Plan)),
     println(S[1]),

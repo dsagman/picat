@@ -1,17 +1,21 @@
 import planner.
+
 main =>
     best_plan_unbounded([3,3,south],Plan),
     foreach (Step in Plan)
         println(Step)
     end.
+
 final([3,3,north]) => true.
-action([M,C,Bank],NextS,Action,Cost) =>
+
+action(S@[M,C,Bank],NextS,Action,Cost) =>
+
     member(BM,0..M),
     member(BC,0..C),
     BM+BC > 0, BM+BC =< 2,
     OppBank = opposite(Bank),
     % Action = $cross(BM,BC,OppBank),
-    if (Bank == south)
+    if (Bank == south) then
         Action = $stand([NewM1,NewC1,Bank],[NewM2,NewC2,OppBank])
     else
         Action = $stand([NewM2,NewC2,Bank],[NewM1,NewC1,OppBank])
@@ -21,10 +25,10 @@ action([M,C,Bank],NextS,Action,Cost) =>
     NewC1 = C-BC,
     NewM2 = 3-NewM1,
     NewC2 = 3-NewC1,
-    if (NewM1 !== 0)  % missionaries are safe
+    if (NewM1 !== 0) then % missionaries are safe
         NewM1 >= NewC1
     end,
-    if (NewM2 !== 0) 
+    if (NewM2 !== 0) then
         NewM2 >= NewC2
     end,
     NextS = [NewM2,NewC2,OppBank].
