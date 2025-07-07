@@ -1,0 +1,8 @@
+import student.
+import cp.
+
+main =>
+    % println("Hello").
+    Square = magic(5),
+    solve([ffd,reverse_split],Square),
+    println(Square).

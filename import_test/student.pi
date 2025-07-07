@@ -1,0 +1,17 @@
+module student.
+import cp.
+
+magic(N) = Square =>
+    NN = N*N,
+    Sum = N*(NN+1)//2,% magical sum
+    Square = new_array(N,N),
+    Square :: 1..NN,
+    all_different(Square.vars()),
+    foreach (I in 1..N)
+        Sum #= sum([Square[I,J] : J in 1..N]), % rows
+        Sum #= sum([Square[J,I] : J in 1..N]) % columns
+    end,
+    % diagonal sums
+    Sum #= sum([Square[I,I] : I in 1..N]),
+    Sum #= sum([Square[I,N-I+1] : I in 1..N]).
+    
