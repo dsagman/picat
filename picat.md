@@ -85,6 +85,9 @@ Also: Hashmaps, Sets, Ordered Sets and Binary Heaps.
 ### Things I Still Don't Fully Understand
 
 - Structs
+- Reduce
+- Acyclic
+- Contains
 
 
 
