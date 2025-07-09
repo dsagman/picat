@@ -2,9 +2,22 @@
 
 July 2025
 
-I've been trying to learn Picat. I am primarily interested in constraint programming, which has been referred to as the "Holy Grail" of programming where the user states the problem and the computer solves it. https://dl.acm.org/doi/fullHtml/10.1145/242224.242304
+I have long been interested in constraint programming, which has been referred to as the "Holy Grail" of programming where the user states the problem and the computer solves it. https://dl.acm.org/doi/fullHtml/10.1145/242224.242304
 
-While this is far from reality, constraint programming can reduce and scan the search space for NP dynamic programming problems without the user having to explictly code the backtracking/search algorithm. Examples include: shortest path, knapsack, n-queens, Soduko and so on.
+While this is far from reality, constraint programming can reduce and scan the search space for NP dynamic programming problems without the user having to explictly code the backtracking/search algorithm. Examples include: shortest path, knapsack, n-queens, Soduko and so on. 
+
+Picat is a great language for learning these concepts and also an interesting general purpose programming language. 
+
+My background in programming is mostly procedural (Python) and pure functional (Haskell). So my challenge with Picat is multi-faceted: 1. Learn how constraint programming works in general, 2. Learn how constraint programming works in Picat, 3. Learn how Picat works.
+
+Because Picat is a descendent of Prolog, it's core is a logic programming paradigm. And while the Picat manual is excellent, it moves along a quick clip and I had to read it very carefully to understand what I didn't understand. Think Calculus textbook. It's all documented, but makes sense sometimes only after you've learned it.
+
+Also, because it's a niche language, there's a limited amount of online support. There's no StackExchange/Picat. (There are a few Picat questions there though!) I was lucky to get in contact with one of the key developers/users of the language, Håkan Kjellerstrand, who kindly helped me through many a head scratching moment. He also made a customized ChatGPT with Picat's documentation that has helped me as well, although like all LLMs, it can hallucinate solutions that don't work and has a tiny  training dataset compared with JavaScript.
+
+This document is my attempt to share what I learned and is intended for programmers who have similar experience to me. A reasonable grasp of a common language such as Python, C, JavaScript, etcc or a background with a functional language such as Haskell or OCaml, but not much use of Prolog or other logic programming language, and possibly no idea what constraint programming is. 
+
+Consider this a rough draft representing my personal learning curve. This document is not intended to be read top to bottom, but rather to help you if you get stuck where I did and hopefully give you the insight to move forward. As such, there's some redundancy between sections because I'm trying to make them self-contained as much as possible.
+
 
 ## About Picat
 
@@ -93,16 +106,55 @@ My primary programming languages are Python and Haskell. I often make syntax err
 - Long variable names are bi-capitalized. 
 ```
 A = 5. % OK
+
 _A = 5. % OK
+
 a = 5. % Parses, but the result is 'false'. Because the atom 'a' does not unify with the number 5.
+
 A=5,b=4. % Parses, but fails because the atom b!=4, and therefore A does not get bound to 5.
+
 b=4;A=5. % A is bound to 5. because b!=4 and ';' means 'or'!
-NoJavaVariableNamesHere=true. % OK, but you're not going to do this
+
+NoJavaVariableNamesHere=true. % OK, but this is not normal Picat style
 ```
 
 ### Assignment (Binding) vs. Unification (Bind or Fail) vs. Equality (Only Numbers)
 
 Here be dragons. Or at least a sharp corner to hit your head on when you realize your program is failing because you used the wrong one.
+
+Logic programming uses the concepts of binding and unification. Binding is similar to assignment in other programming languages. Unification attempts to validate if the left and right side are the same, and if not either binds one side to the other or fails. Examples will help here.
+
+```
+A. % If A hasn't been defined then *** error(instantiation_error,call).
+
+println(A). % If A hasn't been defined then _3d084e8, meaning A is pointer to the memory address 3d084e8, which is "empty" and available to binding to a value.
+
+A=5, println(A). % A is bound to the value 5, and the unification succeeds allowing the statement to print 5. 
+```
+
+Read the above as 
+ 1. `A` points to an empty memory location.
+ 2. The empty memory can be made/shown to be equivalent to `5` through unification
+ 3. The unification binds `5` to `A` through the memory address
+ 4. `,` means the logical and
+ 5. Because the left side of the `,` is true we can output the value of memory address of `A` to the terminal.
+
+Compare this with:
+
+```
+A=5, A=3, println(A). % Fails. 
+```
+Read the above as:
+1. `A=5 `binds/unifies/assigns `5` to `A`. 
+2. `A=3` attempts to unify `A` with `3`. This fails `5` cannot be made to equal `3`.
+3. Because 2 is false, the overall `,` clause is false and the `println` doesn't happen.
+4. NOTE: The entire clause fails. `A` will not be `5` after this clause!
+
+PUT IN EXAMPLE WITH OR!!!
+
+
+XXxXXXXXXXX
+
 
 - Lists are usually decomposed using H and T as in `max([H|T])=max(H,max(T)).`
 
