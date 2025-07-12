@@ -455,6 +455,7 @@ XXxXXXXXXXX
 
 - Picat website https://picat-lang.org/ 
 - The Manual https://picat-lang.org/download/picat_guide.pdf 
+- Constraint Solving and Planning with Picat book https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf
 - Karlova University Course https://jbulin.github.io/teaching/fall/nopt042/
 - A ChatGPT version that knows something about Picat. (It can get confused between Picat and Prolog.) https://chatgpt.com/g/g-EEpNUZ9H1-picat-prodigy 
 
@@ -499,10 +500,66 @@ XXxXXXXXXXX
 
 ## Appendix: Using Picat For Instruction
 
-Stuff about importing student answers as modules.
+To use Picat with an autograder, the student code can be imported as a module into the grader. For example, students could be given the magic square problem from the Picat Constraint Solving book. 
+
+Here's a sample assignment.
+
+A magic square is one where the columns, rows and diagonals sum to the same number. https://en.wikipedia.org/wiki/Magic_square You are to code a constrain solving solution in Picat that has that sum be the "magic sum" of N*(N*N+1)//2. https://en.wikipedia.org/wiki/Magic_constant Be sure to not change the code that says `module student.` at the top.
+
+Use this code as your template:
+```
+module student. 
+import cp.
+
+magic(N) = Square =>
+    NN = N*N,
+    Sum = N*(NN+1)//2, % ensures consistency of solve
+    Square = new_array(N,N),
+    Square :: 1..NN,
+    % your code here
+    solve(Square)
+
+```
 
 
+Here's a potential full solution, this is from the Picat book. https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf
 
+```
+module student. 
+import cp.
+
+magic(N) = Square =>
+    NN = N*N,
+    Sum = N*(NN+1)//2,
+    Square = new_array(N,N),
+    Square :: 1..NN,
+    all_different(Square.vars()), 
+    foreach (I in 1..N)
+        Sum #= sum([Square[I,J] : J in 1..N]), % rows
+        Sum #= sum([Square[J,I] : J in 1..N]) % columns
+    end,
+    % diagonal sums
+    Sum #= sum([Square[I,I] : I in 1..N]),
+    Sum #= sum([Square[I,N-I+1] : I in 1..N]).
+```
+
+And the associated grader that puts the result into a file. Consistency in grading is ensured by using the combination of the magic sum and the set solve search method, in this caes: `[ffd,down]`. (Fail first with variable ordered by degree and down variables from largest to smallest.)
+
+```
+% grader.pi
+import student.
+import cp.
+
+main =>
+    Writer = open("grade_file.txt", write),
+    Square = magic(5),
+    solve([ffd,down],Square), % tell students the solve method
+    if 
+        Square == {{3,9,14,15,24},{10,20,22,2,11},{19,17,1,21,7},{8,13,16,23,5},{25,6,12,4,18}}
+        then println(Writer,"Correct!") % or write to a file
+        else println(Writer,"Wrong!")
+    end.
+```
 
 
 

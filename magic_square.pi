@@ -1,8 +1,9 @@
 import cp.
 
 main =>
-    N = 13, % size of problem
-    time2(magic2(N,Square)),
+    N = 5, % size of problem
+    time2(magic(N,Square)),
+    println(Square),
     foreach(Srow in Square)
         foreach(Scol in Srow)
             printf("%*d", 5, Scol)
