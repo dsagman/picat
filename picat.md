@@ -158,7 +158,15 @@ The `=` operator performs one function that looks like two. It can assign a vari
 
 Unification is central to logic programming, but it also underlies type inference, type checking and pattern matching in functional programming languages such as Haskell and OCaml. However, unless you have tried to build a type inference engine, you are unlikey to have heard the term used in functional programming. 
 
-Unification results either in success/true/yes or fail/false/no. (The slash indicates these are the synonyms.) Key point: a successful unification results in an unbound variable being bound. Let's look at some examples.
+Unification results either in success/true/yes or fail/false/no. The slash here indicates these are the synonyms. The evaluation results in success or failure, the logical value of the evaluation for each respectively is true/false and the Picat interpreter will output `yes` or `no` to indicate this.
+
+Key point: a successful unification results in an unbound variable being bound. Let's look at some examples.
+
+**VERY IMPORTANT:** The explict and central use of unification is the main difference between Prolog and almost all other programming languages. 
+
+Picat makes it easier for people coming from non-logic programming backgrounds by including functions (see below), `foreach` loops and list comprehensions. 
+
+However, Picat is still a member of the Prolog family and as such, understanding how unification works is required for anything but the simplest program.
 
 *Rabbit Hole: Mercury is a functional/logic language that includes unification. Unlike Picat, it is purely function and strongly typed. https://mercurylang.org/ Verse is also functional/logic, but is not yet publicly available except for programming games such as Fortnight. Yes, really. https://files.gotocon.com/uploads/slides/conference_65/2896/original/GOTO.pdf*
 
@@ -266,9 +274,9 @@ A=new_array(2,3), bind_vars(A,0). A = {{0,0,0},{0,0,0}}
 
 ### Program Structure and Control Flow
 
-Picat programs consist of statements which can be combined into longer clauses inside procedures or functions. Picat statements are technically rules or facts. This is more correct than thinking of them as statements because all of the rules and facts are stored in a database of the program. This is also how Prolog works.
+Picat programs consist of statements which can be combined into longer clauses inside procedures or functions. Picat statements are either rules or facts. This is more correct than thinking of them as statements because all of the rules and facts are stored in a database of the program. This is also how Prolog works.
 
-Fun fact: Because a program is a database, you can alter the rules and facts on the fly with `cl_facts`. See the end of this section for a perfectly legitimate abuse of this.
+Fun fact: Because a program is a database, you can alter the rules and facts on the fly with `cl_facts`. See the later of this section for a perfectly legitimate abuse of this.
 
 
 #### The `main` function.
@@ -292,10 +300,114 @@ Hello Picat!
 
 Whitespace does not matter except for one space needed after the end of clauses Picat doesn't care if you smush everything together.
 
+#### Predicates vs. Functions 
+
+A key difference of Picat vs. Prolog is the inclusion of functions. In Prolog, everything is a predicate and there's no direct concept of a "returned value". 
+
+The classic example of this is Prolog's `append` predicate, which Picat also has and it let's you join two lists. It takes the form `append(L1,L2,L3)`. Note the standard use of terse variable names. 
+
+```
+append([1,2],[3,4],L3). % L3 = [1,2,3,4].
+```
+
+But `L1`, `L2`, and `L3` are not the "output" of the predicate. You can also write this:
+
+```
+append(L1,[3,4],[1,2,3,4]). % L1 = [1,2].
+```
+
+OK, that's not like Python at all. And it gets weirder. Type this into the Picat interpreter.
+
+```
+Picat> append(L1,L2,[1,2,3,4]).
+L1 = '[]'
+L2 = [1,2,3,4] ?
+
+```
+This means `[1,2,3,4]` can be formed by an empty `L1` and `L2` being the same as `L3`. And then there's this `?`. Picat is asking if you want more. If you enter `;`, which means "or", the output continues with all possibilities until there are no more, which is indicated with `no`.
+
+
+```
+Picat> append(L1,L2,[1,2,3,4]).
+L1 = '[]'
+L2 = [1,2,3,4] ?;
+L1 = [1]
+L2 = [2,3,4] ?;
+L1 = [1,2]
+L2 = [3,4] ?;
+L1 = [1,2,3]
+L2 = [4] ?;
+L1 = [1,2,3,4]
+L2 = '[]' ?;
+
+no
+```
+
+Technically what is happening here is unification, which we discussed earlier. Unification allows for non-deterministic behavior, which we will go into futher later. But the key point here is what would it be like to write a program with nothing but predicates that work this way? 
+
+Picat has all of this Prolog-stype behavior, but with functions it's more explicit what the input and output of a called object are. You can use `append` or, if you just want to join two lists, you can do this:
+
+```
+L3 = L1 ++ L2.
+L3 = [1,2] ++ [3,4]. % L3 = [1,2,3,4].
+[1,2] ++ [3,4] = L3. % L3 = [1,2,3,4].
+L3 := [1,2] ++ [3,4]. % L3 = [1,2,3,4].
+
+```
+This is deterministic and unifies or explicitly assigns `L1` followed by `L2` to `L3`. Again note that unification is bidirectional.
+
+***Key point:*** The Picat manual identifies functions with the notation `= Val`, `= ResList` or similar. If you try to call a predicate like a function or visa-versa you will get an error an `undefined procedure` or a fail that you didn't expect.
+
+For example:
+```
+A = append(1,2,3). % *** Undefined procedure: append/3
+[3,4] = [1,2] ++ L2. println(L2). % Fails/false/no.
+
+```
+
+These seem like simple errors to avoid, but the distinction between a function that returns a value versus a predicate that unifies one or more of its arguments can be subtle. It's important to read the manual. 
+
+For example to get a single solution or all solutions to a constraint programming problem the manual says:
+
+- solve(Vars): This predicate ... a single solution
+- solve_all(Vars) = Solutions ... all solutions
+
+Calling `solver(MyVariable)` will unify `MyVariable` with the solution. In other words, you can `println(MyVariable)` to see the result.
+
+But `solve_all(MyVariable)` gives a `** Error  : function_used_as_predicate:import(cp,solve_all / 2)`. You need to write something like `Sols = solve_all(MyVariable)`.
+
+Note the reason for the difference is that before calling `solve`, `Vars` is a domain variable that has the shape of the solution. Solving binds `Vars` to the solution, so it is a predicate. All the solutions is a list, which is not the same shape as a single solution, and therefore needs to be assigned to a new variable. 
+
+Don't worry if this doesn't make perfect sense yet. Personally this took me quite some time to understand.
+
+
+#### Function calls: `()` and `.`
+
+Functions can be called by placing arguments in parenthesis or by using dot notation. This is just syntactic sugar. The `.` notation makes the code a little shorter (1 character versus 2), and looks more like functional programming (or Rust) as opposed to lots of parentheses. You may find it easier to follow the logic with the dot notation, and you can mix-and-match the notations however you like.
+
+For example:
+
+```
+% parentheses
+Steps = map(my_parser,map(split,read_file_lines("day.txt"))),
+init_bots(Steps,Bots,Bins),
+Answer = prod(map(dec,take(3,(to_list(step([S : S in Steps, S[1]=$gives],Bots,Bins))))),
+
+% dot notation
+Steps = ("day.txt").read_file_lines.map(split).map(my_parser),
+init_bots(Steps,Bots,Bins),
+Answer = step([S : S in Steps, S[1]=$gives],Bots,Bins).to_list.take(3).map(dec).prod,
+
+% mixed
+Steps = read_file_lines("day.txt").map(split).map(my_parser),
+% etc.
+
+```
+
 
 #### Statement delimiters
 
-All statements have to end in `,`, `;` or `.` `,` means "and", `;` means "or" and `.` means "end of statement". 
+All statements have to end in `,`, `;` or `.` `,` means "and", `;` means "or" and `.` means "end of statement". `()` are used to mark a block of code. For example, as part of an `if` statement. 
 
 ```
 A=2, B=3.
@@ -327,6 +439,7 @@ foreach(X in 1..10, Y in 1..10)
    	A[X,Y] := my_hash_function(X,Y) % <- comma optional
 end.
 ```
+#### Control flow: `;` operator, `cond` and `compare_terms`
 
 procedures, functions
 
@@ -412,13 +525,9 @@ XXxXXXXXXXX
 
 
 - printf is your friend or print([])
-- := force vs == test vs = fail
-
-- can’t if statement on true. need X==true or X=true =:= 
-
-!= !== =\=
-
+- compare_terms(T erm1,T erm2) = Res:
 - , and ;  and .  also => and ! flow
+- apply and call
 - #= domain variable
 - procedure vs function
 - => versus =
@@ -440,6 +549,7 @@ XXxXXXXXXXX
 - 2d array notation. link to rosetta code
 - bind_vars
 - time and time2
+- tabling
 
 
 ## Using the Manual
