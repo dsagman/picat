@@ -209,7 +209,14 @@ https://www.janestreet.com/bug-byte/
 
 ![Bug byte](janestreet_bug.png)
 
-In Picat, here's a solution.
+In Picat, here's a solution. The nodes and edges are defined and then the constraints about the known values of nodes and possibly values for the edge weights. Each constraint reduces the search space.
+
+A constraint in this program are `all_distinct`, `#=`, `#^` and `#<=`.
+`all_distinct` means that the values of the list of edges are all different from each other. When combined with the previous line that puts them in the range of 1 to 24, that means the edges will contain every possible value between 1 and 24. 
+
+The `#=` constraint syntax means that a valid solution has the left and right side equal. This is different from unify, `=`, where the values have to be the same at the time of comparisson. The constraint tells the solver module (in this case `cp`) to try to find a set of values of left and right that can be unified.
+
+`#<=` is less than or equal and `#^` is the logical XOR.
 
 ```
 import cp.
@@ -316,13 +323,25 @@ sp(Graph,X,Y,Path,WL) =>
     WL1 = Wzy,
     WL = Wxz+Wzy.
 
-% Save to file for use with Python
+% Save to file for use with Python to make a graph
 save_solution(Solutions) =>
     Out = open("solutions.txt", write),
     foreach(Solution in Solutions)
         println(Out, Solution)
     end,
     close(Out).
+```
+
+The above outputs two potential solutions.
+```
+Number of solutions: 2
+=====================
+[((S,I),18),((I,J),3),((J,L),17),((L,O),16),((O,E),4)]
+Message is: RCQPD
+=====================
+[((S,D),12),((D,H),9),((H,K),14),((K,M),11),((M,O),5),((O,E),4)]
+Message is: LINKED
+Done!
 ```
 
 ### The Planner
@@ -346,6 +365,8 @@ Here's an example from the documentation for the programming language Curry, whi
 
 Here's a solution with the Picat `planner`.
 
+NOTE: A neat trick here is the use of `()` and `;` (meaning "or") to create the equivalent of a `case` statement in another language. 
+
 ```
 import planner.
 
@@ -365,17 +386,16 @@ problem(S) =>
     S = [[[a,b,c,d,e],[],[]], [[],[c,b,a,d,e],[]]]. % difficult
 
 % the goal state
-final(State), 
-    problem(S),
-    State[1] == S[2] => true.
+final(State), State[1] == State[2] => true.
 
 % action predicate defines how to go to the next state: NextS
 % Action variable is used to write the chosen step to the log
 
-action([[S1,S2,S3]],NextS,Action,Cost) =>
+action([[S1,S2,S3],G],NextS,Action,Cost) =>
 
     % pattern match on all the possible moves
     % this is essentially a case statement
+    % Goal is G and is passed through as part of the state
 
     (
     S1 = [H1|T1], 
@@ -415,8 +435,25 @@ action([[S1,S2,S3]],NextS,Action,Cost) =>
         Action = $("3->2",NewS1,NewS2,NewS3) 
     ),
     Cost = 1, % the cost for a given step
-    NextS = [[NewS1,NewS2,NewS3]]. % the next state.
+    NextS = [[NewS1,NewS2,NewS3],G]. % the next state.
 
+```
+This outputs:
+
+```
+[abcde,[],[]]
+(1->2,bcde,a,[])
+(1->2,cde,ba,[])
+(1->3,de,ba,c)
+(2->3,de,a,bc)
+(2->3,de,[],abc)
+(1->3,e,[],dabc)
+(1->2,[],e,dabc)
+(3->2,[],de,abc)
+(3->2,[],ade,bc)
+(3->2,[],bade,c)
+(3->2,[],cbade,[])
+Solution cost: 11
 ```
 
 ## Picat Isn't Python
@@ -758,10 +795,18 @@ procedures, functions
 ....Haskell fold....
 
 
-### Some control flow tricks
+### Global fact = Global state
+The below code recursively parses parenthensis but has different requirements for part 1 and part 2. To do this it uses a global fact: `part(n)` to change the behavior of `parse1` function. The fact is changed from `part(1).` to `part(2).` with the `cl_facts()` command that updates the global fact dictionary.
+
+Probably unsafe, but quite neat!
 
 ```
+% Advent of code 2016, day 9
+
 main =>
+    % Data = "A(1x5)BC",
+    % Data = "A(2x2)BCD(2x2)EFG",
+    % Data = "(25x3)(3x3)ABC(2x3)XY(5x2)PQRSTX(18x9)(3x2)TWO(5x7)SEVEN",
     Data = read_file_lines("day.txt").head,
  	cl_facts([$part(1)]), % a global fact
 	printf("Part 1 Answer: %w\n",parse(Data).sum),
@@ -784,9 +829,106 @@ parse1(L) = R =>
 
 ```
 
-In this code the `parse` ...global variable
-use of ; instead of it.
-use of accumulator via helper function
+#### Dynamic Dispatch with `apply` and `call`
+
+Here's code that simulates a simple assembly language. It invokes the correct operation based on the parsed input strings via the `apply` function. `apply` and `call` are able to transfer operation to another function or predicate based on a variable. 
+
+(`call` and `apply` perform the same action, but `apply` is a function and returns a value.)
+
+The interesting thing here is that the name of the function is identical to the string in the input. The *cpy* command is performed by the `cpy` function.
+
+The code also makes use of a hash map to store the value of registers and passes state back and forth via unification. Note how S isn't explictly returned. It's not a global variable. It's unified with itself resulting in updates meaning it is both input and output.
+
+The program counter, by contrast, is explictly returned and updated using the function syntax and `:=`.
+
+From the Advent of Code website:
+
+- cpy x y copies x (either an integer or the value of a register) into register y.
+- inc x increases the value of register x by one.
+- dec x decreases the value of register x by one.
+- jnz x y jumps to an instruction y away (positive means forward; negative means backward), but only if x is not zero.
+
+Here's a couple of possible programs:
+
+```
+cpy 41 a
+cpy a b
+inc a
+inc a
+dec a
+jnz a 2
+dec a
+
+```
+
+```
+cpy 1 a
+cpy 1 b
+cpy 26 d
+jnz c 2
+jnz 1 5
+cpy 7 c
+inc d
+dec c
+jnz c -2
+cpy a c
+inc a
+dec b
+jnz b -2
+cpy c b
+dec d
+jnz d -6
+cpy 13 c
+cpy 14 d
+inc a
+dec d
+jnz d -2
+dec c
+jnz c -5
+
+```
+And here's the code.
+
+```
+% Advent of Code 2016 Day 12
+
+import util.
+
+main => 
+    % Program = read_file_lines("test").map(split).map(parse),
+    Program = read_file_lines("day.txt").map(split).map(parse),
+
+    Part1 = run(Program,new_map(["a"=0,"b"=0,"c"=0,"d"=0]),1),
+    printf("Answer Part 1: %w\n",get(Part1, "a")),
+
+    Part2 = run(Program,new_map(["a"=0,"b"=0,"c"=1,"d"=0]),1),
+    printf("Answer Part 2: %w\n",get(Part2, "a")).
+
+run(Program,S,PC) = NewS =>
+    while (between(1,Program.len,PC))
+        [Op,Args] = Program[PC],
+        PC := apply(Op,Args,S,PC),
+    end,
+    NewS = S.
+
+% extract the op code as an atom 
+% convert numbers in the argument into the correct int type.
+parse([H|T]) = [(H).to_atom,T.map(parse_n)].
+parse_n(X) = Xn => if between(97,122,ord(X[1])) then Xn = X else Xn = X.to_int end.
+
+cpy([X,Y],S,PC) = NPC=> NPC = PC+1,
+    if number(X) then put(S,Y,X) else V = get(S,X), put(S,Y,V) end.
+
+inc([X],S,PC) = NPC => NPC = PC+1, V = get(S,X), put(S,X,V+1).
+
+dec([X],S,PC) = NPC => NPC = PC+1, V = get(S,X), put(S,X,V-1).
+
+jnz([X,Y],S,PC) = NPC => 
+    if number(X) then Xn = X else Xn = get(S,X) end,
+    if Xn != 0 then NPC = PC+Y else NPC = PC+1 end.
+
+```
+
 
 
 ## Non-determinism
@@ -842,25 +984,21 @@ XXXXXXXXXXXXXXXXXXXXX
 
 
 
-***TODO LIST***
+# TODO LIST
+
 - Lists are usually decomposed using H and T as in `max([H|T])=max(H,max(T)).`
-
-
 - printf is your friend or print([])
 - compare_terms(T erm1,T erm2) = Res:
 - , and ;  and .  also => and ! flow
-- apply and call
 - #= domain variable
 - procedure vs function
 - => versus =
 - when to use a comma (and not to)
 - type error string/int
-- what happens if you invent a variable
 - accumulator for base case
 - length is not a constraint, but sum [1: X in …] is
 - no lambda but neat trick: call (or apply) using a function name in a variable. or list item! - dynamic dispatch
 - $ means literal
-- neat trick ; for case/multiple if then else
 - =>? opposite of prolog !, but we also have ! (!)
 - cond not really in the manual
 - -> not really in the manual
@@ -869,10 +1007,7 @@ XXXXXXXXXXXXXXXXXXXXX
 - “” vs ‘’ string (check this one)
 - using @
 - 2d array notation. link to rosetta code
-- bind_vars
 - time and time2
-- tabling
-
 
 
 
@@ -1007,6 +1142,12 @@ The Picat manual can be terse and doesn't provide examples for everything. Here'
     yes
     ```
     Which is neat, and kind of like building up an expression that can then be dynamically evaluated, but how do I evaluate `C`? I have no idea. This is the only use of `Conj` as an output value in the entire manual.
+    
+- `->` can be used for `if` `then` as in (A>5 -> X=yes; X=no). Technically, I understand this and it's on a footnote on page 6 that says, "Picat also accepts Prolog-style if-then-else in the form (If -> Then; Else) and mandates the presence of the else-part." 
+    
+    `->` is not used in examples, and I had to have someone point this footnote out to me after ChatGPT insisted that this is the prefered method for Picat `if` `then`. 
+
+- `-->` The manual says this syntax supports DCG (Definite Clause Grammar) rules. I don't know much about these and the Prolog manual talks about the `phrase` predicate for processing them, which Picat doesn't seem to have. And without some examples, I'm not sure what I'd use them for. Would they make better/easier parsers for LL, LR or CFG grammars? I do not know.
 
 
 

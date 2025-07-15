@@ -17,12 +17,10 @@ problem(S) =>
 
 % final(([],[a,b],[])) => true.
 % final(State), State == ([],[a,b],[]) => true.
-final(State), 
-    problem(S),
-    State == S[2] => true.
+final(State), State[1] == State[2] => true.
 
 
-action([[S1,S2,S3]],NextS,Action,Cost) =>
+action([[S1,S2,S3],G],NextS,Action,Cost) =>
     % how to skip moving if stack matches goal
     % move(S1,S2,S3,NewS1,NewS2,NewS3,Action),
     (
@@ -34,7 +32,7 @@ action([[S1,S2,S3]],NextS,Action,Cost) =>
     S3 = [H3|T3], NewS1 = S1,      NewS2 = [H3|S2], NewS3 = T3,      Action = $("3->2",NewS1,NewS2,NewS3)
     ),
     Cost = 1,
-    NextS = [[NewS1,NewS2,NewS3]].
+    NextS = [[NewS1,NewS2,NewS3],G].
 
 
 
