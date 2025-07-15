@@ -84,31 +84,340 @@ Also: Hashmaps, Sets, Ordered Sets and Binary Heaps.
 - Strong Typing, Type Hinting, Monads
 - Monads 
 
-### Things I Still Don't Fully Understand
-
-- Structs
-- Reduce
-- Acyclic
-- Contains
-
 
 More at: https://picat-lang.org/download/picat_compared_to_prolog_haskell_python.html
 
+## Using the Manual
+
+https://picat-lang.org/download/picat_guide.pdf
+- The manual is the single most important document for learning Picat. It has everything, but can be very terse, and so must be read closely.
+- The index at the back lists all the commands and hyperlinks to them. I use this more than any other method when programming in Piact.
+
 ## Note About Example Code 
 
-Each clause in Picat ends with a `.`. In example code each line is fully distinct as if it had been typed into the Picat interactive interpreter. For example:
+Each clause in Picat ends with a `.`. In example code each line is fully distinct for variable scope.
+
+`%` begins a comment.
+
+For example:
 
 ```
-A=5. % A=5. But only in this clause. And if you prefer spaces around your operators, please go ahead.
-A="A Wildebeest!". % A is a string. Again, only here.
-println(A). % fails, A isn't assigned to anything.
+A=5. % A=5. 
 ```
+But `A` only equals `5` in this clause. After the `.`, `A` goes out of scope.
 
+And if you prefer spaces around your operators, please go ahead.
+
+```
+A="A Wildebeest!". % A is a string. 
+```
+Again, `A` is in scope only until the `.` and doesn't exist after.
+```
+B=A+A. %** Error  : Free variable in expression: '+' 
+```
+ `A` hasn't been defined in this clause. 
+ 
+ But using a `,` provides a continuous scope for `A`.
+```
+A=5,B=A+A. %A=5 and B=10.
+```
 
 ## Constraint Programming
 
-Some examples here. Let's try not to use the same ones from the manual!
+Constraint programming let's you solve problems that require searching through possible solutions. How can you place queens on a chessboard so that no queen is able to take another? (N-queens) Can a knight on chessboard visit every square once and end by returning to its starting square? (Knights tour) The best route for a travelling salesman? (Travelling Salesman) The quickest way out of a maze? (Shortest Path) How best to choose items to fill a suitcase? (Knapsack) How to complete a partially filled Soduku puzzle? (Soduku)
 
+All of these, and many many more can be found via the links in the references section. 
+
+The main concept here is the minimization of a function defined by a set of rules aka constraints. The function has variables whose values are not known, but can be defined to be within a given range.
+
+These variables can be real/floating point values or integers and, in general, real variable solutions are easier to find than integer ones. In most most cases, for integer or "mixed integer" where some of the values are integers, there's no closed form solution. Constraint progamming is NP-Hard. https://en.wikipedia.org/wiki/Integer_programming#Heuristic_methods
+
+There are many applicable techniques you may have seen in a CS algorithms class: Dijkstra's algorithm, A*, recursion/induction, A/B pruning, branch-and-bound, fail first, breadth first search, depth first search, simplex, gradient descent, satisfiability solver, memoization/tabling or just brute force.
+
+A solution is found through iteration and any efficiency over brute force is through careful selection of which potential solution to try next, when to give up and try a different one, and identification of when a given search location is the same as a previous one. This last item is also known as symmetry breaking, that is, if a state is identical/symmetrical to a previous one, don't do the calculations all over again.
+
+These algorithms can reduce the time to find a solution from hours to fractions of a second, but learning all of them and implementing them for a specific problem can be challenging. Enter Picat!
+
+Picat has multiple built-in solvers: Boolean Satisfiability (SAT), Mixed-Integer Programming (MIP), Satisfiability Modulo Theories (SMT), Finite Domain (FD) Constraint Programming (CP), and a Planner for shortest path/minimum cost. 
+
+Incredibly, the interface to all of them is essentially the same. This lets you switch between CP and SAT, for example by just changing and `import` statement. 
+
+### Fibonacci and Tabling
+
+Let's take a the example every dynamic programming text begins with, Fibonacci numbers. $F_n = F_{n-1} + F_{n-2}$. In Picat:
+
+```
+fib(0) = 1.
+fib(1) = 1.
+fib(N) = fib(N-1)+fib(N-2).
+```
+Run this with and we quickly see a problem with compute time.
+```
+main =>
+    time(println(fib(5))),
+    time(println(fib(30))),
+    time(println(fib(40))).
+---------------------------------
+8 CPU time 0.0 seconds.
+1346269 CPU time 0.042 seconds.
+165580141 CPU time 4.755 seconds.
+---------------------------------
+```
+`fib` is recalculating every value of `N-1` and `N-2` for each `N`. At `fib(40)` that's 331,160,281 recursive calls. https://cboard.cprogramming.com/c-programming/168662-fibonacci-how-long-would-take.html
+
+The solution is to memoize the values into a hash table after they are computed so that they can be looked up rather than brute forced on subsequent calls.
+
+Picat (and Prolog) make this ridiculously easy. Here's the revised code.
+
+```
+main =>
+    time(println(fib(5))),
+    time(println(fib(30))),
+    time(println(fib(40))),
+    time(println(fib(4000))).
+
+table
+fib(0) = 1.
+fib(1) = 1.
+fib(N) = fib(N-1)+fib(N-2).
+---------------------------------
+8 CPU time 0.0 seconds.
+1346269 CPU time 0.0 seconds.
+165580141 CPU time 0.0 seconds.
+64574884490948173531376949015369595644413900640151342708407577598177210359034088914449477807287241743760741523783818897499227009742183152482019062763550798743704275106856470216307593623057388506776767202069670477506088895294300509291166023947866841763853953813982281703936665369922709095308006821399524780721049955829191407029943622087779296459174012610148659520381170452591141331949336080577141708645783606636081941915217355115810993973945783493983844592749672661361548061615756595818944317619922097369917676974058206341892088144549337974422952140132621568340701016273422727827762726153066303093052982051757444742428033107522419466219655780413101759505231617222578292486081002391218785189299675757766920269402348733644662725774717740924068828300186439425921761082545463164628807702653752619616157324434040342057336683279284098590801501
+CPU time 0.013 seconds.
+---------------------------------
+
+```
+
+
+
+### Constraint Example: Jane Street Bug
+
+https://www.janestreet.com/bug-byte/
+
+
+> Bug Byte
+> 
+>Fill in the edge weights in the graph below with the numbers 1 through 24, using each number exactly once. Labeled nodes provide some additional constraints:
+>
+>The sum of all edges directly connected to this node is M.
+>
+>There exists a non-self-intersecting path starting from this node where N is the sum of the weights of the edges on that path. Multiple numbers indicate multiple paths that may overlap.
+>
+>Once the graph is filled, find the shortest (weighted) path from to and convert it to letters (1=A, 2=B, etc.) to find a secret message.
+
+![Bug byte](janestreet_bug.png)
+
+In Picat, here's a solution.
+
+```
+import cp.
+
+main =>
+    % Define the graph with nodes and edges
+    Nodes = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'S'],
+    Edges = [('A', 'B'), ('A', 'D'),
+             ('B', 'S'),
+             ('C', 'H'),
+             ('D', 'S'), ('D', 'H'),
+             ('S', 'I'),
+             ('F', 'I'),
+             ('G', 'J'),
+             ('H', 'J'), ('H', 'K'),
+             ('I', 'J'), ('I', 'L'),
+             ('J', 'K'), ('J', 'L'),
+             ('K', 'M'), ('K', 'P'), ('K', 'N'),
+             ('L', 'O'),
+             ('M', 'N'), ('M', 'O'),
+             ('N', 'E'),
+             ('O', 'E'),
+             ('Q', 'L')],
+
+    % Edges are tuples of nodes and weights in range 1..24
+    EdgeVars = [(Edge, V) : Edge in Edges, V :: 1..24],
+    
+    % Unique edge weights
+    % Reduce search space to 24! = 6,204,484,903,168,028,160
+    all_distinct([V : (_, V) in EdgeVars]),
+
+    % Constraint to enforce known edge weights 
+    % Reduce search space to 19! = 121,645,100,408,832,000
+    KnownWeights = [(('D','S'), 12),
+                    (('J', 'K'), 24),
+                    (('K', 'N'), 7),
+                    (('I', 'L'), 20)],
+    foreach((Edge, Weight) in KnownWeights),
+        member((Edge, Weight), EdgeVars)
+    end,
+    
+    % Constraint to enforce known sum of weights for nodes
+    % Reduce search space to 48
+    KnownSums = [('A', 17), 
+                 ('B', 3),
+                 ('H', 54),
+                 ('I', 49),
+                 ('J', 60),
+                 ('K', 79),
+                 ('L', 75),
+                 ('M', 29),
+                 ('N', 39),
+                 ('O', 25)],
+    foreach((Node, Sum) in KnownSums),
+        NodeEdges = [(N1, N2) : (N1, N2) in Edges, (N1 = Node ; N2 = Node)],
+        NodeVars = [V : (Edge, V) in EdgeVars, Edge in NodeEdges],
+        sum(NodeVars) #= Sum
+    end,
+
+    % Constraint that sum of weight on an edge = KnownPathSum OR 
+    % sum of weight plus min edge on neighbor is <= to KnownPathSums
+    % only need C, G, and F to reduce search space to 2
+    KnownPathSums = [
+                    ('C', 31),
+                    %  ('D', 19), 
+                    %  ('D', 23),
+                     ('G', 6), 
+                    %  ('G', 9), 
+                    %  ('G', 16),
+                     ('F', 8)],
+    foreach((Node, Sum) in KnownPathSums),
+        NodeEdges = [(N1, N2) : (N1, N2) in Edges, N1 = Node],
+        NodeVars = [V : (Edge, V) in EdgeVars, Edge in NodeEdges],
+        Neighbors = [N2 : (N1, N2) in Edges, N1 = Node],
+        NodeOneHopEdges = [(N1, N2) : (N1, N2) in Edges, N1 in Neighbors],
+        NodeOneHopVars = [V : (Edge, V) in EdgeVars, Edge in NodeOneHopEdges],
+        (sum(NodeVars) #= Sum) #^ (sum(NodeVars) + min(NodeOneHopVars) #=< Sum)
+    end,
+
+    Solutions = solve_all([ffc], EdgeVars),
+    printf("Number of solutions: %d\n", length(Solutions)),
+    foreach(Solution in Solutions)
+        AllEdges = Solution ++ [((Y,X), Weight) : ((X,Y), Weight) in Solution],
+        sp(AllEdges, 'S', 'E', Path, _),
+        Message = [chr(W+64) : ((X,Y), W) in Path],
+        println('====================='),
+        println(Path),
+        println("Message is: "++Message),
+    end,
+    save_solution(Solutions),
+    println("Done!").
+
+% shortest path adapted from Picat Manual
+table (+,+,+,-,min)
+sp(Graph,X,Y,Path,WL) ?=>
+    Path = [((X,Y),Wxy)],
+    WL = Wxy,
+    member(((X,Y), Wxy), Graph).
+
+sp(Graph,X,Y,Path,WL) =>
+    Path = [((X,Z), Wxz)|Path1],
+    member(((X,Z), Wxz), Graph),
+    sp(Graph,Z,Y,Path1,WL1),
+    WL1 = Wzy,
+    WL = Wxz+Wzy.
+
+% Save to file for use with Python
+save_solution(Solutions) =>
+    Out = open("solutions.txt", write),
+    foreach(Solution in Solutions)
+        println(Out, Solution)
+    end,
+    close(Out).
+```
+
+### The Planner
+
+The `planner` module is, as far as I know, unique to Picat. It lets you define a starting state, action to create the next state, the final/goal state, and then just solve it.
+
+Planner acts as high-level interface to the underlying solver and mechanics of tabling and goal state checking.
+
+### A Planner Example
+
+Here's an example from the documentation for the programming language Curry, which combines functional and logic paradigms. https://curry-lang.org/docs/tutorial/html/curry-tutorial.Ch6.S1.html#SS3
+
+
+>The “blocks world” consists of 3 possibly empty piles, labeled p, q and r, of unique blocks labeled A, B, C, etc. “Start” and “Final” below are two examples from [blocks world](https://www.d.umn.edu/~gshute/cs2511/projects/Java/assignment6/blocks/blocks.xhtml).
+
+![](blocksworld1.png)
+
+![](blocksworld2.png)
+
+>A blocks world “problem” consists of two worlds, like Start and Final above. Its solution consists in the moves that produce the second world from the first one. A “move” transfers the block on top of a pile to the top of another pile. No other blocks are affected by the move. 
+
+Here's a solution with the Picat `planner`.
+
+```
+import planner.
+
+main =>
+    problem(S),
+    best_plan(S,Plan), % solves the problem S
+    println(S[1]), % prints the first state
+    foreach (Step in Plan)
+        println(Step) % prints each state
+    end,
+    printf("Solution cost: %w\n", length(Plan)).
+ 
+% uncomment an S to run it
+problem(S) => 
+    % S = [[[a,b],[],[]], [[],[a,b],[]]]. % simple
+    % S = [[[a,b],[],[]], [[],[b,a],[]]].  % simple
+    S = [[[a,b,c,d,e],[],[]], [[],[c,b,a,d,e],[]]]. % difficult
+
+% the goal state
+final(State), 
+    problem(S),
+    State[1] == S[2] => true.
+
+% action predicate defines how to go to the next state: NextS
+% Action variable is used to write the chosen step to the log
+
+action([[S1,S2,S3]],NextS,Action,Cost) =>
+
+    % pattern match on all the possible moves
+    % this is essentially a case statement
+
+    (
+    S1 = [H1|T1], 
+        NewS1 = T1,      
+        NewS2 = [H1|S2], 
+        NewS3 = S3,      
+        Action = $("1->2",NewS1,NewS2,NewS3);
+
+    S1 = [H1|T1], 
+        NewS1 = T1,      
+        NewS2 = S2,      
+        NewS3 = [H1|S3], 
+        Action = $("1->3",NewS1,NewS2,NewS3);
+
+    S2 = [H2|T2], 
+        NewS1 = S1,      
+        NewS2 = T2,      
+        NewS3 = [H2|S3], 
+        Action = $("2->3",NewS1,NewS2,NewS3);
+
+    S2 = [H2|T2], 
+        NewS1 = [H2|S1], 
+        NewS2 = T2,      
+        NewS3 = S3,      
+        Action = $("2->1",NewS1,NewS2,NewS3);
+
+    S3 = [H3|T3], 
+        NewS1 = [H3|S1], 
+        NewS2 = S2,      
+        NewS3 = T3,      
+        Action = $("3->1",NewS1,NewS2,NewS3);
+
+    S3 = [H3|T3], 
+        NewS1 = S1,      
+        NewS2 = [H3|S2], 
+        NewS3 = T3, 
+        Action = $("3->2",NewS1,NewS2,NewS3) 
+    ),
+    Cost = 1, % the cost for a given step
+    NextS = [[NewS1,NewS2,NewS3]]. % the next state.
+
+```
 
 ## Picat Isn't Python
 
@@ -490,37 +799,50 @@ A key feature of logic programming languages is implicit backtracking from failu
 #### `?=>`
 
 
-### Errors I Make
+### Errors I Always Make and How I Compensate
 
 #### Unification vs Assignment
 
-Invariably I make an error where I use `=` but I need to use `:=`. This happens when I am editing code and moving things around and lose track of the first time I bind a variable versus when I either test it or mutate it. 
+Invariably I make an error where I use `=` when I need to use `:=`. This happens when I am editing code and moving things around and lose track of the first time I bind a variable versus when I either test it or mutate it. 
 
-This can be prevented by only ever using `:=` to do assignment, `==` to test equality and not mutating any variables. However, these limitations limit the use of the power of Picat to do non-deterministic binding and make it more complex to track a shared state.
-
-Here's an example:
+You could try to only ever use `:=` to do assignment and `==` to test equality. But without unification Picat is hobbled and there's no non-deterministic binding.
 
 
+### Forgetting a comma or a period
+
+Some people like to put the `,`, `;` and `.` at the start of lines. 
+
+```
+main =>
+      A = 5
+    , B = 10
+    , if A > B 
+        then println("Yoo")
+        else println("Hoo")
+      end
+    .  
+
+```
+This can make it easier to move lines around, but I think it looks weird and it doesn't work in all cases.
+
+Invariably, I add a new line of code and forget the comma. Picat is improving in its ability to locate the error, but it can be vague and give a large range of possible lines to check.
+
+I compensate by adding only a few lines at a time and always saving and rerunning so that I don't have far to hunt for the most recent edit that broke syntax rules.
+
+### Print and Printf are Your Friends
+
+Picat lets you put a `println` anywhere, and I make extensive use of this when debugging.
+
+println one variable
+use of $
+
+printf simplest format
+
+XXXXXXXXXXXXXXXXXXXXX
 
 
 
-
-
-###
-
-
-
-
-
-
-Show a longer example with a bug.
-
-
-
-
-XXxXXXXXXXX
-
-
+***TODO LIST***
 - Lists are usually decomposed using H and T as in `max([H|T])=max(H,max(T)).`
 
 
@@ -552,10 +874,7 @@ XXxXXXXXXXX
 - tabling
 
 
-## Using the Manual
-- The manual is the single most important document. It has everything, but can be very terse, and so must be read closely
-- Not every function/predicate has an example
-- The index at the back lists all the commands and hyperlinks to them
+
 
 
 
@@ -670,6 +989,24 @@ main =>
         else println(Writer,"Wrong!")
     end.
 ```
+
+## Appendix:  Things I Still Don't Fully Understand
+
+The Picat manual can be terse and doesn't provide examples for everything. Here's some commands I don't know how to use.
+
+- `reduce` I think this is a functional `fold`, but have not been able to make it work.
+- `acyclic_term` "This predicate is true if Term is acyclic, meaning that Term does not contain itself." I don't know what this means or when I would use it.
+- `list_to_and(List) = Conj` I understand that this turns a list into a conjunction of facts separated by and (`,`). For example: 
+
+    ```
+    M = [A=5,B=3,A!=B],
+    C = list_to_and(M).
+    -------
+    M = [_13558 = 5,_13570 = 3,_13558 != _13570]
+    C = (A = 5,B = 3,A != B)
+    yes
+    ```
+    Which is neat, and kind of like building up an expression that can then be dynamically evaluated, but how do I evaluate `C`? I have no idea. This is the only use of `Conj` as an output value in the entire manual.
 
 
 

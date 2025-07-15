@@ -1,0 +1,10 @@
+main =>
+    time(println(fib(5))),
+    time(println(fib(30))),
+    time(println(fib(40))),
+    time(println(fib(4000))).
+
+table
+fib(0) = 1.
+fib(1) = 1.
+fib(N) = fib(N-1)+fib(N-2).
