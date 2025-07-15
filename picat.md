@@ -1143,9 +1143,9 @@ The Picat manual can be terse and doesn't provide examples for everything. Here'
     ```
     Which is neat, and kind of like building up an expression that can then be dynamically evaluated, but how do I evaluate `C`? I have no idea. This is the only use of `Conj` as an output value in the entire manual.
     
-- `->` can be used for `if` `then` as in (A>5 -> X=yes; X=no). Technically, I understand this and it's on a footnote on page 6 that says, "Picat also accepts Prolog-style if-then-else in the form (If -> Then; Else) and mandates the presence of the else-part." 
+- `->` can be used for `if` `then` as in (A>5 -> X=yes; X=no). Technically, I understand this and it's on a footnote (pg 6) that says, "Picat also accepts Prolog-style if-then-else in the form (If -> Then; Else) and mandates the presence of the else-part." 
     
-    `->` is not used in examples, and I had to have someone point this footnote out to me after ChatGPT insisted that this is the prefered method for Picat `if` `then`. 
+    `->` is used in one example (pg 93), and I had to have someone point out the footnote and example after ChatGPT insisted that `->` is the prefered method for Picat `if` `then`. (It is not.)
 
 - `-->` The manual says this syntax supports DCG (Definite Clause Grammar) rules. I don't know much about these and the Prolog manual talks about the `phrase` predicate for processing them, which Picat doesn't seem to have. And without some examples, I'm not sure what I'd use them for. Would they make better/easier parsers for LL, LR or CFG grammars? I do not know.
 
