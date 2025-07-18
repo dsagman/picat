@@ -30,14 +30,14 @@ Consider this a rough draft representing my personal learning curve. This docume
 
 This document has the following primary sections:
 
-- [Introduction](#what-i-wish-i-knew-when-learning-picat-introduction) (you are here!), which includes some high level information about Picat.
+- [Introduction](#what-i-wish-i-knew-when-learning-picat-introduction). (you are here!), which includes some high level information about Picat.
 - [Constraint and Planner Programming](#constraint-programming-and-the-planner), these capabilities are the reason I wanted to learn Picat and are a central strength of the language. If you are familiar with Prolog then start here.
 - [Picat is not Python](#picat-isnt-python). This is the section if you're unfamiliar with Prolog and logic programming concepts. I had always struggled with these, so I share what I found challenging and helpful. There's also some neat tricks here such as dynamic dispatch.
 - [Resources](#resources). Links to more information about Picat and example code.
-- [Appendix: Using Picat In Class](#appendix-using-picat-for-instruction)Some ideas for how to autograde Picat student assignments.
+- [Appendix: Using Picat In Class](#appendix-using-picat-for-instruction). Some ideas for how to autograde Picat student assignments.
 - [Appendix: My Errors](#errors-i-always-make-and-how-i-compensate). The things I always get wrong, altough I'm doing it less now that I've written this!
-- [Appendix: Debugging](#appendix-debugging) Some ideas for debugging that I rely on.
-- [Appendix: Stuff I Don't Know](#appendix--things-i-still-dont-fully-understand)Things that I don't fully understand about Picat.
+- [Appendix: Debugging](#appendix-debugging). Some ideas for debugging that I rely on.
+- [Appendix: Stuff I Don't Know](#appendix--things-i-still-dont-fully-understand).Things that I don't fully understand about Picat.
 
 
 ## About Picat
@@ -253,6 +253,9 @@ This puzzle is perfect for Picat. Some things to notice:
     end,
    ```
 - But because each is zero, the sum is zero, and one line of code looks cooler than three. So we used `sum(...) #= 0`.
+- Because we are looking to know the time to press the button, the variable `T` is set to a range of possible values. 
+- The notation `::` means that the variable is within the set of values of the list on the right side of the expression.
+- The notation `1..5` means "a list with items 1 to 5 i.e., [1,2,3,4,5]`
 - We aren't given a range of times, so the program sets the range of the solution T to between 0 and `maxint_small()`, which is not very small. It's 72,057,594,037,927,935.
 - `solve` is a predicate and unifies `T` with the solution.
 - If you wanted all the solutions, `solve_all` is a function and looks like `Sols = solve_all(T).`
@@ -309,6 +312,33 @@ A constraint in this program are `all_distinct`, `#=`, `#^` and `#<=`.
 The `#=` constraint syntax means that a valid solution has the left and right side equal. This is different from unify, `=`, where the values have to be the same at the time of comparisson. The constraint tells the solver module (in this case `cp`) to try to find a set of values of left and right that can be unified.
 
 `#<=` is less than or equal and `#^` is the logical XOR.
+
+Some more notes:
+
+`V :: 1..24` means that `V` is a variable that could be set to any number between 1 and 24, inclusive. Further constraints will limit this, but initially each V is open to all possible values in this range.
+
+The line `EdgeVars = [(Edge, V) : Edge in Edges, V :: 1..24]` results initially in this:
+
+```
+[((A,B),_09b8::[1 ..24]),((A,D),_0a80::[1 ..24]),((B,S),_0b48::[1 ..24]),((C,H),_0c10::[1 ..24]),((D,S),_0cd8::[1 ..24]),((D,H),_0da0::[1 ..24]),((S,I),_0e68::[1 ..24]),((F,I),_0f30::[1 ..24]),((G,J),_0ff8::[1 ..24]),((H,J),_010c0::[1 ..24]),((H,K),_01188::[1 ..24]),((I,J),_01250::[1 ..24]),((I,L),_01318::[1 ..24]),((J,K),_013e0::[1 ..24]),((J,L),_014a8::[1 ..24]),((K,M),_01570::[1 ..24]),((K,P),_01638::[1 ..24]),((K,N),_01700::[1 ..24]),((L,O),_017c8::[1 ..24]),((M,N),_01890::[1 ..24]),((M,O),_01958::[1 ..24]),((N,E),_01a20::[1 ..24]),((O,E),_01ae8::[1 ..24]),((Q,L),_01bb0::[1 ..24])]
+```
+
+The `_xxxx` indicates the memory address of the individual `V` and the `::[1..24]` shows that the variable has a range of possible values that will have to be constrained.
+
+If we added a `sum` constraint:
+
+```
+EdgeVars = [(Edge, V) : Edge in Edges, V :: 1..24],
+sum([V : (_, V) in EdgeVars]) #= 30
+
+```
+The result would be:
+
+```
+[((A,B),_09b8::[1 ..7]),((A,D),_0a80::[1 ..7]),((B,S),_0b48::[1 ..7]),((C,H),_0c10::[1 ..7]),((D,S),_0cd8::[1 ..7]),((D,H),_0da0::[1 ..7]),((S,I),_0e68::[1 ..7]),((F,I),_0f30::[1 ..7]),((G,J),_0ff8::[1 ..7]),((H,J),_010c0::[1 ..7]),((H,K),_01188::[1 ..7]),((I,J),_01250::[1 ..7]),((I,L),_01318::[1 ..7]),((J,K),_013e0::[1 ..7]),((J,L),_014a8::[1 ..7]),((K,M),_01570::[1 ..7]),((K,P),_01638::[1 ..7]),((K,N),_01700::[1 ..7]),((L,O),_017c8::[1 ..7]),((M,N),_01890::[1 ..7]),((M,O),_01958::[1 ..7]),((N,E),_01a20::[1 ..7]),((O,E),_01ae8::[1 ..7]),((Q,L),_01bb0::[1 ..7])]
+```
+
+But we will need a different set of constraints to solve the bug byte, and here they are!
 
 ```
 import cp.
@@ -1228,8 +1258,8 @@ Here's the code. Items of note:
 
 - The biggest gain is from tabling the function `f` which indicates if a given coordinate is a wall or open space.
 - The `planner` will use the function named `heuristic`, if provided, as an aid in finding the solution. Here this approach helped by providing the "Manhattan distance" to the solution for part 1.
-- For part 2 there are two algorithms, a standard depth first search (DFS) which does not use the solver and a "brute force" approach of just calling the solver on every possible coordinate that's up to 50 steps away from the start.
-- I couldn't wrap my head around DFS and had to turn to ChatGPT, which, except for some syntax errors, provided the code. This runs super fast, 0.001 seconds.
+- For part 2 there are two algorithms, a standard breadth first search (BFS) which does not use the solver and a "brute force" approach of just calling the solver on every possible coordinate that's up to 50 steps away from the start.
+- I couldn't wrap my head around BFS and had to turn to ChatGPT, which, except for some syntax errors, provided the code. This runs super fast, 0.001 seconds.
 - For the brute force solution, Picat is fast enough to get it done in less than 0.4 seconds.
 
 
@@ -1804,8 +1834,6 @@ https://adventofcode.com/2016/day/9
 
 
 ```
-% Advent of code 2016, day 9
-
 main =>
     % Data = "A(1x5)BC",
     % Data = "A(2x2)BCD(2x2)EFG",
@@ -1828,8 +1856,6 @@ parse1(L) = R =>
     part(Part),
     (Part = 1, R = [M*N]++parse(TT);
      Part = 2, R = [N*sum(parse(slice(L,Ip+1,Ip+M)))]++parse(TT)).')'
-
-
 ```
 
 ## Example: Dynamic Dispatch with `apply` and `call`
@@ -2098,8 +2124,9 @@ I compensate by adding only a few lines at a time and always saving and rerunnin
 
 # Appendix: Debugging
 
-Picat has a debugger, but for me the key has been `println` and `printf`.
-### Print and Printf are Your Friends
+Picat has a debugger, and it works as advertised and if you want to use it I will point you at the Manual. But for me the key has been `println`, `printf`, and, in extreme cases, `readchar`.
+
+## Print and Printf are Your Friends
 
 Picat lets you put a `println` anywhere, and I make extensive use of this when debugging.
 
@@ -2109,6 +2136,10 @@ use of $
 printf simplest format
 
 XXXXXXXXXXXXXXXXXXXXX
+
+## `readchar` to step
+
+xxxxx
 
 # Appendix:  Things I Still Don't Fully Understand
 
