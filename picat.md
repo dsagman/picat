@@ -1,4 +1,4 @@
-# What I Wish I Knew When Learning Picat
+# What I Wish I Knew When Learning Picat: Introduction
 
 July 2025
 
@@ -18,7 +18,25 @@ This document is my attempt to share what I learned and is intended for programm
 
 Consider this a rough draft representing my personal learning curve. This document is not intended to be read top to bottom, but rather to help you if you get stuck where I did and hopefully give you the insight to move forward. As such, there's some redundancy between sections because I'm trying to make them self-contained as much as possible.
 
-Note: Title inspired by What I Wish I Knew When I was Learning Haskell, which helped me learn that language. https://github.com/sdiehl/wiwinwlh
+*Notes:*
+
+ *I am much indebted to Advent of Code for providing a wealth of puzzles that have helped me learn Picat (and other languages). https://adventofcode.com*
+
+ *Title inspired by What I Wish I Knew When I was Learning Haskell, which helped me learn that language. https://github.com/sdiehl/wiwinwlh*
+
+## How This Document Is Organized
+
+This document has the following primary sections:
+
+- [Introduction](#what-i-wish-i-knew-when-learning-picat-introduction) (you are here!), which includes some high level information about Picat.
+- [Constraint and Planner Programming](#constraint-programming-and-the-planner), these capabilities are the reason I wanted to learn Picat and are a central strength of the language. 
+- [Picat is not Python](#picat-isnt-python). This is the section if you're unfamiliar with Prolog and logic programming concepts. I had always struggled with these, so I share what I found challenging and helpful. There's also some neat tricks here such as dynamic dispatch.
+- [Resources](#resources). Links to more information about Picat and example code.
+- [Appendix: Using Picat In Class](#appendix-using-picat-for-instruction)Some ideas for how to autograde Picat student assignments.
+- [Appendix: My Errors](#errors-i-always-make-and-how-i-compensate). The things I always get wrong, altough I'm doing it less now that I've written this!
+- [Appendix: Debugging](#appendix-debugging) Some ideas for debugging that I rely on.
+- [Appendix: Stuff I Don't Know](#appendix--things-i-still-dont-fully-understand)Things that I don't fully understand about Picat.
+
 
 ## About Picat
 
@@ -122,7 +140,7 @@ B=A+A. %** Error  : Free variable in expression: '+'
 A=5,B=A+A. %A=5 and B=10.
 ```
 
-## Constraint Programming
+# Constraint Programming and the Planner
 
 Constraint programming let's you solve problems that require searching through possible solutions. How can you place queens on a chessboard so that no queen is able to take another? (N-queens) Can a knight on chessboard visit every square once and end by returning to its starting square? (Knights tour) The best route for a travelling salesman? (Travelling Salesman) The quickest way out of a maze? (Shortest Path) How best to choose items to fill a suitcase? (Knapsack) How to complete a partially filled Soduku puzzle? (Soduku)
 
@@ -142,7 +160,7 @@ Picat has multiple built-in solvers: Boolean Satisfiability (SAT), Mixed-Integer
 
 Incredibly, the interface to all of them is essentially the same. This lets you switch between CP and SAT, for example by just changing and `import` statement. 
 
-### Fibonacci and Tabling
+## Fibonacci and Tabling
 
 Let's take a the example every dynamic programming text begins with, Fibonacci numbers. $F_n = F_{n-1} + F_{n-2}$. In Picat:
 
@@ -189,7 +207,7 @@ CPU time 0.013 seconds.
 ---------------------------------
 
 ```
-### Constraint Example: Advent of Code 2016 Day 15
+## Constraint Example: Advent of Code 2016 Day 15
 
 https://adventofcode.com/2016/day/15
 >Part of the sculpture is even interactive! When a button is pressed, a capsule is dropped and tries to fall through slots in a set of rotating discs to finally go through a little hole at the bottom and come out of the sculpture. If any of the slots aren't aligned with the capsule as it passes, the capsule bounces off the disc and soars away. You feel compelled to get one of those capsules.
@@ -264,7 +282,7 @@ go(DPos,DTZ) = T =>
 ```
 
 
-### Constraint Example: Jane Street Bug
+## Constraint Example: Jane Street Bug
 
 https://www.janestreet.com/bug-byte/
 
@@ -416,13 +434,141 @@ Message is: LINKED
 Done!
 ```
 
-### The Planner
+## Constraint Example: Santa's Knapsack
 
-The `planner` module is, as far as I know, unique to Picat. It lets you define a starting state, action to create the next state, the final/goal state, and then just solve it.
+https://adventofcode.com/2015/day/24
 
-Planner acts as high-level interface to the underlying solver and mechanics of tabling and goal state checking.
+Advent of Code 2015 day 24 is a knapsack problem. Typically AOC problems get harder from day 1 to day 25, but day 24 is a breeze in Picat! Here's the instructions:
 
-### A Planner Example: Blocks World
+>Part 1
+>
+>It's Christmas Eve, and Santa is loading up the sleigh for this year's deliveries. However, there's one small problem: he can't get the sleigh to balance. If it isn't balanced, he can't defy physics, and nobody gets presents this year.
+>
+>No pressure.
+>
+>Santa has provided you a list of the weights of every package he needs to fit on the sleigh. The packages need to be split into three groups of exactly the same weight, and every package has to fit. The first group goes in the passenger compartment of the sleigh, and the second and third go in containers on either side. Only when all three groups weigh exactly the same amount will the sleigh be able to fly. Defying physics has rules, you know!
+>
+>Of course, that's not the only problem. The first group - the one going in the passenger compartment - needs as few packages as possible so that Santa has some legroom left over. It doesn't matter how many packages are in either of the other two groups, so long as all of the groups weigh the same.
+>
+>Furthermore, Santa tells you, if there are multiple ways to arrange the packages such that the fewest possible are in the first group, you need to choose the way where the first group has the smallest quantum entanglement to reduce the chance of any "complications". The quantum entanglement of a group of packages is the product of their weights, that is, the value you get when you multiply their weights together. Only consider quantum entanglement if the first group has the fewest possible number of packages in it and all groups weigh the same amount.
+>
+>For example, suppose you have ten packages with weights 1 through 5 and 7 through 11. For this situation, some of the unique first groups, their quantum entanglements, and a way to divide the remaining packages are as follows:
+
+| Group 1             | Group 2   | Group 3         |
+|---------------------|----------|-----------------|
+| 11 9 (QE=99)        | 10 8 2   | 7 5 4 3 1       |
+| 10 9 1 (QE=90)      | 11 7 2   | 8 5 4 3         |
+| 10 8 2 (QE=160)     | 11 9     | 7 5 4 3 1       |
+| 10 7 3 (QE=210)     | 11 9     | 8 5 4 2 1       |
+| 10 5 4 1 (QE=200)   | 11 9     | 8 7 3 2         |
+| 10 5 3 2 (QE=300)   | 11 9     | 8 7 4 1         |
+| 10 4 3 2 1 (QE=240) | 11 9     | 8 7 5           |
+| 9 8 3 (QE=216)      | 11 7 2   | 10 5 4 1        |
+| 9 7 4 (QE=252)      | 11 8 1   | 10 5 3 2        |
+| 9 5 4 2 (QE=360)    | 11 8 1   | 10 7 3          |
+| 8 7 5 (QE=280)      | 11 9     | 10 4 3 2 1      |
+| 8 5 4 3 (QE=480)    | 11 9     | 10 7 2 1        |
+| 7 5 4 3 1 (QE=420)  | 11 9     | 10 8 2          |
+
+
+> Of these, although 10 9 1 has the smallest quantum entanglement (90), the configuration with only two packages, 11 9, in the passenger compartment gives Santa the most legroom and wins. In this situation, the quantum entanglement for the ideal configuration is therefore 99. Had there been two configurations with only two packages in the first group, the one with the smaller quantum entanglement would be chosen.
+>
+> What is the quantum entanglement of the first group of packages in the ideal configuration?
+>
+> Part 2
+>
+>
+>That's weird... the sleigh still isn't balancing.
+>
+>"Ho ho ho", Santa muses to himself. "I forgot the trunk".
+>
+>Balance the sleigh again, but this time, separate the packages into four groups instead of three. The other constraints still apply.
+>
+>Given the example packages above, this would be some of the new unique first groups, their quantum entanglements, and one way to divide the remaining packages:
+
+| Group 1            | Group 2  | Group 3    | Group 4    |
+|--------------------|---------|------------|------------|
+| 11 4 (QE=44)       | 10 5    | 9 3 2 1    | 8 7        |
+| 10 5 (QE=50)       | 11 4    | 9 3 2 1    | 8 7        |
+| 9 5 1 (QE=45)      | 11 4    | 10 3 2     | 8 7        |
+| 9 4 2 (QE=72)      | 11 3 1  | 10 5       | 8 7        |
+| 9 3 2 1 (QE=54)    | 11 4    | 10 5       | 8 7        |
+| 8 7 (QE=56)        | 11 4    | 10 5       | 9 3 2 1    |
+
+>Of these, there are three arrangements that put the minimum (two) number of packages in the first group: 11 4, 10 5, and 8 7. Of these, 11 4 has the lowest quantum entanglement, and so it is selected.
+>
+>Now, what is the quantum entanglement of the first group of packages in the ideal configuration?
+
+And here's the code. Some things to note:
+- There are two parts and two solution algorithms per part. 
+- The first algorithm `go_kn` uses a modified version of the knapsack algorithm from the Picat book about constraint solving. https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf It does not use the `cp` solver module, but does use tabling to speed up.
+- The second algorithm is uses `cp` and `#=` to constrain the solution to the problem statement.
+- Algorithm 1 is much faster than algorithm 2, but both are pretty fast. Interestingly part 1 shows a bigger difference in times than part 2.
+
+    |         | Knapsack | CP    |
+    |---------|----------|-------|
+    | Part 1  | 0.005s   | 1.6s  |
+    | Part 2  | 0.001s   | 0.5s  |
+
+```
+import cp.
+
+main => 
+    % Weights = {1, 2, 3, 4, 5, 7, 8, 9, 10, 11}, % example
+    Weights = {1,2,3,7,11,13,17,19,23,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113}, % problem
+    time(go_kn(Weights,sum(Weights)//3, 1)),
+    printf("\n"),
+    time(go(Weights, sum(Weights)//3, 1)),
+    printf("\n"),
+    time(go_kn(Weights, sum(Weights)//4, 2)),
+    printf("\n"),
+    time(go(Weights, sum(Weights)//4, 2)).
+    
+go(Weights,Target,Q) =>
+    assign_bin1(Weights,Target,Bins,QE,L1),
+    solve($[min(L1), min(QE), 
+              report(printf("Found %w, %w %w\n", L1, QE, Bins))],
+              Bins),
+    Bin1Weights = [Weights[I]: I in 1..Weights.length, Bins[I]==0],
+    printf("Bin 1: %w\n",Bin1Weights),
+    printf("CP Answer Part %d: %w\n",Q,prod(Bin1Weights)).
+
+assign_bin1(Weights,Target,Bins,QE,L1) =>
+    N = length(Weights),
+    Bins = new_array(N),
+    Bins :: 0..1,
+    Bin1Sum #= sum([Weights[I]*(Bins[I] #= 0) : I in 1..N]),
+    Bin1Sum #= Target,
+    L1 #= sum([(Bins[I] #= 0) : I in 1..N]), % Minimize L1 = Bin 1 length
+    QE #= prod([max(1,W*(Bins[I]#=0)) : I in 1..N, W = Weights[I]]). % Minimize QE = product of weights in bin 1
+
+go_kn(Weights,Target,Q) =>
+    knapsack(to_list(Weights),Target,Sack,Val),
+    printf("Bin 1: %w\n",Sack),
+    printf("Table Answer Part %d: %w\n",Q,second(Val)).
+
+% knapsack modified from https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf
+% Val = (Length of Sack, QE)
+% Item is a list of weights
+
+table(+,+,-,min)
+knapsack(_,C,Sack,Val), C<=0 =>
+    Sack = [], Val = (1,1).
+knapsack([_|L],C,Sack,Val), C > 0 ?=>
+    knapsack(L,C,Sack,Val).
+knapsack([IWeight|L],C,Sack,Val), C >= IWeight =>
+    Sack = [IWeight|Sack1],
+    knapsack(L,C-IWeight,Sack1,Val1),
+    Val = (first(Val1)+1,second(Val1)*IWeight).
+```
+
+## The Planner
+
+The `planner` module is, as far as I know, unique to Picat. It lets you define a starting state, action to create the next state, the final/goal state, and then just solve it. It's quite amazing!
+
+Planner acts as high-level interface to the underlying solver and mechanics of tabling and goal state checking. 
+
+## Planner Example: Blocks World
 
 Here's an example from the documentation for the programming language Curry, which combines functional and logic paradigms. https://curry-lang.org/docs/tutorial/html/curry-tutorial.Ch6.S1.html#SS3
 
@@ -528,11 +674,11 @@ This outputs:
 Solution cost: 11
 ```
 
-## Picat Isn't Python
+# Picat Isn't Python
 
 My primary programming languages are Python and Haskell. I often make syntax errors or cause logic problems because I forget about these items below. If you come from these or a C-syntax style language, you may also need to read this.
 
-### Variables
+## Variables
 - Variable names must have an initial capital letter or underscore. 
 - Like Prolog, Picat programmers tend towards short, often single character variable names.
 - Long variable names are bi-capitalized. 
@@ -550,13 +696,13 @@ b=4;A=5. % A is bound to 5. because b!=4 and ';' means 'or'.
 NoJavaVariableNamesHere=true. % OK, but this is not normal Picat style, but you live your best self however you want.
 ```
 
-### Assignment (Binding) vs. Unification (Bind or Fail) vs. Equality (Only Numbers)
+## Assignment (Binding) vs. Unification (Bind or Fail) vs. Equality (Only Numbers)
 
 Here be dragons. Or at least a sharp corner to hit your head on when you realize your program is failing because you used the wrong one.
 
 Logic programming uses the concepts of binding and unification. Binding is similar to assignment in other programming languages. Unification attempts to validate if the left and right side are the same, and if not either binds one side to the other or fails. Examples will help here.
 
-#### Default binding
+### Default binding
 
 When a variable is first parsed by Picat, it is in an uninstantiated state. Trying to use it will result in an error.
 
@@ -570,7 +716,7 @@ However, it can be accessed because Picat will instantiate an unbounded variable
 println(A). % If A hasn't been defined/bound then _3d084e8 (or some other memory address) 
 ```
 
-#### Unification: the `=` and `is` operators
+### Unification: the `=` and `is` operators
 
 The `=` operator performs one function that looks like two. It can assign a variable to an expression for it's first use and it can check the equality of a variable and an expression on subsequent uses. But these are both the same operation: unification. 
 
@@ -642,7 +788,7 @@ Above is a two variable example. Both left and right in `A=B` are unbound variab
  5.0 is 5 % Succeds/true/yes. Equivalent to =.= below.
  ```
 
-#### Equality: the `==` and `=:=` operators
+### Equality: the `==` and `=:=` operators
 
 If you want to test equality without unifying or binding, then `==` does this, just like Python or JavaScript. (Well, not like JavaScript, which has `===` and more rabbit holes about equality.)
 
@@ -674,7 +820,7 @@ Numerical equality can also be checked with `=:=`, which considers float and int
 5=\=6 % Succeeds/true/yes
 ```
 
-#### Assignment: The `:=` operator, `bind_vars()` 
+### Assignment: The `:=` operator, `bind_vars()` 
 
 To force the binding of a value to a variable, `:=` is the operator. Variables in Picat are mutable, meaning `:=` overwrites the previous value. `bind_vars()` lets you assign a value to a structure such as a list or array. Some examples.
 
@@ -690,14 +836,14 @@ A=new_list(5), bind_vars(A,"b"). A = [[b],[b],[b],[b],[b]]
 A=new_array(2,3), bind_vars(A,0). A = {{0,0,0},{0,0,0}}
 ```
 
-### Program Structure and Control Flow
+## Program Structure and Control Flow
 
 Picat programs consist of statements which can be combined into longer clauses inside procedures or functions. Picat statements are either rules or facts. This is more correct than thinking of them as statements because all of the rules and facts are stored in a database of the program. This is also how Prolog works.
 
 Fun fact: Because a program is a database, you can alter the rules and facts on the fly with `cl_facts`. See the later of this section for a perfectly legitimate abuse of this.
 
 
-#### The `main` function.
+### The `main` function.
 
 The default entry point for a Picat program is a `main` function. If you call a Picat program from the command line, `main` will be run unless you overrride it.
 
@@ -714,11 +860,11 @@ picat hello.pi
 Hello Picat!
 ```
 
-#### Whitespace
+### Whitespace
 
 Whitespace does not matter except for one space needed after the end of clauses Picat doesn't care if you smush everything together.
 
-#### Predicates vs. Functions 
+### Predicates vs. Functions 
 
 A key difference of Picat vs. Prolog is the inclusion of functions. In Prolog, everything is a predicate and there's no direct concept of a "returned value". 
 
@@ -798,7 +944,7 @@ Note the reason for the difference is that before calling `solve`, `Vars` is a d
 Don't worry if this doesn't make perfect sense yet. Personally this took me quite some time to understand.
 
 
-#### Function calls: `()` and `.`
+### Function call syntax: `()` and `.`
 
 Functions can be called by placing arguments in parenthesis or by using dot notation. This is just syntactic sugar. The `.` notation makes the code a little shorter (1 character versus 2), and looks more like functional programming (or Rust) as opposed to lots of parentheses. You may find it easier to follow the logic with the dot notation, and you can mix-and-match the notations however you like.
 
@@ -821,7 +967,7 @@ Steps = read_file_lines("day.txt").map(split).map(my_parser),
 
 ```
 
-#### Statement delimiters
+### Statement delimiters
 
 All statements have to end in `,`, `;` or `.` `,` means "and", `;` means "or" and `.` means "end of statement". 
 
@@ -832,7 +978,7 @@ A=2, B=3.
 Name.length > 0; Name := "I'll just call you Larry.".
 ```
 
-#### Control flow: `if` and `foreach`
+### Control flow: `if` and `foreach`
 
 `if ... then` is exactly what you think it is, but there's required syntax that took me a while to get used to.
 
@@ -868,13 +1014,13 @@ foreach(X in 1..10, Y in 1..10)
 end.
 ```
 
-#### Control flow: `;` operator
+### Control flow: `;` operator
 
 `if ... then ... else` are familiar control flow for almost all programming languages. Prolog/Picat can also use the concept of "or". There's an example of this in [Blocks World](#a-planner-example-blocks-world).
 
 The structure is essentially a case statement in other languages: `(A; B; C; D)`, which reads as perform `A`, if it fails, perform `B`, etc. Enclose these in `()` to make sure that the case statement doesn't get mixed up with other parts of the predicate or function.
 
-#### `cond` and `compare_terms`
+### `cond` and `compare_terms`
 
 Another way to do an `if` is with `cond`. While it's not listed in the Picat manual index, it does define the function in this example:
 
@@ -894,12 +1040,12 @@ C = compare_terms(2,5). % C = -1
 
 
 
-### Helper functions for accumlating results
+## Helper functions for accumlating results
 
 ....Haskell fold....
 
 
-### Global fact = Global state
+## Example: Global fact = Global state
 The below code recursively parses parenthensis but has different requirements for part 1 and part 2. To do this it uses a global fact: `part(n)` to change the behavior of `parse1` function. The fact is changed from `part(1).` to `part(2).` with the `cl_facts()` command that updates the global fact dictionary.
 
 Probably unsafe, but quite neat!
@@ -933,7 +1079,7 @@ parse1(L) = R =>
 
 ```
 
-#### Example: Dynamic Dispatch with `apply` and `call`
+## Example: Dynamic Dispatch with `apply` and `call`
 
 While Picat doesn't have lambda expressions, it does allow for code execution based on the value of a variable.
 
@@ -1032,52 +1178,13 @@ jnz([X,Y],S,PC) = NPC =>
 
 A key feature of logic programming languages is implicit backtracking from failure to try and achieve success. This is also why they lend themselve to constraint programming. 
 
-#### Lists and Arrays
+### Lists and Arrays
 
 
-#### `?=>`
+### `?=>`
 
 
-### Errors I Always Make and How I Compensate
 
-#### Unification vs Assignment
-
-Invariably I make an error where I use `=` when I need to use `:=`. This happens when I am editing code and moving things around and lose track of the first time I bind a variable versus when I either test it or mutate it. 
-
-You could try to only ever use `:=` to do assignment and `==` to test equality. But without unification Picat is hobbled and there's no non-deterministic binding.
-
-
-### Forgetting a comma or a period (or having an extra one)
-
-Some people like to put the `,`, `;` and `.` at the start of lines. 
-
-```
-main =>
-      A = 5
-    , B = 10
-    , if A > B 
-        then println("Yoo")
-        else println("Hoo")
-      end
-    .  
-
-```
-This can make it easier to move lines around, but I think it looks weird and it doesn't work in all cases.
-
-Invariably, I add a new line of code and forget the comma or I accidentally add a period. Picat is improving in its ability to locate the error, but it can be vague and give a large range of possible lines to check.
-
-I compensate by adding only a few lines at a time and always saving and rerunning so that I don't have far to hunt for the most recent edit that broke syntax rules.
-
-### Print and Printf are Your Friends
-
-Picat lets you put a `println` anywhere, and I make extensive use of this when debugging.
-
-println one variable
-use of $
-
-printf simplest format
-
-XXXXXXXXXXXXXXXXXXXXX
 
 
 
@@ -1110,7 +1217,7 @@ XXXXXXXXXXXXXXXXXXXXX
 
 
 
-## Resources
+# Resources
 
 - Picat website https://picat-lang.org/ 
 - The Manual https://picat-lang.org/download/picat_guide.pdf 
@@ -1118,7 +1225,7 @@ XXXXXXXXXXXXXXXXXXXXX
 - Karlova University Course https://jbulin.github.io/teaching/fall/nopt042/
 - A ChatGPT version that knows something about Picat. (It can get confused between Picat and Prolog.) https://chatgpt.com/g/g-EEpNUZ9H1-picat-prodigy 
 
-### Code Exampls 
+## Code Examples 
 - Rosetta Code. Useful to compare to a language you know https://rosettacode.org/wiki/Category:Picat 
 - The **best** resource https://hakank.org/picat/ 
 - Constraint Programming Problems (multiple languages) https://www.csplib.org
@@ -1131,11 +1238,11 @@ XXXXXXXXXXXXXXXXXXXXX
     + Knapsack https://github.com/dsagman/advent-of-code/blob/main/2015/day24/day24.pi
 
 
-### Modules
+## Modules
 
 - JSON encoder https://github.com/nfzhou/json-picat
 
-### Editor Plugins
+## Editor Plugins
 
 - VS Code https://marketplace.visualstudio.com/items?itemName=arthurwang.vsc-picat
 - Emacs https://github.com/nfzhou/emacs-picat-mode/tree/main
@@ -1150,14 +1257,14 @@ XXXXXXXXXXXXXXXXXXXXX
     from IPython.display import display, HTML, Javascript
     ```
 
-### Optimization Resources
+## Optimization Resources
 - COIN-OR open source https://github.com/coin-or/COIN-OR-OptimizationSuite
 - Z3 (Microsoft) https://microsoft.github.io/z3guide/docs/logic/intro/
 - OR-Tools (Google) https://developers.google.com/optimization
 - CPLEX (IBM) https://ibmdecisionoptimization.github.io/tutorials/html/Linear_Programming.html
 
 
-## Appendix: Using Picat For Instruction
+# Appendix: Using Picat For Instruction
 
 To use Picat with an autograder, the student code can be imported as a module into the grader. For example, students could be given the magic square problem from the Picat Constraint Solving book. 
 
@@ -1220,7 +1327,51 @@ main =>
     end.
 ```
 
-## Appendix:  Things I Still Don't Fully Understand
+# Appendix: Errors I Always Make and How I Compensate
+
+## Unification vs Assignment
+
+Invariably I make an error where I use `=` when I need to use `:=`. This happens when I am editing code and moving things around and lose track of the first time I bind a variable versus when I either test it or mutate it. 
+
+You could try to only ever use `:=` to do assignment and `==` to test equality. But without unification Picat is hobbled and there's no non-deterministic binding.
+
+
+## Forgetting a comma or a period (or having an extra one)
+
+Some people like to put the `,`, `;` and `.` at the start of lines. 
+
+```
+main =>
+      A = 5
+    , B = 10
+    , if A > B 
+        then println("Yoo")
+        else println("Hoo")
+      end
+    .  
+
+```
+This can make it easier to move lines around, but I think it looks weird and it doesn't work in all cases.
+
+Invariably, I add a new line of code and forget the comma or I accidentally add a period. Picat is improving in its ability to locate the error, but it can be vague and give a large range of possible lines to check.
+
+I compensate by adding only a few lines at a time and always saving and rerunning so that I don't have far to hunt for the most recent edit that broke syntax rules.
+
+# Appendix: Debugging
+
+Picat has a debugger, but for me the key has been `println` and `printf`.
+### Print and Printf are Your Friends
+
+Picat lets you put a `println` anywhere, and I make extensive use of this when debugging.
+
+println one variable
+use of $
+
+printf simplest format
+
+XXXXXXXXXXXXXXXXXXXXX
+
+# Appendix:  Things I Still Don't Fully Understand
 
 The Picat manual can be terse and doesn't provide examples for everything. Here's some commands I don't know how to use or where I felt the documentation could have been better.
 
