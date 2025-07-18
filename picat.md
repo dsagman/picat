@@ -933,19 +933,25 @@ parse1(L) = R =>
 
 ```
 
-#### Dynamic Dispatch with `apply` and `call`
+#### Example: Dynamic Dispatch with `apply` and `call`
 
-Here's code that simulates a simple assembly language. It invokes the correct operation based on the parsed input strings via the `apply` function. `apply` and `call` are able to transfer operation to another function or predicate based on a variable. 
+While Picat doesn't have lambda expressions, it does allow for code execution based on the value of a variable.
 
-(`call` and `apply` perform the same action, but `apply` is a function and returns a value.)
+Here's an example that simulates a simple assembly language. It invokes the correct operation based on the parsed input strings via the `apply` function. `apply` and `call` are able to transfer operation to another function or predicate that is passed as an argument. 
+
+`call` and `apply` perform the same action, but `apply` is a function and returns a value.
 
 The interesting thing here is that the name of the function is identical to the string in the input. The *cpy* command is performed by the `cpy` function.
 
-The code also makes use of a hash map to store the value of registers and passes state back and forth via unification. Note how S isn't explictly returned. It's not a global variable. It's unified with itself resulting in updates meaning it is both input and output.
+The code also makes use of a hash map to store the value of registers and passes state back and forth via unification. Note how `S` isn't explictly returned. It's not a global variable. It's unified with itself resulting in updates meaning it is both input and output.
 
 The program counter, by contrast, is explictly returned and updated using the function syntax and `:=`.
 
+One more thing to notice here: the code for converting strings to integers. You may find it useful when parsing input yourself.
+
 From the Advent of Code website:
+
+https://adventofcode.com/2016/day/12
 
 - cpy x y copies x (either an integer or the value of a register) into register y.
 - inc x increases the value of register x by one.
@@ -954,42 +960,32 @@ From the Advent of Code website:
 
 Here's a couple of possible programs:
 
-```
-cpy 41 a
-cpy a b
-inc a
-inc a
-dec a
-jnz a 2
-dec a
-```
+    | Program 1| Program 2|
+    |----------|----------|
+    | cpy 41 a | cpy 1 a  |
+    | cpy a b  | cpy 1 b  |
+    | inc a    | cpy 26 d |
+    | inc a    | jnz c 2  |
+    | dec a    | jnz 1 5  |
+    | jnz a 2  | cpy 7 c  |
+    | dec a    | inc d    |
+    |          | dec c    |
+    |          | jnz c -2 |
+    |          | cpy a c  |
+    |          | inc a    |
+    |          | dec b    |
+    |          | jnz b -2 |
+    |          | cpy c b  |
+    |          | dec d    |
+    |          | jnz d -6 |
+    |          | cpy 13 c |
+    |          | cpy 14 d |
+    |          | inc a    |
+    |          | dec d    |
+    |          | jnz d -2 |
+    |          | dec c    |
+    |          | jnz c -5 |
 
-```
-cpy 1 a
-cpy 1 b
-cpy 26 d
-jnz c 2
-jnz 1 5
-cpy 7 c
-inc d
-dec c
-jnz c -2
-cpy a c
-inc a
-dec b
-jnz b -2
-cpy c b
-dec d
-jnz d -6
-cpy 13 c
-cpy 14 d
-inc a
-dec d
-jnz d -2
-dec c
-jnz c -5
-
-```
 And here's the code.
 
 ```
@@ -1032,13 +1028,11 @@ jnz([X,Y],S,PC) = NPC =>
 
 ```
 
-
-
 ## Non-determinism
 
 A key feature of logic programming languages is implicit backtracking from failure to try and achieve success. This is also why they lend themselve to constraint programming. 
 
-#### Lists
+#### Lists and Arrays
 
 
 #### `?=>`
@@ -1053,7 +1047,7 @@ Invariably I make an error where I use `=` when I need to use `:=`. This happens
 You could try to only ever use `:=` to do assignment and `==` to test equality. But without unification Picat is hobbled and there's no non-deterministic binding.
 
 
-### Forgetting a comma or a period
+### Forgetting a comma or a period (or having an extra one)
 
 Some people like to put the `,`, `;` and `.` at the start of lines. 
 
@@ -1070,7 +1064,7 @@ main =>
 ```
 This can make it easier to move lines around, but I think it looks weird and it doesn't work in all cases.
 
-Invariably, I add a new line of code and forget the comma. Picat is improving in its ability to locate the error, but it can be vague and give a large range of possible lines to check.
+Invariably, I add a new line of code and forget the comma or I accidentally add a period. Picat is improving in its ability to locate the error, but it can be vague and give a large range of possible lines to check.
 
 I compensate by adding only a few lines at a time and always saving and rerunning so that I don't have far to hunt for the most recent edit that broke syntax rules.
 
@@ -1093,13 +1087,12 @@ XXXXXXXXXXXXXXXXXXXXX
 - printf is your friend or print([])
 
 - #= domain variable
-- predicate vs function
 - => versus =
 - when to use a comma (and not to)
 - type error string/int
 - accumulator for base case
 - length is not a constraint, but sum [1: X in …] is
-- no lambda but neat trick: call (or apply) using a function name in a variable. or list item! - dynamic dispatch
+
 - $ means literal
 - =>? opposite of prolog !, but we also have ! (!)
 - cond not really in the manual
