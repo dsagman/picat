@@ -137,9 +137,9 @@ action(State@[0,[MaxHP, HP, Mana, BHP, BDamage], Shield, Poison, Recharge, Mode]
     Mana := Mana + (101 * sign(Recharge)), % apply recharge 
 
     Spells = [["missile", 53], ["drain", 73]],
-    if (Shield <= 1)   (Spells := Spells ++ [["shield", 113]]) end,
-    if (Poison <= 1)   (Spells := Spells ++ [["poison", 173]]) end,
-    if (Recharge <= 1) (Spells := Spells ++ [["recharge", 229]]) end, 
+    if (Shield <= 1)   then (Spells := Spells ++ [["shield", 113]]) end,
+    if (Poison <= 1)   then (Spells := Spells ++ [["poison", 173]]) end,
+    if (Recharge <= 1) then (Spells := Spells ++ [["recharge", 229]]) end, 
     member([Spell,SpellMana],Spells), 
     SpellMana <= Mana,
     NMana := Mana - SpellMana,

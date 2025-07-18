@@ -501,6 +501,10 @@ Advent of Code 2015 day 24 is a knapsack problem. Typically AOC problems get har
 
 And here's the code. Some things to note:
 - There are two parts and two solution algorithms per part. 
+- Bins are represented by a list of 1s and 0s to indicate if a particular weight is in bin 1 or either of bin 2 or bin 3. 
+- It doesn't matter which items are in bin 2 vs. bin 3, only that bin 1 represents $\frac{1}{3}$ of the total. 
+- In my initial attempts on the problem I solved for bin 2 and bin3 and it took an order of magnitude longer to solve. 
+- Faster solving depends very much on selecting the right problem to solve!
 - The first algorithm `go_kn` uses a modified version of the knapsack algorithm from the Picat book about constraint solving. https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf It does not use the `cp` solver module, but does use tabling to speed up.
 - The second algorithm is uses `cp` and `#=` to constrain the solution to the problem statement.
 - Algorithm 1 is much faster than algorithm 2, but both are pretty fast. Interestingly part 1 shows a bigger difference in times than part 2.
@@ -561,7 +565,17 @@ knapsack([IWeight|L],C,Sack,Val), C >= IWeight =>
     knapsack(L,C-IWeight,Sack1,Val1),
     Val = (first(Val1)+1,second(Val1)*IWeight).
 ```
+Here's some of the output:
 
+```
+Found 13, 5612243503168302 {0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,0}
+Found 11, 42371251364442 {0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,0,0,0}
+Found 9, 438478398078 {0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,0,0,0,1,0}
+Found 7, 23538056666 {0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1}
+Found 6, 11846773891 {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1,0,0,0}
+Bin 1: [1,89,101,107,109,113]
+CP Answer Part 1: 11846773891
+```
 ## The Planner
 
 The `planner` module is, as far as I know, unique to Picat. It lets you define a starting state, action to create the next state, the final/goal state, and then just solve it. It's quite amazing!
@@ -673,6 +687,265 @@ This outputs:
 (3->2,[],cbade,[])
 Solution cost: 11
 ```
+
+## Planner Example: Wizards!
+
+Advent of Code 2015 day 22. This has a long description, sorry! But hopefully helpful in understanding what's needed.
+
+>--- Day 22: Wizard Simulator 20XX ---
+>
+>Little Henry Case decides that defeating bosses with swords and stuff is boring. Now he's playing the game with a wizard. Of course, he gets stuck on another boss and needs your help again.
+>
+>In this version, combat still proceeds with the player and the boss taking alternating turns. The player still goes first. Now, however, you don't get any equipment; instead, you must choose one of your spells to cast. The first character at or below 0 hit points loses.
+>
+>Since you're a wizard, you don't get to wear armor, and you can't attack normally. However, since you do magic damage, your opponent's armor is ignored, and so the boss effectively has zero armor as well. As before, if armor (from a spell, in this case) would reduce damage below 1, it becomes 1 instead - that is, the boss' attacks always deal at least 1 damage.
+>
+>On each of your turns, you must select one of your spells to cast. If you cannot afford to cast any spell, you lose. Spells cost mana; you start with 500 mana, but have no maximum limit. You must have enough mana to cast a spell, and its cost is immediately deducted when you cast it. Your spells are Magic Missile, Drain, Shield, Poison, and Recharge.
+>
+>Magic Missile costs 53 mana. It instantly does 4 damage.
+>Drain costs 73 mana. It instantly does 2 damage and heals you for 2 hit points.
+>Shield costs 113 mana. It starts an effect that lasts for 6 turns. While it is active, your armor is increased by 7.
+>Poison costs 173 mana. It starts an effect that lasts for 6 turns. At the start of each turn while it is active, it deals the boss 3 damage.
+>Recharge costs 229 mana. It starts an effect that lasts for 5 turns. At the start of each turn while it is active, it gives you 101 new mana.
+>Effects all work the same way. Effects apply at the start of both the player's turns and the boss' turns. Effects are created with a timer (the number of turns they last); at the start of each turn, after they apply any effect they have, their timer is decreased by one. If this decreases the timer to zero, the effect ends. You cannot cast a spell that would start an effect which is already active. However, effects can be started on the same turn they end.
+>
+>For example, suppose the player has 10 hit points and 250 mana, and that the boss has 13 hit points and 8 damage:
+>
+>-- Player turn --
+>- Player has 10 hit points, 0 armor, 250 mana
+>- Boss has 13 hit points
+>Player casts Poison.
+>
+>-- Boss turn --
+>- Player has 10 hit points, 0 armor, 77 mana
+>- Boss has 13 hit points
+>Poison deals 3 damage; its timer is now 5.
+>Boss attacks for 8 damage.
+>
+>-- Player turn --
+>- Player has 2 hit points, 0 armor, 77 mana
+>- Boss has 10 hit points
+>Poison deals 3 damage; its timer is now 4.
+>Player casts Magic Missile, dealing 4 damage.
+>
+>-- Boss turn --
+>- Player has 2 hit points, 0 armor, 24 mana
+>- Boss has 3 hit points
+>Poison deals 3 damage. This kills the boss, and the player wins.
+>Now, suppose the same initial conditions, except that the boss has 14 hit points instead:
+>
+>-- Player turn --
+>- Player has 10 hit points, 0 armor, 250 mana
+>- Boss has 14 hit points
+>Player casts Recharge.
+>
+>-- Boss turn --
+>- Player has 10 hit points, 0 armor, 21 mana
+>- Boss has 14 hit points
+>Recharge provides 101 mana; its timer is now 4.
+>Boss attacks for 8 damage!
+>
+>-- Player turn --
+>- Player has 2 hit points, 0 armor, 122 mana
+>- Boss has 14 hit points
+>Recharge provides 101 mana; its timer is now 3.
+>Player casts Shield, increasing armor by 7.
+>
+>-- Boss turn --
+>- Player has 2 hit points, 7 armor, 110 mana
+>- Boss has 14 hit points
+>Shield's timer is now 5.
+>Recharge provides 101 mana; its timer is now 2.
+>Boss attacks for 8 - 7 = 1 damage!
+>
+>-- Player turn --
+>- Player has 1 hit point, 7 armor, 211 mana
+>- Boss has 14 hit points
+>Shield's timer is now 4.
+>Recharge provides 101 mana; its timer is now 1.
+>Player casts Drain, dealing 2 damage, and healing 2 hit points.
+>
+>-- Boss turn --
+>- Player has 3 hit points, 7 armor, 239 mana
+>- Boss has 12 hit points
+>Shield's timer is now 3.
+>Recharge provides 101 mana; its timer is now 0.
+>Recharge wears off.
+>Boss attacks for 8 - 7 = 1 damage!
+>
+>-- Player turn --
+>- Player has 2 hit points, 7 armor, 340 mana
+>- Boss has 12 hit points
+>Shield's timer is now 2.
+>Player casts Poison.
+>
+>-- Boss turn --
+>- Player has 2 hit points, 7 armor, 167 mana
+>- Boss has 12 hit points
+>Shield's timer is now 1.
+>Poison deals 3 damage; its timer is now 5.
+>Boss attacks for 8 - 7 = 1 damage!
+>
+>-- Player turn --
+>- Player has 1 hit point, 7 armor, 167 mana
+>- Boss has 9 hit points
+>Shield's timer is now 0.
+>Shield wears off, decreasing armor by 7.
+>Poison deals 3 damage; its timer is now 4.
+>Player casts Magic Missile, dealing 4 damage.
+>
+>-- Boss turn --
+>- Player has 1 hit point, 0 armor, 114 mana
+>- Boss has 2 hit points
+>Poison deals 3 damage. This kills the boss, and the player wins.
+>You start with 50 hit points and 500 mana points. The boss's actual stats are in your puzzle input. (see code below) What is the least amount of mana you can spend and still win the fight? (Do not include mana recharge effects as "spending" negative mana.)
+>
+>--- Part Two ---
+>
+>On the next run through the game, you increase the difficulty to hard.
+>
+>At the start of each player turn (before any other effects apply), you lose 1 hit point. If this brings you to or below 0 hit points, you lose.
+>
+>With the same starting stats for you and the boss, what is the least amount of mana you can spend and still win the fight?
+
+Like I said, that was a lot of instruction. Here's a short table with the spells summarized.
+
+| Spell    | Mana | Damage | Heal | Effect                     |
+|----------|------|--------|------|----------------------------|
+| Missile  | 53   | 4      |      |                            |
+| Drain    | 73   | 2      | 2    |                            |
+| Shield   | 113  |        |      | +7 armor for 6 turns       |
+| Poison   | 173  |        |      | 3 damage for 6 turns       |
+| Recharge | 229  |        |      | +101 mana for 5 turns      |
+
+The code is below. Some things to note:
+
+- The problem state is expressed with a nested list that includes all of the elements, even if they don't get modified, such as the boss' damage to the player. 
+- This state is passed from each action to the next and modified as needed based on the chosen action.
+- There are two `action` predicates, which are pattern matched on whose turn it is. `0` for the player and `1` for the boss. (And why is Bruce Springsteen always the enemy?)
+- The notation `State@[0,[MaxHP, HP, Mana, BHP, BDamage], Shield, Poison, Recharge, Mode]` binds the variable State to all of the list after the `@` sign. This way it can be referenced in whole in the `Action` variable rather than having to retype all of that.
+- The notation `_` for variables in the `final` predicate mean that the variable isn't being used.
+- Like Blocks World, this code uses a case statement formed through clauses separated by `;` meaning "or".
+- `sign` is used to avoid having an `if`. For example, `NBHP = BHP - (3 * sign(Poison))` means that if `Poison` is 0, then `sign(Poison)` is 0, but if `Poison` is greater than 0, `sign` returns 1. It didn't run any faster, but I felt like a boss for writing it this way.
+- The list of possible spells is built up by addition rather than starting with all and removing. At first I tried removing, but the logic was complex and hard to implement. Adding allowed spells was much more straightforward to code.
+```
+import planner.
+import math.
+
+main =>
+
+    problem(S),
+    Initial1 = [0,S,0,0,0,0], % Turn, [Player, Boss], Shield, Poison, Recharge, Mode
+    % time2(best_plan_unbounded(Initial1,Plan1,PlanCost1)), % 3.33 s
+    % time2(best_plan(Initial1,Plan1,PlanCost1)), % 1.72 s
+    time2(best_plan_bb(Initial1,Plan1,PlanCost1)), % 0.06 s
+    foreach (Step in Plan1)
+        println(Step)
+    end,
+    printf("Part 1 solution length: %w\n", length(Plan1)),
+    printf("Part 1 answer = mana cost: %w\n", PlanCost1),
+    
+    Initial2 = [0,S,0,0,0,1],
+    time2(best_plan_bb(Initial2,Plan2,PlanCost2)), % fastest
+    printf("Part 2 solution length: %w\n", length(Plan2)),
+    printf("Part 2 answer = mana cost: %w\n", PlanCost2).
+
+problem(S) => 
+    % S = [10,10,250,13,8]. % Example 1: 10 Max HP, 10 HP, 250 mana, boss 13 HP and 8 damage
+    % S = [10,10,250,14,8]. % Example 2: 10 Max HP, 10 HP, 250 mana, boss 14 HP and 8 damage
+    S = [50,50,500,55,8].  % Puzzle: 10 Max HP, 10 HP, 250 mana, boss 14 HP and 8 damage
+
+
+final(State@[_,[_, HP, Mana, BHP, _], _, _, _, _]), HP > 0, BHP <= 0 => true.
+
+% Play Turn 0
+action(State@[0,[MaxHP, HP, Mana, BHP, BDamage], Shield, Poison, Recharge, Mode],NextS,Action,Cost) =>
+    HP := HP - Mode, 
+    Mana := Mana + (101 * sign(Recharge)), % apply recharge 
+
+    Spells = [["missile", 53], ["drain", 73]],
+    if (Shield <= 1)   then (Spells := Spells ++ [["shield", 113]]) end,
+    if (Poison <= 1)   then (Spells := Spells ++ [["poison", 173]]) end,
+    if (Recharge <= 1) then (Spells := Spells ++ [["recharge", 229]]) end, 
+    member([Spell,SpellMana],Spells), 
+    SpellMana <= Mana,
+    NMana := Mana - SpellMana,
+    (
+     Spell == "missile"  , BHP := BHP - 4; 
+     Spell == "drain"    , BHP := BHP - 2, HP := min(HP+2, MaxHP); 
+     Spell == "shield"   , Shield := 6; 
+     Spell == "poison"   , Poison := 6; 
+     Spell == "recharge" , Recharge := 5 + 1
+    ),
+    NBHP = BHP - (3 * sign(Poison)), % apply poison
+    
+    Action = [State, Spell],
+    Cost = SpellMana,
+    NextS = [1,[MaxHP, HP, NMana, NBHP, BDamage], max([Shield-1,0]), max([Poison-1,0]), max([Recharge-1,0]), Mode].
+
+% Boss Turn 1
+action(State@[1,[MaxHP, HP, Mana, BHP, BDamage], Shield, Poison, Recharge, Mode],NextS,Action,Cost) =>    
+    Mana := Mana + (101 * sign(Recharge)), % apply recharge 
+    NBHP = BHP-(3 * sign(Poison)), % apply poison 
+    NHP = HP - max([BDamage-(7 * sign(Shield)),1]), % min damage = 1
+    NHP > 0,
+    Action = [State, boss],
+    Cost = 0,
+    NextS = [0,[MaxHP, NHP, Mana, NBHP, BDamage], max([Shield-1,0]), max([Poison-1,0]), max([Recharge-1,0]), Mode].
+
+```
+
+And here's the output:
+```
+% Searching with the bound 268435455
+% Searching with the bound 3518
+% Searching with the bound 3405
+% Searching with the bound 2970
+% Searching with the bound 2917
+% Searching with the bound 2482
+% Searching with the bound 2296
+% Searching with the bound 2001
+% Searching with the bound 1928
+% Searching with the bound 1742
+% Searching with the bound 1460
+% Searching with the bound 1347
+% Searching with the bound 1294
+% Searching with the bound 952
+
+CPU time 0.09 seconds. Backtracks: 0
+
+[[0,[50,50,500,55,8],0,0,0,0],missile]
+[[1,[50,50,447,51,8],0,0,0,0],boss]
+[[0,[50,42,447,51,8],0,0,0,0],poison]
+[[1,[50,42,274,48,8],0,5,0,0],boss]
+[[0,[50,34,274,45,8],0,4,0,0],recharge]
+[[1,[50,34,45,42,8],0,3,5,0],boss]
+[[0,[50,26,146,39,8],0,2,4,0],missile]
+[[1,[50,26,194,32,8],0,1,3,0],boss]
+[[0,[50,18,295,29,8],0,0,2,0],shield]
+[[1,[50,18,283,29,8],5,0,1,0],boss]
+[[0,[50,17,384,29,8],4,0,0,0],poison]
+[[1,[50,17,211,26,8],3,5,0,0],boss]
+[[0,[50,16,211,23,8],2,4,0,0],missile]
+[[1,[50,16,158,16,8],1,3,0,0],boss]
+[[0,[50,15,158,13,8],0,2,0,0],missile]
+[[1,[50,15,105,6,8],0,1,0,0],boss]
+[[0,[50,7,105,3,8],0,0,0,0],missile]
+Part 1 solution length: 17
+Part 1 answer = mana cost: 953
+% Searching with the bound 268435455
+% Searching with the bound 1500
+% Searching with the bound 1460
+% Searching with the bound 1407
+% Searching with the bound 1294
+% Searching with the bound 1288
+
+CPU time 0.045 seconds. Backtracks: 0
+
+Part 2 solution length: 17
+Part 2 answer = mana cost: 1289
+```
+
 
 # Picat Isn't Python
 
