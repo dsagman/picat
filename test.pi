@@ -1,0 +1,6 @@
+main =>
+    A = "A string of characters!",
+    println(cipher(A)).
+
+cipher([]) = [].
+cipher([H|T]) = chr(ord(H)+1) ++ cipher(T).

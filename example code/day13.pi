@@ -44,13 +44,13 @@ main =>
     print_maze(9,9,I),
     
     time(best_plan([Start,End,I],Plan,Cost)), % .007 sec
-    printf("Answer Part 1: %w\n",Cost).
+    printf("Answer Part 1: %w\n",Cost),
 
-    % time(Part2Alt = part2alt(50,Start,I)),  % 0.4 sec
-    % printf("Answer Part 2 Alt: %w\n",Part2Alt.len),
+    time(Part2Alt = part2alt(50,Start,I)),  % 0.4 sec
+    printf("Answer Part 2 Alt: %w\n",Part2Alt.len),
 
-    % time(Part2 = paths(50,Start,I)),        % 0.001 sec
-    % printf("Answer Part 2: %w\n",Part2.len).
+    time(Part2 = paths(50,Start,I)),        % 0.001 sec
+    printf("Answer Part 2: %w\n",Part2.len).
 
 %%%%%%%%%%%%%%%%%%%%%%%
 % Part 1 

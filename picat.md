@@ -12,9 +12,11 @@ My background in programming is mostly procedural (Python) and pure functional (
 
 Because Picat is a descendent of Prolog, it's core is a logic programming paradigm. And while the Picat manual is excellent, it moves along a quick clip and I had to read it very carefully to understand what I didn't understand. Think Calculus textbook. It's all documented, but makes sense sometimes only after you've learned it.
 
-Also, because it's a niche language, there's a limited amount of online support. There's no StackExchange/Picat. (There are a few Picat questions there though!) I was lucky to get in contact with one of the key developers/users of the language, Håkan Kjellerstrand, who kindly helped me through many a head scratching moment. He also made a customized ChatGPT with Picat's documentation that has helped me as well, although like all LLMs, it can hallucinate solutions that don't work and has a tiny  training dataset compared with JavaScript.
+Also, because it's a niche language, there's a limited amount of online support. There's no StackExchange/Picat. (There are a few Picat questions there though!) I was lucky to get in contact with one of the key developers/users of the language, Håkan Kjellerstrand, who kindly helped me through many a head scratching moment. His website is invaluable: https://hakank.org/picat/.
 
-This document is my attempt to share what I learned and is intended for programmers who have similar experience to me. A reasonable grasp of a common language such as Python, C, JavaScript, etcc or a background with a functional language such as Haskell or OCaml, but not much use of Prolog or other logic programming language, and possibly no idea what constraint programming is. 
+He also made a customized ChatGPT with Picat's documentation that has helped me as well, although like all LLMs, it can hallucinate solutions that don't work and has a tiny training dataset compared with JavaScript. But it has been more useful than not as I bang my head against the wall of knowledge.
+
+This document is my attempt to share what I learned and is intended for programmers who have similar experience to me: a reasonable grasp of a common language such as Python, C, JavaScript, etc or a background with a functional language such as Haskell or OCaml, but not much use of Prolog or other logic programming language, and possibly no idea what constraint programming is. 
 
 Consider this a rough draft representing my personal learning curve. This document is not intended to be read top to bottom, but rather to help you if you get stuck where I did and hopefully give you the insight to move forward. As such, there's some redundancy between sections because I'm trying to make them self-contained as much as possible.
 
@@ -1093,6 +1095,7 @@ Phew! Here's the code. And some things to note:
 - I also tried adding a `heuristic` function. In this case it didn't make any difference.
 - In terms of the search method, `best_plan_unbounded` was the fastest. The other methods were about twice as long to complete: `best_plan`, `best_plan_bin`, `best_plan_bb` and `best_plan_nondet`.
 - There a great explantion of how to solve efficiently on Reddit. https://www.reddit.com/r/adventofcode/comments/5hoia9/comment/db1v1ws/
+- In case you didn't see this syntax elsewhere here `S@[A,B,C]` means that `S` is bound to the list `[A,B,C]` and that it can be referenced wherever you want to use the entire list without decomposing it.
 
 ```
 import planner.
@@ -1528,6 +1531,26 @@ Hello Picat!
 
 Whitespace does not matter except for one space needed after the end of clauses Picat doesn't care if you smush everything together.
 
+### A convention: `_`
+
+`_` is used when you have a variable in a function or predicate and don't need to use that variable in it's body. 
+
+Here's an example from the Picat manual with a definition of `zip` for combinging two lists into pairs of elements from each list. The result is the same length as the shorter list and any extra is thrown away. Thus, we don't care about what the other list contains if one of the lists is `[]`.
+
+```
+zip([],_) = []. % don't care about the 2nd list if first is empty
+zip(_,[]) = []. % visa versa
+zip([X|Xs],[Y|Ys]) = [{X,Y}|zip(Xs,Ys)]. % recursive zip if both are non-empty
+
+A = zip(1..2,3..6). % A = [{1,3},{2,4}]
+```
+Of course, you could also just list the variables and not use them.
+```
+zip([],Ys) = []. % works the same.
+zip(Xs,[]) = []. 
+zip([X|Xs],[Y|Ys]) = [{X,Y}|zip(Xs,Ys)]. 
+```
+
 ### Predicates vs. Functions 
 
 A key difference of Picat vs. Prolog is the inclusion of functions. In Prolog, everything is a predicate and there's no direct concept of a "returned value". 
@@ -1607,6 +1630,70 @@ Note the reason for the difference is that before calling `solve`, `Vars` is a d
 
 Don't worry if this doesn't make perfect sense yet. Personally this took me quite some time to understand.
 
+### `=>` vs `=` and conditions
+
+Functions and predicates can be defined with `=` if they are simply a unifiation or `=>` if there are multiple clauses in the body. Also, when using `=>` you can add a condition after the assignment of the result. For example.
+
+```
+main =>
+    println(double(5)),
+    println(double2(5)),
+    println(double3(5)),
+    println(double3(15)).
+
+double(X) = X*2.
+double2(X) = R => R = X*2.
+double3(X) = R, X<10  => R = X*2.
+double3(X) = R => R = "not today my friend"
+```
+The output is:
+```
+10
+10
+10
+not today my friend
+```
+
+### Pattern matching and `@`
+
+Pattern matching is too big a topic to cover fully. But here's an example of how you can decompose a compound object, such as a list, into its parts.
+
+```
+main =>
+    A = [1,2,3],
+    [L2,L3] = last_two_of_three(A), % pattern match left side
+    println([L2,L3]).
+
+last_two_of_three([L1,L2,L3]) = [L2,L3] => % pattern match argument
+    printf("What's wrong with %w?\n",L1).
+```
+Outputs
+```
+What's wrong with 1?
+[2,3]
+```
+
+To pattern match on the head and tail of a list, the syntax is `[Head|Tail]`. Note that `Head` is an individual item and `Tail` is a list. Combining `Head` with a list requires putting it inside `[]`. For example:
+
+```
+main =>
+    A = "A string of characters!",
+    println(cipher(A)).
+
+cipher([]) = [].
+cipher([H|T]) = [chr(ord(H)+1)] ++ cipher(T). % note [] around H term
+```
+Outputs:
+```
+B!tusjoh!pg!dibsbdufst"
+```
+
+`@` lets you reference an entire pattern matched object without having to deal with the decomposed parts. That sounds complicated. It's not. `@` is just syntactic sugar.
+```
+some_predicate(All@[X,Y,Z]), % All is bound to [X,Y,Z]
+L1 = length([X,Y,Z]),
+L2 = length(All).  % L1 is identical L2,
+```
 
 ### Function call syntax: `()` and `.`
 
@@ -1628,7 +1715,6 @@ Answer = step([S : S in Steps, S[1]=$gives],Bots,Bins).to_list.take(3).map(dec).
 % mixed
 Steps = read_file_lines("day.txt").map(split).map(my_parser),
 % etc.
-
 ```
 
 ### Statement delimiters
@@ -1840,46 +1926,33 @@ jnz([X,Y],S,PC) = NPC =>
 
 ```
 
-## Non-determinism
+## Non-determinism: `?=>`, `!`
 
 A key feature of logic programming languages is implicit backtracking from failure to try and achieve success. This is also why they lend themselve to constraint programming. 
 
-### Lists and Arrays
+## Lists and Arrays
 
 
-### `?=>`
-
-
-
+## `?=>`
 
 
 
-# TODO LIST
 
-- Lists are usually decomposed using H and T as in `max([H|T])=max(H,max(T)).`
+
+
+# TODO 
+
 - printf is your friend or print([])
-
 - #= domain variable
-- => versus =
-- when to use a comma (and not to)
 - type error string/int
 - accumulator for base case
 - length is not a constraint, but sum [1: X in …] is
-
 - $ means literal
 - =>? opposite of prolog !, but we also have ! (!)
-- cond not really in the manual
-- -> not really in the manual
-- instead of if, sign function
 - term vs string
 - “” vs ‘’ string (check this one)
-- using @
 - 2d array notation. link to rosetta code
 - time and time2
-
-
-
-
 
 
 
