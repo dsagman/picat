@@ -189,7 +189,79 @@ CPU time 0.013 seconds.
 ---------------------------------
 
 ```
+### Constraint Example: Advent of Code 2016 Day 15
 
+https://adventofcode.com/2016/day/15
+>Part of the sculpture is even interactive! When a button is pressed, a capsule is dropped and tries to fall through slots in a set of rotating discs to finally go through a little hole at the bottom and come out of the sculpture. If any of the slots aren't aligned with the capsule as it passes, the capsule bounces off the disc and soars away. You feel compelled to get one of those capsules.
+>
+>The discs pause their motion each second and come in different sizes; they seem to each have a fixed number of positions at which they stop. You decide to call the position with the slot 0, and count up for each position it reaches next.
+>
+>Furthermore, the discs are spaced out so that after you push the button, one second elapses before the first disc is reached, and one second elapses as the capsule passes from one disc to the one below it. So, if you push the button at time=100, then the capsule reaches the top disc at time=101, the second disc at time=102, the third disc at time=103, and so on.
+>
+>The button will only drop a capsule at an integer time - no fractional seconds allowed.
+>
+>For example, at time=0, suppose you see the following arrangement:
+>
+>Disc #1 has 5 positions; at time=0, it is at position 4.
+Disc #2 has 2 positions; at time=0, it is at position 1.
+>
+>If you press the button exactly at time=0, the capsule would start to fall; it would reach the first disc at time=1. Since the first disc was at position 4 at time=0, by time=1 it has ticked one position forward. As a five-position disc, the next position is 0, and the capsule falls through the slot.
+>
+>Then, at time=2, the capsule reaches the second disc. The second disc has ticked forward two positions at this point: it started at position 1, then continued to position 0, and finally ended up at position 1 again. Because there's only a slot at position 0, the capsule bounces away.
+>
+>If, however, you wait until time=5 to push the button, then when the capsule reaches each disc, the first disc will have ticked forward 5+1 = 6 times (to position 0), and the second disc will have ticked forward 5+2 = 7 times (also to position 0). In this case, the capsule would fall through the discs and come out of the machine.
+>
+>However, your situation has more than two discs; you've noted their positions in your puzzle input. What is the first time you can press the button to get a capsule?
+>
+>--- Part Two ---
+>
+>After getting the first capsule (it contained a star! what great fortune!), the machine detects your success and begins to rearrange itself.
+>
+>When it's done, the discs are back in their original configuration as if it were time=0 again, but a new disc with 11 positions and starting at position 0 has appeared exactly one second below the previously-bottom disc.
+>
+>With this new disc, and counting again starting from time=0 with the configuration in your puzzle input, what is the first time you can press the button to get another capsule?
+
+This puzzle is perfect for Picat. Some things to notice:
+
+- Look how long the description is versus the code!
+- The use of parallel lists to encode the problem variables. This is a common approach.
+- As the capsule falls, to solve for $T_{start}$ for a given $Disc$ the equation is $(T_{start}+ Distance + Disc_{time-zero}) \mod Disc_{num-positions} = 0$.
+- We could code this as a `foreach` loop.
+    ```
+    foreach (D in 1..DPos.len)
+        0 #= (T+D+DTZ[D]) mod DPos[D]
+    end,
+   ```
+- But because each is zero, the sum is zero, and one line of code looks cooler than three. So we used `sum(...) #= 0`.
+- We aren't given a range of times, so the program sets the range of the solution T to between 0 and `maxint_small()`, which is not very small. It's 72,057,594,037,927,935.
+- `solve` is a predicate and unifies `T` with the solution.
+- If you wanted all the solutions, `solve_all` is a function and looks like `Sols = solve_all(T).`
+- On this problem the `cp` solver is the fastest, but that's not always the case.
+
+    | Solver | Part1 | Part2 |
+    |--------|-------|-------|
+    | cp     | 0.04  | 0.25  |
+    | sat    | DNF   | DNF   |
+    | mip    | 0.4   | 2.4   |
+
+```
+import cp. 
+
+main =>
+    time(Part1 = go([17,3,19,13,7,5],
+                    [15,2,4,2,2,0])), %0.04 sec
+    printf("Answer Part 1: %w\n",Part1), % 400589
+
+    time(Part2 = go([17,3,19,13,7,5,11],
+                    [15,2,4,2,2,0,0])), % 0.25 sec
+    printf("Answer Part 2: %w\n",Part2). % 3045959
+
+go(DPos,DTZ) = T =>
+    %(Time + Dist + T Zero Position) mod Disc Positions
+    T :: 0..maxint_small(), % 72057594037927935
+    sum([(T+D+DTZ[D]) mod DPos[D] : D in 1..DPos.len]) #=0,
+    solve(T).
+```
 
 
 ### Constraint Example: Jane Street Bug
@@ -350,7 +422,7 @@ The `planner` module is, as far as I know, unique to Picat. It lets you define a
 
 Planner acts as high-level interface to the underlying solver and mechanics of tabling and goal state checking.
 
-### A Planner Example
+### A Planner Example: Blocks World
 
 Here's an example from the documentation for the programming language Curry, which combines functional and logic paradigms. https://curry-lang.org/docs/tutorial/html/curry-tutorial.Ch6.S1.html#SS3
 
@@ -708,7 +780,6 @@ For example:
 ```
 A = append(1,2,3). % *** Undefined procedure: append/3
 [3,4] = [1,2] ++ L2. println(L2). % Fails/false/no.
-
 ```
 
 These seem like simple errors to avoid, but the distinction between a function that returns a value versus a predicate that unifies one or more of its arguments can be subtle. It's important to read the manual. 
@@ -750,10 +821,11 @@ Steps = read_file_lines("day.txt").map(split).map(my_parser),
 
 ```
 
-
 #### Statement delimiters
 
-All statements have to end in `,`, `;` or `.` `,` means "and", `;` means "or" and `.` means "end of statement". `()` are used to mark a block of code. For example, as part of an `if` statement. 
+All statements have to end in `,`, `;` or `.` `,` means "and", `;` means "or" and `.` means "end of statement". 
+
+`()` are used to mark a block of code as separate from the code around it. They are often optional, but using them will help make sure the compiler and you don't get confused.
 
 ```
 A=2, B=3.
@@ -762,8 +834,9 @@ Name.length > 0; Name := "I'll just call you Larry.".
 
 #### Control flow: `if` and `foreach`
 
-`if` and `foreach` require an `end`. The statement just before this `end` doesn't need a `,`. Picat used to enforce this syntax, but doesn't anymore. The condition in `foreach` has to be enclosed in `()`. 
+`if ... then` is exactly what you think it is, but there's required syntax that took me a while to get used to.
 
+`if` requires an `end`. The statement just before this `end` doesn't need a `,`. Picat used to enforce this syntax, but doesn't anymore. 
 ```
 curve(Grade) = (Letter,Comment) => 
    	if Grade > 50 
@@ -779,15 +852,46 @@ curve(Grade) = Letter =>
 if (Grade > 50) (Letter = A) else (Letter = F) end. 
 ```
 
+Picat also allow Prolog style if statements with `->` and `;`. The syntax is $if -> then ; else$.
 
-```                                                                                         % multiple iterators are allowed, they are treated like nested loops
+```
+(A>5 -> println("Big"); println("small")).
+
+```
+
+`foreach` is a loop structure like any other programming language. Picat also has `while` and `do ... while`. The condition in `foreach` has to be enclosed in `()`. And, like `if`, you need an `end` at the end.
+
+```                                                    
+% multiple iterators are allowed, they are treated like nested loops
 foreach(X in 1..10, Y in 1..10) 
-   	A[X,Y] := my_hash_function(X,Y) % <- comma optional
+   	A[X,Y] := my_hash_function(X,Y) % <- line end comma optional
 end.
 ```
-#### Control flow: `;` operator, `cond` and `compare_terms`
 
-procedures, functions
+#### Control flow: `;` operator
+
+`if ... then ... else` are familiar control flow for almost all programming languages. Prolog/Picat can also use the concept of "or". There's an example of this in [Blocks World](#a-planner-example-blocks-world).
+
+The structure is essentially a case statement in other languages: `(A; B; C; D)`, which reads as perform `A`, if it fails, perform `B`, etc. Enclose these in `()` to make sure that the case statement doesn't get mixed up with other parts of the predicate or function.
+
+#### `cond` and `compare_terms`
+
+Another way to do an `if` is with `cond`. While it's not listed in the Picat manual index, it does define the function in this example:
+
+> The fib function can also be defined as follows:
+>
+>  `fib(N) = cond((N = 0; N = 1), 1, fib(N-1)+fib(N-2)).`
+>
+>   The conditional expression returns 1 if the condition `(N = 0; N = 1)` is true, and the value of `fib(N-1)+fib(N-2)` if the condition is false.
+
+Another option is `compare_terms`. It outputs -1, 0, or 1 if the first term is less than, equal to, or greater than the second term. For example.
+
+```
+A = compare_terms(5,2). % A = 1
+B = compare_terms(2,2). % B = 0
+C = compare_terms(2,5). % C = -1
+```
+
 
 
 ### Helper functions for accumlating results
@@ -858,7 +962,6 @@ inc a
 dec a
 jnz a 2
 dec a
-
 ```
 
 ```
@@ -988,10 +1091,9 @@ XXXXXXXXXXXXXXXXXXXXX
 
 - Lists are usually decomposed using H and T as in `max([H|T])=max(H,max(T)).`
 - printf is your friend or print([])
-- compare_terms(T erm1,T erm2) = Res:
-- , and ;  and .  also => and ! flow
+
 - #= domain variable
-- procedure vs function
+- predicate vs function
 - => versus =
 - when to use a comma (and not to)
 - type error string/int
@@ -1127,7 +1229,7 @@ main =>
 
 ## Appendix:  Things I Still Don't Fully Understand
 
-The Picat manual can be terse and doesn't provide examples for everything. Here's some commands I don't know how to use.
+The Picat manual can be terse and doesn't provide examples for everything. Here's some commands I don't know how to use or where I felt the documentation could have been better.
 
 - `reduce` I think this is a functional `fold`, but have not been able to make it work.
 - `acyclic_term` "This predicate is true if Term is acyclic, meaning that Term does not contain itself." I don't know what this means or when I would use it.
@@ -1143,9 +1245,11 @@ The Picat manual can be terse and doesn't provide examples for everything. Here'
     ```
     Which is neat, and kind of like building up an expression that can then be dynamically evaluated, but how do I evaluate `C`? I have no idea. This is the only use of `Conj` as an output value in the entire manual.
     
-- `->` can be used for `if` `then` as in (A>5 -> X=yes; X=no). Technically, I understand this and it's on a footnote (pg 6) that says, "Picat also accepts Prolog-style if-then-else in the form (If -> Then; Else) and mandates the presence of the else-part." 
+- `->` can be used for `if` `then` as in (A>5 -> X=yes; X=no). It's in a footnote (pg 6) that says, "Picat also accepts Prolog-style if-then-else in the form (If -> Then; Else) and mandates the presence of the else-part." 
     
     `->` is used in one example (pg 93), and I had to have someone point out the footnote and example after ChatGPT insisted that `->` is the prefered method for Picat `if` `then`. (It is not.)
+
+- Picat also has `cond`, but it's only mentioned in an example about Fibonacci and isn't in the index. It was ChatGPT who told me about it.
 
 - `-->` The manual says this syntax supports DCG (Definite Clause Grammar) rules. I don't know much about these and the Prolog manual talks about the `phrase` predicate for processing them, which Picat doesn't seem to have. And without some examples, I'm not sure what I'd use them for. Would they make better/easier parsers for LL, LR or CFG grammars? I do not know.
 
