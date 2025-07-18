@@ -29,7 +29,7 @@ Consider this a rough draft representing my personal learning curve. This docume
 This document has the following primary sections:
 
 - [Introduction](#what-i-wish-i-knew-when-learning-picat-introduction) (you are here!), which includes some high level information about Picat.
-- [Constraint and Planner Programming](#constraint-programming-and-the-planner), these capabilities are the reason I wanted to learn Picat and are a central strength of the language. 
+- [Constraint and Planner Programming](#constraint-programming-and-the-planner), these capabilities are the reason I wanted to learn Picat and are a central strength of the language. If you are familiar with Prolog then start here.
 - [Picat is not Python](#picat-isnt-python). This is the section if you're unfamiliar with Prolog and logic programming concepts. I had always struggled with these, so I share what I found challenging and helpful. There's also some neat tricks here such as dynamic dispatch.
 - [Resources](#resources). Links to more information about Picat and example code.
 - [Appendix: Using Picat In Class](#appendix-using-picat-for-instruction)Some ideas for how to autograde Picat student assignments.
@@ -690,6 +690,8 @@ Solution cost: 11
 
 ## Planner Example: Wizards!
 
+https://adventofcode.com/2015/day/22
+
 Advent of Code 2015 day 22. This has a long description, sorry! But hopefully helpful in understanding what's needed.
 
 >--- Day 22: Wizard Simulator 20XX ---
@@ -946,6 +948,395 @@ Part 2 solution length: 17
 Part 2 answer = mana cost: 1289
 ```
 
+## Planner Example: Moving Stuff
+
+https://adventofcode.com/2016/day/11
+
+Advent of Code 2016 day 11 has you moving stuff up and down with an elevator based on constraints. So perfect for Planner! Apologies again for the length of the description.
+
+>--- Day 11: Radioisotope Thermoelectric Generators ---
+>
+>You come upon a column of four floors that have been entirely sealed off from the rest of the building except for a small dedicated lobby. There are some radiation warnings and a big sign which reads "Radioisotope Testing Facility".
+>
+>According to the project status board, this facility is currently being used to experiment with Radioisotope Thermoelectric Generators (RTGs, or simply "generators") that are designed to be paired with specially-constructed microchips. Basically, an RTG is a highly radioactive rock that generates electricity through heat.
+>
+>The experimental RTGs have poor radiation containment, so they're dangerously radioactive. The chips are prototypes and don't have normal radiation shielding, but they do have the ability to generate an electromagnetic radiation shield when powered. Unfortunately, they can only be powered by their corresponding RTG. An RTG powering a microchip is still dangerous to other microchips.
+>
+>In other words, if a chip is ever left in the same area as another RTG, and it's not connected to its own RTG, the chip will be fried. Therefore, it is assumed that you will follow procedure and keep chips connected to their corresponding RTG when they're in the same room, and away from other RTGs otherwise.
+>
+>These microchips sound very interesting and useful to your current activities, and you'd like to try to retrieve them. The fourth floor of the facility has an assembling machine which can make a self-contained, shielded computer for you to take with you - that is, if you can bring it all of the RTGs and microchips.
+>
+>Within the radiation-shielded part of the facility (in which it's safe to have these pre-assembly RTGs), there is an elevator that can move between the four floors. Its capacity rating means it can carry at most yourself and two RTGs or microchips in any combination. (They're rigged to some heavy diagnostic equipment - the assembling machine will detach it for you.) As a security measure, the elevator will only function if it contains at least one RTG or microchip. The elevator always stops on each floor to recharge, and this takes long enough that the items within it and the items on that floor can irradiate each other. (You can prevent this if a Microchip and its Generator end up on the same floor in this way, as they can be connected while the elevator is recharging.)
+>
+>You make some notes of the locations of each component of interest (your puzzle input). Before you don a hazmat suit and start moving things around, you'd like to have an idea of what you need to do.
+>
+>When you enter the containment area, you and the elevator will start on the first floor.
+>
+>For example, suppose the isolated area has the following arrangement:
+>
+>The first floor contains a hydrogen-compatible microchip and a lithium-compatible microchip.
+>The second floor contains a hydrogen generator.
+>The third floor contains a lithium generator.
+>The fourth floor contains nothing relevant.
+>As a diagram (F# for a Floor number, E for Elevator, H for Hydrogen, L for Lithium, M for Microchip, and G for Generator), the initial state looks like this:
+>
+    F4 .  .  .  .  .  
+    F3 .  .  .  LG .  
+    F2 .  HG .  .  .  
+    F1 E  .  HM .  LM  
+>
+>Then, to get everything up to the assembling machine on the fourth floor, the following steps could be taken:
+>
+>Bring the Hydrogen-compatible Microchip to the second floor, which is safe because it can get power from the Hydrogen Generator:
+>
+    F4 .  .  .  .  .  
+    F3 .  .  .  LG .  
+    F2 E  HG HM .  .  
+    F1 .  .  .  .  LM 
+>Bring both Hydrogen-related items to the third floor, which is safe because the Hydrogen-compatible microchip is getting power from its generator:
+>
+    F4 .  .  .  .  .  
+    F3 E  HG HM LG .  
+    F2 .  .  .  .  .  
+    F1 .  .  .  .  LM 
+>Leave the Hydrogen Generator on floor three, but bring the Hydrogen-compatible Microchip back down with you so you can still use the elevator:
+>
+    F4 .  .  .  .  .  
+    F3 .  HG .  LG .  
+    F2 E  .  HM .  .  
+    F1 .  .  .  .  LM 
+>At the first floor, grab the Lithium-compatible Microchip, which is safe because Microchips don't affect each other:
+>
+    F4 .  .  .  .  .  
+    F3 .  HG .  LG .  
+    F2 .  .  .  .  .  
+    F1 E  .  HM .  LM 
+>Bring both Microchips up one floor, where there is nothing to fry them:
+>
+    F4 .  .  .  .  .  
+    F3 .  HG .  LG .  
+    F2 E  .  HM .  LM 
+    F1 .  .  .  .  .  
+>Bring both Microchips up again to floor three, where they can be temporarily connected to their corresponding generators while the elevator recharges, preventing either of them from being fried:
+>
+    F4 .  .  .  .  .  
+    F3 E  HG HM LG LM 
+    F2 .  .  .  .  .  
+    F1 .  .  .  .  .  
+>Bring both Microchips to the fourth floor:
+>
+    F4 E  .  HM .  LM 
+    F3 .  HG .  LG .  
+    F2 .  .  .  .  .  
+    F1 .  .  .  .  .  
+>Leave the Lithium-compatible microchip on the fourth floor, but bring the Hydrogen-compatible one so you can still use the elevator; this is safe because although the Lithium Generator is on the destination floor, you can connect Hydrogen-compatible microchip to the Hydrogen Generator there:
+>
+    F4 .  .  .  .  LM 
+    F3 E  HG HM LG .  
+    F2 .  .  .  .  .  
+    F1 .  .  .  .  .  
+>Bring both Generators up to the fourth floor, which is safe because you can connect the Lithium-compatible Microchip to the Lithium Generator upon arrival:
+>
+    F4 E  HG .  LG LM 
+    F3 .  .  HM .  .  
+    F2 .  .  .  .  .  
+    F1 .  .  .  .  .  
+>Bring the Lithium Microchip with you to the third floor so you can use the elevator:
+>
+    F4 .  HG .  LG .  
+    F3 E  .  HM .  LM 
+    F2 .  .  .  .  .  
+    F1 .  .  .  .  .  
+>Bring both Microchips to the fourth floor:
+>
+    F4 E  HG HM LG LM 
+    F3 .  .  .  .  .  
+    F2 .  .  .  .  .  
+    F1 .  .  .  .  .  
+>In this arrangement, it takes 11 steps to collect all of the objects at the fourth floor for assembly. (Each elevator stop counts as one step, even if nothing is added to or removed from it.)
+>
+>In your situation, what is the minimum number of steps required to bring all of the objects to the fourth floor?
+>
+>--- Part Two ---
+>
+>You step into the cleanroom separating the lobby from the isolated area and put on the hazmat suit.
+>
+>Upon entering the isolated containment area, however, you notice some extra parts on the first floor that weren't listed on the record outside:
+>
+> - An elerium generator.
+> - An elerium-compatible microchip.
+> - A dilithium generator.
+> - A dilithium-compatible microchip.
+>
+>These work just like the other generators and microchips. You'll have to get them up to assembly as well.
+>
+>What is the minimum number of steps required to bring all of the objects, including these four new ones, to the fourth floor?
+
+Phew! Here's the code. And some things to note:
+
+- The problem state is represented by two lists: one with the floor each molecule is on and one with the floor each generator is on.
+- These two arrays are parallel so that the same molecule and generator are paired by index in the problem setup.
+- The names of the molecules/generators are not stored. It is infered by the index into the list, but as you will see, we play fast and loose with this.
+- The solution speed is very dependent on how the search space is reduced through the constraints. My initial version took 45 seconds for part 1 and 245 seconds for part 2. After many enhancements, the time was reduced to 0.02 and 0.09 seconds, respectively.
+- Here's what made the code run faster:
+    - unbounded search (depth first)
+    - `Item2 < Item1`
+    - extract `get_move` into its own function
+    - precompute the number of items and pass as state (`MolE.len` for example)
+    - `Action` is set to `[]`
+    - ++[0] instead of [0]++ when setting `Item2`
+    - `counter` function instead of `membchk`
+    - try to bring up two whenever possible and only down one
+    - only go down if items are on floors below the elevator
+    - *Biggest gain* zipped pairs of `{Mol,Gen}` sorted rather than `[Mol ++ Gen]` this allows for symmetry breaking meaning that moving a pair {2,0}, for example, doesn't matter if it's one molecule or another, the move is identical.
+    - remove `table`. I tried adding `table` everywhere, but it's built into the planner and just slowed things down 
+- I also tried adding a `heuristic` function. In this case it didn't make any difference.
+- In terms of the search method, `best_plan_unbounded` was the fastest. The other methods were about twice as long to complete: `best_plan`, `best_plan_bin`, `best_plan_bb` and `best_plan_nondet`.
+- There a great explantion of how to solve efficiently on Reddit. https://www.reddit.com/r/adventofcode/comments/5hoia9/comment/db1v1ws/
+
+```
+import planner.
+import util.
+
+main =>    
+    % example, requires 11 moves
+    MolE = [1,1], %H, Li
+    GenE = [2,3],  %HGen, LiGen
+    ProbE = [1,MolE.len,zip(MolE,GenE).sort], % elevator on ground floor
+    time2(best_plan_unbounded(ProbE,PlanE)), 
+    printf("Example solution length: %w\n", length(PlanE)),
+
+    % part 1
+    Mol1 = [2,1,2,1,1],  %Po, Tm, Pm, Ru, Co
+    Gen1 = [1,1,1,1,1],  %Po, Tm, Pm, Ru, Co
+    Prob1 = [1,Mol1.len,zip(Mol1,Gen1).sort], % elevator on ground floor
+    time2(best_plan_unbounded(Prob1,Plan1)), 
+    printf("Part 1 solution length: %w\n", length(Plan1)),
+
+    % part 2
+    Mol2 = [2,1,2,1,1,1,1],  %Po, Tm, Pm, Ru, Co, El, Di
+    Gen2 = [1,1,1,1,1,1,1],  %Po, Tm, Pm, Ru, Co, El, Di    
+    Prob2 = [1,Mol2.len,zip(Mol2,Gen2).sort], % elevator on ground floor
+    time2(best_plan_unbounded(Prob2,Plan2)), 
+    printf("Part 2 solution length: %w\n", length(Plan2)).
+
+final(State@[E,N,Items]),Items.map(sum).sum == 4*2*N => true. % all 4th floor
+
+action(State@[E,N,Items],NextS,Action,Cost) =>
+    [NewE,NewItems] = get_move(E,N,Items),
+    Action = [],
+    % 30x  speedup pairs/sort and action memoizes duplicate states
+    NextS = [NewE,N,NewItems.pairs.sort], 
+    Cost = 1.
+
+get_move(E,N,Items) = [NewE,NewItems] =>
+    N2 = N*2,
+    FlatItems = Items.map(to_list).flatten,
+
+    % .001 sec speedup
+    if min(FlatItems) >= E % don't move to emptied bottom floors
+        then Move = 1 
+        else member(Move,[-1,1]) end,
+    NewE = E+Move, NewE >0, NewE <=4, % elevator moves
+
+    FloorItems = [I : I in 1..N2, FlatItems[I]==E], % pick item from current floor
+    member(Item1, FloorItems),
+    
+    NewItems = copy_term(FlatItems),
+    NewItems[Item1] := FlatItems[Item1]+Move,
+
+    % 0.3x  speedup
+    if Move = 1 % always try to bring up two / down one item
+    then member(Item2, FloorItems++[0]), 
+         Item2 < Item1,
+         if Item2 > 0 then
+            NewItems[Item2] := FlatItems[Item2]+Move end
+    end,
+
+    NewGBF = counter(NewItems), % GBF means generators by floor
+    foreach (I in 1..2..N2) % step 2.
+       NewItems[I] = NewItems[I+1]; % mol attached to its generator OR
+       NewGBF[NewItems[I]] = 0 % no other gen on floor
+    end.
+
+% would be nice if this were builtin, but easy enough to code
+pairs(L) = [{L[I],L[I+1]} : I in 1..2..L.len]. 
+
+% counter is O(n)
+counter(L) = R =>
+    R = [0,0,0,0],
+    foreach(I in 2..2..L.len)
+        R[L[I]] := 1
+    end.
+```
+
+## Planner Example: Twisty Passages All The Same
+
+https://adventofcode.com/2016/day/13
+
+Advent of Code 2016 day 13 has another good candidate for the planner. 
+
+> --- Day 13: A Maze of Twisty Little Cubicles ---
+>
+> You arrive at the first floor of this new building to discover a much less welcoming environment than the shiny atrium of the last one. Instead, you are in a maze of twisty little cubicles, all alike.
+>
+> Every location in this area is addressed by a pair of non-negative integers (x,y). Each such coordinate is either a wall or an open space. You can't move diagonally. The cube maze starts at 0,0 and seems to extend infinitely toward positive x and y; negative values are invalid, as they represent a location outside the building. You are in a small waiting area at 1,1.
+>
+> While it seems chaotic, a nearby morale-boosting poster explains, the layout is actually quite logical. You can determine whether a given x,y coordinate will be a wall or an open space using a simple system:
+>
+>     Find x*x + 3*x + 2*x*y + y + y*y.
+>
+>     Add the office designer's favorite number (your puzzle input).
+>
+>     Find the binary representation of that sum; count the number of bits that are 1.
+>
+>         If the number of bits that are 1 is even, it's an open space.
+>
+>         If the number of bits that are 1 is odd, it's a wall.
+> For example, if the office designer's favorite number were 10, drawing walls as # and open spaces as ., the corner of the building containing 0,0 would look like this:
+
+          0123456789
+        0 .#.####.##
+        1 ..#..#...#
+        2 #....##...
+        3 ###.#.###.
+        4 .##..#..#.
+        5 ..##....#.
+        6 #...##.###
+> Now, suppose you wanted to reach 7,4. The shortest route you could take is marked as O:
+
+          0123456789
+        0 .#.####.##
+        1 .O#..#...#
+        2 #OOO.##...
+        3 ###O#.###.
+        4 .##OO#OO#.
+        5 ..##OOO.#.
+        6 #...##.###
+
+> Thus, reaching 7,4 would take a minimum of 11 steps (starting from your current location, 1,1).
+>
+> What is the fewest number of steps required for you to reach 31,39?
+>
+> --- Part Two ---
+> How many locations (distinct x,y coordinates, including your starting location) can you reach in at most 50 steps?
+
+Here's the code. Items of note:
+
+- The biggest gain is from tabling the function `f` which indicates if a given coordinate is a wall or open space.
+- The `planner` will use the function named `heuristic`, if provided, as an aid in finding the solution. Here this approach helped by providing the "Manhattan distance" to the solution for part 1.
+- For part 2 there are two algorithms, a standard depth first search (DFS) which does not use the solver and a "brute force" approach of just calling the solver on every possible coordinate that's up to 50 steps away from the start.
+- I couldn't wrap my head around DFS and had to turn to ChatGPT, which, except for some syntax errors, provided the code. This runs super fast, 0.001 seconds.
+- For the brute force solution, Picat is fast enough to get it done in less than 0.4 seconds.
+
+
+```
+import planner.
+
+main =>
+    % I = 10,       % example
+    % End = [7,4],  % example
+    I = 1358,       % puzzle
+    End = [31,39],  % part 1
+    Start = [1,1],
+
+    print_maze(9,9,I),
+    
+    time(best_plan([Start,End,I],Plan,Cost)), % .007 sec
+    printf("Answer Part 1: %w\n",Cost),
+
+    time(Part2Alt = part2alt(50,Start,I)),  % 0.4 sec
+    printf("Answer Part 2 Alt: %w\n",Part2Alt.len),
+
+    time(Part2 = paths(50,Start,I)),        % 0.001 sec
+    printf("Answer Part 2: %w\n",Part2.len).
+
+% Part 1 
+
+final([Loc,End,_]), Loc = End => true.
+
+action(S@[[X,Y],End,I],NextS,Action,Cost) =>
+    member([DX,DY],[[1,0],[0,1],[-1,0],[0,-1]]),
+    NewX = X + DX, NewY = Y + DY,
+    NewX >= 0, NewY >= 0,
+    f(NewX,NewY,I), % no moving into a wall
+    NextS = [[NewX,NewY],End,I],
+    Action = [NewX,NewY],
+    Cost = 1. 
+
+% 4x speedup
+heuristic([[X,Y],[EX,EY],_]) = abs(X-EX)+abs(Y-EY).
+
+% table 10x speedup
+table 
+f(X,Y,I) => even((X*X + 3*X + 2*X*Y + Y + Y*Y + I).to_binary_string.map(to_int).sum).
+
+% Part 2
+
+paths(Steps, Start, I) = Visited =>
+    Visited = bfs(Steps, [Start],[Start], I).    
+
+% ChatGPT BFS
+bfs(0, _Frontier, Visited, _I) = Visited.  
+bfs(Steps, Frontier, Visited0, I) = VisitedFinal =>
+    Next := [],
+    Vacc := Visited0,
+    foreach ([X,Y] in Frontier)
+        foreach ([DX,DY] in [[1,0],[0,1],[-1,0],[0,-1]])
+            NX = X + DX,  NY = Y + DY,
+            if NX >= 0, NY >= 0 then 
+                if f(NX,NY,I), not member([NX,NY], Vacc) then
+                    Vacc := Vacc ++ [[NX,NY]],
+                    Next := Next ++ [[NX,NY]]
+                end
+            end
+        end
+    end,
+    VisitedFinal = bfs(Steps-1, Next, Vacc, I).
+
+
+part2alt(Steps,Start,I) = R => 
+    Poss = possible(Steps,Start,I),
+    Visited = [],
+    while (Poss != [])
+        if best_plan([Start,Poss.head,I],Steps,Plan,Cost) 
+            then Visited := (Visited ++ [Poss.head]) end,
+        Poss := Poss.tail,
+    end,
+    R = Visited.
+
+possible(Steps,[X1,Y1],I) = R =>
+    R = sort_remove_dups([[X+DX,Y+DY] : X in 0..Steps+1, Y in 0..Steps+1, X+Y<=Steps+1, 
+                       [DX,DY] in [[1,0],[0,1],[-1,0],[0,-1]],
+                       X+DX>=0, Y+DY>=0, f(X+DX,Y+DY,I)]).
+
+% Helpers
+
+print_maze(MX,MY,I) =>
+    printf("  %w\n",stringify(0..MX)),
+    foreach(Y in 0..MY) 
+        printf("%w ",Y),
+        foreach(X in 0..MX)
+            if f(X,Y,I) then Wall = "." else Wall = "#" end,
+            printf("%w",Wall)
+        end,
+        printf("\n")
+    end.
+
+% My maze, upper corner
+%   0123456789
+% 0 .#.####.##
+% 1 ..#..#...#
+% 2 #....##...
+% 3 ###.#.###.
+% 4 .##..#..#.
+% 5 ..##....#.
+% 6 #...##.###
+
+stringify([]) = "".
+stringify([H|T]) = to_string(H)++stringify(T).
+
+```
 
 # Picat Isn't Python
 
@@ -1323,6 +1714,9 @@ The below code recursively parses parenthensis but has different requirements fo
 
 Probably unsafe, but quite neat!
 
+https://adventofcode.com/2016/day/9
+
+
 ```
 % Advent of code 2016, day 9
 
@@ -1368,8 +1762,6 @@ The program counter, by contrast, is explictly returned and updated using the fu
 
 One more thing to notice here: the code for converting strings to integers. You may find it useful when parsing input yourself.
 
-From the Advent of Code website:
-
 https://adventofcode.com/2016/day/12
 
 - cpy x y copies x (either an integer or the value of a register) into register y.
@@ -1404,8 +1796,9 @@ Here's a couple of possible programs:
     |          | jnz d -2 |
     |          | dec c    |
     |          | jnz c -5 |
+    |----------|----------|
 
-And here's the code.
+And here's the code. The list index of each program serves as the program counter reference for the jnz, jump not zero command.
 
 ```
 % Advent of Code 2016 Day 12

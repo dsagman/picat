@@ -1,0 +1,144 @@
+% --- Day 13: A Maze of Twisty Little Cubicles ---
+% You arrive at the first floor of this new building to discover a much less welcoming environment than the shiny atrium of the last one. Instead, you are in a maze of twisty little cubicles, all alike.
+% Every location in this area is addressed by a pair of non-negative integers (x,y). Each such coordinate is either a wall or an open space. You can't move diagonally. The cube maze starts at 0,0 and seems to extend infinitely toward positive x and y; negative values are invalid, as they represent a location outside the building. You are in a small waiting area at 1,1.
+% While it seems chaotic, a nearby morale-boosting poster explains, the layout is actually quite logical. You can determine whether a given x,y coordinate will be a wall or an open space using a simple system:
+%     Find x*x + 3*x + 2*x*y + y + y*y.
+%     Add the office designer's favorite number (your puzzle input).
+%     Find the binary representation of that sum; count the number of bits that are 1.
+%         If the number of bits that are 1 is even, it's an open space.
+%         If the number of bits that are 1 is odd, it's a wall.
+% For example, if the office designer's favorite number were 10, drawing walls as # and open spaces as ., the corner of the building containing 0,0 would look like this:
+%   0123456789
+% 0 .#.####.##
+% 1 ..#..#...#
+% 2 #....##...
+% 3 ###.#.###.
+% 4 .##..#..#.
+% 5 ..##....#.
+% 6 #...##.###
+% Now, suppose you wanted to reach 7,4. The shortest route you could take is marked as O:
+%   0123456789
+% 0 .#.####.##
+% 1 .O#..#...#
+% 2 #OOO.##...
+% 3 ###O#.###.
+% 4 .##OO#OO#.
+% 5 ..##OOO.#.
+% 6 #...##.###
+% Thus, reaching 7,4 would take a minimum of 11 steps (starting from your current location, 1,1).
+% What is the fewest number of steps required for you to reach 31,39?
+% Your puzzle answer was 96.
+% The first half of this puzzle is complete! It provides one gold star: *
+% --- Part Two ---
+% How many locations (distinct x,y coordinates, including your starting location) can you reach in at most 50 steps?
+
+import planner.
+
+main =>
+    % I = 10,       % example
+    % End = [7,4],  % example
+    I = 1358,       % puzzle
+    End = [31,39],  % part 1
+    Start = [1,1],
+
+    print_maze(9,9,I),
+    
+    time(best_plan([Start,End,I],Plan,Cost)), % .007 sec
+    printf("Answer Part 1: %w\n",Cost).
+
+    % time(Part2Alt = part2alt(50,Start,I)),  % 0.4 sec
+    % printf("Answer Part 2 Alt: %w\n",Part2Alt.len),
+
+    % time(Part2 = paths(50,Start,I)),        % 0.001 sec
+    % printf("Answer Part 2: %w\n",Part2.len).
+
+%%%%%%%%%%%%%%%%%%%%%%%
+% Part 1 
+%%%%%%%%%%%%%%%%%%%%%%%
+
+final([Loc,End,_]), Loc = End => true.
+
+action(S@[[X,Y],End,I],NextS,Action,Cost) =>
+    member([DX,DY],[[1,0],[0,1],[-1,0],[0,-1]]),
+    NewX = X + DX, NewY = Y + DY,
+    NewX >= 0, NewY >= 0,
+    f(NewX,NewY,I), % no moving into a wall
+    NextS = [[NewX,NewY],End,I],
+    Action = [NewX,NewY],
+    Cost = 1. 
+
+% 4x speedup
+heuristic([[X,Y],[EX,EY],_]) = abs(X-EX)+abs(Y-EY).
+
+% table 10x speedup
+table 
+f(X,Y,I) => even((X*X + 3*X + 2*X*Y + Y + Y*Y + I).to_binary_string.map(to_int).sum).
+
+%%%%%%%%%%%%%%%%%%%%%%%
+% Part 2
+%%%%%%%%%%%%%%%%%%%%%%%
+
+paths(Steps, Start, I) = Visited =>
+    Visited = bfs(Steps, [Start],[Start], I).    
+
+% ChatGPT BFS
+bfs(0, _Frontier, Visited, _I) = Visited.  
+bfs(Steps, Frontier, Visited0, I) = VisitedFinal =>
+    Next := [],
+    Vacc := Visited0,
+    foreach ([X,Y] in Frontier)
+        foreach ([DX,DY] in [[1,0],[0,1],[-1,0],[0,-1]])
+            NX = X + DX,  NY = Y + DY,
+            if NX >= 0, NY >= 0 then 
+                if f(NX,NY,I), not member([NX,NY], Vacc) then
+                    Vacc := Vacc ++ [[NX,NY]],
+                    Next := Next ++ [[NX,NY]]
+                end
+            end
+        end
+    end,
+    VisitedFinal = bfs(Steps-1, Next, Vacc, I).
+
+
+part2alt(Steps,Start,I) = R => 
+    Poss = possible(Steps,Start,I),
+    Visited = [],
+    while (Poss != [])
+        if best_plan([Start,Poss.head,I],Steps,Plan,Cost) 
+            then Visited := (Visited ++ [Poss.head]) end,
+        Poss := Poss.tail,
+    end,
+    R = Visited.
+
+possible(Steps,[X1,Y1],I) = R =>
+    R = sort_remove_dups([[X+DX,Y+DY] : X in 0..Steps+1, Y in 0..Steps+1, X+Y<=Steps+1, 
+                       [DX,DY] in [[1,0],[0,1],[-1,0],[0,-1]],
+                       X+DX>=0, Y+DY>=0, f(X+DX,Y+DY,I)]).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Helpers
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+print_maze(MX,MY,I) =>
+    printf("  %w\n",stringify(0..MX)),
+    foreach(Y in 0..MY) 
+        printf("%w ",Y),
+        foreach(X in 0..MX)
+            if f(X,Y,I) then Wall = "." else Wall = "#" end,
+            printf("%w",Wall)
+        end,
+        printf("\n")
+    end.
+
+stringify([]) = "".
+stringify([H|T]) = to_string(H)++stringify(T).
+
+%   0123456789
+% 0 .#.####.##
+% 1 ..#..#...#
+% 2 #....##...
+% 3 ###.#.###.
+% 4 .##..#..#.
+% 5 ..##....#.
+% 6 #...##.###
