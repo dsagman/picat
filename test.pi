@@ -1,6 +1,22 @@
-main =>
-    A = "A string of characters!",
-    println(cipher(A)).
+import cp.
 
-cipher([]) = [].
-cipher([H|T]) = chr(ord(H)+1) ++ cipher(T).
+main =>
+    Edges = [('A', 'B'), ('A', 'D'),
+             ('B', 'S'),
+             ('C', 'H'),
+             ('D', 'S'), ('D', 'H'),
+             ('S', 'I'),
+             ('F', 'I'),
+             ('G', 'J'),
+             ('H', 'J'), ('H', 'K'),
+             ('I', 'J'), ('I', 'L'),
+             ('J', 'K'), ('J', 'L'),
+             ('K', 'M'), ('K', 'P'), ('K', 'N'),
+             ('L', 'O'),
+             ('M', 'N'), ('M', 'O'),
+             ('N', 'E'),
+             ('O', 'E'),
+             ('Q', 'L')],
+EdgeVars = [(Edge, V) : Edge in Edges, V :: 1..24],
+sum([V : (_, V) in EdgeVars]) #= 30,
+println(EdgeVars).
