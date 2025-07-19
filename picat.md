@@ -2094,12 +2094,39 @@ main =>
 
 # Appendix: Errors I Always Make and How I Compensate
 
+## Type Errors
+
+Since Picat isn't strongly typed, the programmer has to keep track of what's what. Also, lists and arrays can be heterogeneous, meaning you can mix types freely in them.
+
+For example, Picat doesn't show the difference between a string and an integer when printing output of a list or array. Here's some code:
+
+```
+main =>
+    D = "12345",
+    C = 1..5,
+    E = D++C,
+    println(E),
+    E[6]:=E[6]+10,
+    println(E),
+    E[1]:=E[1]+10,
+    println(E).
+```
+Output is below. There's no quote marks around the strings so it's not clear that the first 5 items are strings and the second 5 are integers. You just have to be careful 
+```
+[1,2,3,4,5,1,2,3,4,5]
+[1,2,3,4,5,11,2,3,4,5]
+
+*** error(type_error(number,1),(+)/2)
+
+   ===>  (1) main
+```
+
+
 ## Unification vs Assignment
 
 Invariably I make an error where I use `=` when I need to use `:=`. This happens when I am editing code and moving things around and lose track of the first time I bind a variable versus when I either test it or mutate it. 
 
 You could try to only ever use `:=` to do assignment and `==` to test equality. But without unification Picat is hobbled and there's no non-deterministic binding.
-
 
 ## Forgetting a comma or a period (or having an extra one)
 
