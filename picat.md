@@ -1968,9 +1968,7 @@ A key feature of logic programming languages is implicit backtracking from failu
 
 # TODO 
 
-- printf is your friend or print([])
 - #= domain variable
-- type error string/int
 - accumulator for base case
 - length is not a constraint, but sum [1: X in …] is
 - $ means literal
@@ -2111,7 +2109,7 @@ main =>
     E[1]:=E[1]+10,
     println(E).
 ```
-Output is below. There's no quote marks around the strings so it's not clear that the first 5 items are strings and the second 5 are integers. You just have to be careful 
+Output is below. There's no quote marks around the strings so it's not clear that the first 5 items are strings and the second 5 are integers. You just have to be careful. 
 ```
 [1,2,3,4,5,1,2,3,4,5]
 [1,2,3,4,5,11,2,3,4,5]
@@ -2155,18 +2153,37 @@ Picat has a debugger, and it works as advertised and if you want to use it I wil
 
 ## Print and Printf are Your Friends
 
-Picat lets you put a `println` anywhere, and I make extensive use of this when debugging.
+Picat lets you put a `println` anywhere. You can even put a `println` in a condition in a function definition! As such, I make extensive use of my friend `println` when debugging.
 
-println one variable
-use of $
+`println` only has one argument. To print more than one variable, they can be enclosed in `()` or `[]`. And a literal, that starts with `$`, can be added to give some extra info about where in the code the print is coming from and eliminates the risk that the atom has some specific meaning.
 
-printf simplest format
+```
+println(A). % nice and simple
+println([A,B,C]) % three variables we are wondering about
+println([$parser,slice(A,1,5),A.len]) % where are we? and a piece of A and A's length
+my_func(A,B,C) = Result, println([$my_func_call,A]) => ...
+```
+`printf` is also good, but it requires formatting codes and the newline `\n` has to be added. There's a full list of formatting codes in the manual, but I just use `%w` because I'm lazy.
 
-XXXXXXXXXXXXXXXXXXXXX
+```
+printf("Answer is: %w, %w, %w\n",A,B,C).
+```
 
 ## `readchar` to step
 
-xxxxx
+If I'm really lost as to what's going on in a big loop or recursion, single step debugging can be emulated with `read_char`, which defaults to taking a character from stdin.
+
+This can be adjusted to only fire on a given condition and further limit the stream of output to be focused on for debugging.
+
+```
+R = 0,
+foreach (I in 1..100000000)
+    R := do_thing(R) & mutations, yikes!
+    if (I mod 10000 = 0)  % stop every 10,000 loops
+        then println([$r,R]), read_char() % wait for enter key
+    end
+end.
+```
 
 # Appendix:  Things I Still Don't Fully Understand
 
