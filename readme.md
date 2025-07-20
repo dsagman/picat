@@ -35,9 +35,9 @@ This document has the following primary sections:
 - [Picat is not Python](#picat-isnt-python). This is the section if you're unfamiliar with Prolog and logic programming concepts. I had always struggled with these, so I share what I found challenging and helpful. There's also some neat tricks here such as dynamic dispatch.
 - [Resources](#resources). Links to more information about Picat and example code.
 - [Appendix: Using Picat In Class](#appendix-using-picat-for-instruction). Some ideas for how to autograde Picat student assignments.
-- [Appendix: My Errors](#errors-i-always-make-and-how-i-compensate). The things I always get wrong, altough I'm doing it less now that I've written this!
+- [Appendix: My Errors](#errors-i-always-make-and-how-i-compensate). The things I always get wrong, although I'm doing it less now that I've written this!
 - [Appendix: Debugging](#appendix-debugging). Some ideas for debugging that I rely on.
-- [Appendix: Stuff I Don't Know](#appendix--things-i-still-dont-fully-understand).Things that I don't fully understand about Picat.
+- [Appendix: Stuff I Don't Know](#appendix--things-i-still-dont-fully-understand). Things that I don't fully understand about Picat.
 
 
 ## About Picat
