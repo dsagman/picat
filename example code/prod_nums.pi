@@ -1,0 +1,22 @@
+% inspired by https://www.hakank.org/picat/arith.pi
+
+import cp.
+
+main => 
+    N :: 1..100, 
+    X = new_list(5),
+    X :: 1..100,
+    Y :: 0..100000,
+    increasing_strict(X),
+    foreach(I in 1..X.len-1)
+        X[I+1] #= X[I]+I
+    end,
+    X[1] #> N,
+    prod(X)#<Y,
+
+    solve([$max(N)],X ++ [Y]),
+
+    println(y=Y),
+    println(x=X),
+    println(n=N).
+
