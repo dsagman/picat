@@ -269,7 +269,7 @@ n = 5
 
 There's lots of constraints that can be applied to via a constraint operator or to a list or expression of domain variables and global constraints. 
 
-*Rabbit Hole: Picat has implemented a lot of constraints, but there are so, so, so many more. There's even a Global Constraint Catalog! Take a look at your own peril to your free time: https://sofdem.github.io/gccat/gccat/sec5.html*
+*Rabbit Hole: Picat has implemented a lot of constraints, but there are so, so, so many more. There's even a [Global Constraint Catalog!](https://sofdem.github.io/gccat/gccat/sec5.html) Take a look at your own peril to your free time.*
 
 ### Constraint Operators
 
@@ -285,7 +285,15 @@ Logical: `#~` (not),`#/\` (and),`#^` (XOR),`#\/` (or),`#=>` (left side implies r
 - `min`(*List*): The minimum of a list of domain variables
 - `min`(*Exp1*,*Exp2*): The minimum of *Exp1* and *Exp2*
 - `prod`(*List*): The product of a list of domain variables
-- sum(*List*): The sum of a list of domain variables
+- `sum`(*List*): The sum of a list of domain variables
+
+Note:
+Length of a list is not a built-in constraint, but you can achieve this with:
+
+```
+LenL #= sum([1: _ in L]).
+LenLCond #= sum([1: X in L, X > 100]).
+```
 
 ###  Global Constraints
 
@@ -520,19 +528,17 @@ equivalent to cumulative(*Starts*,*Durations*,*Os*,*1*).
 - `subcircuit`(*List*): This constraint is the same as circuit(*List*), except
 that not all of the vertices are required to be in the circuit. If the *ith* element of *List* is *i*, then the vertex *i* is not part of the circuit.
 
-- subcircuit_grid(A): This constraint ensures that the grid graph represented by A,
-which is a two-dimensional array of Boolean (0/1) variables, forms a Hamiltonian cycle. In
-a grid graph, each cell is directly connected horizontally and vertically, but not diagonally,
-to its neighbors. Only non-zero cells are considered as vertices of the graph.
+- `subcircuit_grid`(*A*): The grid graph represented by *A*, which is a two-dimensional array of Boolean (0/1) variables, forms a Hamiltonian cycle. 
 
-• subcircuit_grid(A,K): This constraint is the same as
-subcircuit_grid(A), except that it also constrains the number of vertices in the graph
-to be K,
+    In a grid graph, each cell is directly connected horizontally and vertically, but not diagonally, to its neighbors. Only non-zero cells are considered as vertices of the graph.
 
-- `tree`(Vs,Es): This constraint ensures that the undirected graph represented by Vs and
-Es is a tree. [*see `hcp` for how the graph is defined*]
+- `subcircuit_grid`(*A*,*K*): The same as
+`subcircuit_grid`(*A*), except that it also constrains the number of vertices in the graph
+to be *K*.
 
-    Note that the graph to be constructed is assumed to be undirected. If there exists a triplet *{V1,V2,B}* in *Es*, then the triplet *{V2,V1,B}* will be added to *Es* if it is not specified
+- `tree`(*Vs*,*Es*): This constraint ensures that the undirected graph represented by *Vs* and *Es* is a tree. [*see `hcp` for how the graph is defined*]
+
+    Note that the graph to be constructed is assumed to be undirected. If there exists a triplet *{V1,V2,B}* in *Es*, then the triplet *{V2,V1,B}* will be added to *Es* if it is not specified.
 
 - `tree`(*Vs*,*Es*,*K*): The same as `tree`(*Vs*,*Es*), except that it also constrains the number of vertices in the tree to be *K*.
 
@@ -2281,16 +2287,37 @@ jnz([X,Y],S,PC) = NPC =>
 
 ```
 
-## Non-determinism: `?=>`, `!`
+## Non-determinism: `?=>` and more `table`
 
 A key feature of logic programming languages is implicit backtracking from failure to try and achieve success. This is also why they lend themselve to constraint programming. 
 
-## Lists and Arrays
+Picat predicates/rules, but not functions, can be defined as backtrackable with `?=>`. The manual provides an example for determining if a a node `Y` is reachable from a node `X` in a graph.
 
+```
+reach(X,Y) ?=> edge(X,Y). % if this fails, try the next rule
+reach(X,Y) => reach(X,Z), edge(Z,Y).
+```
+The manual notes that this takes exponential time to compute and by applying `table`, Picat can memoize the redundant calls to already seen nodes.
 
-## `?=>`
+```
+table  % so much faster
+reach(X,Y) ?=> edge(X,Y). 
+reach(X,Y) => reach(X,Z), edge(Z,Y).
 
+```
 
+## More Backtracking, Cut aka `!`.
+
+The Picat manuals says this about cut, which it has inherited from Prolog:
+
+> !: This special predicate, called a cut, is provided for controlling backtracking. A cut in the body of a rule has the effect of removing the choice points, or alternative rules, of the goals to the left of the cut.
+
+This, given my prior limited understanding of `!` is as clear as mud, but because Picat has `?=>` I, at least, have never seen use for `!`.
+
+*Rabbit Hole:
+Should you wish, here's some slides about cut from a class I took: https://courses.grainger.illinois.edu/cs421/sp2020/slides/11.2.1-prolog-cut.pdf and the SWI-Prolog manual's explanation: https://www.swi-prolog.org/pldoc/doc_for?object=!/0.*
+
+God speed.
 
 
 
@@ -2298,11 +2325,7 @@ A key feature of logic programming languages is implicit backtracking from failu
 # TODO 
 
 - accumulator for base case
-- length is not a constraint, but sum [1: X in …] is
 - $ means literal
-- =>? opposite of prolog !, but we also have ! (!)
-- term vs string
-- “” vs ‘’ string (check this one)
 - 2d array notation. link to rosetta code
 - time and time2
 - Add solver arguments maybe?
@@ -2316,6 +2339,7 @@ A key feature of logic programming languages is implicit backtracking from failu
 - Constraint Solving and Planning with Picat book https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf
 - Karlova University Course https://jbulin.github.io/teaching/fall/nopt042/
 - A ChatGPT version that knows something about Picat. (It can get confused between Picat and Prolog.) https://chatgpt.com/g/g-EEpNUZ9H1-picat-prodigy 
+- The SWI-Prolog manual for Prolog-related concepts. https://www.swi-prolog.org/pldoc/doc_for?object=!/0
 
 ## Code Examples 
 - Rosetta Code. Useful to compare to a language you know https://rosettacode.org/wiki/Category:Picat 
@@ -2349,12 +2373,13 @@ A key feature of logic programming languages is implicit backtracking from failu
     from IPython.display import display, HTML, Javascript
     ```
 
-## Optimization Resources
-- COIN-OR open source https://github.com/coin-or/COIN-OR-OptimizationSuite
+## Optimization/Constraint Programmig Resources
+- COIN-OR open source 
+ https://github.com/coin-or/COIN-OR-OptimizationSuite
 - Z3 (Microsoft) https://microsoft.github.io/z3guide/docs/logic/intro/
 - OR-Tools (Google) https://developers.google.com/optimization
 - CPLEX (IBM) https://ibmdecisionoptimization.github.io/tutorials/html/Linear_Programming.html
-
+- Global Constraint Catalog https://sofdem.github.io/gccat/gccat/index.html
 
 # Appendix: Using Picat For Instruction
 
@@ -2421,7 +2446,7 @@ main =>
 
 # Appendix: Errors I Always Make and How I Compensate
 
-## Type Errors
+## Type Errors, Numbers and Characters
 
 Since Picat isn't strongly typed, the programmer has to keep track of what's what. Also, lists and arrays can be heterogeneous, meaning you can mix types freely in them.
 
@@ -2447,6 +2472,59 @@ Output is below. There's no quote marks around the strings so it's not clear tha
 
    ===>  (1) main
 ```
+
+
+## More Type Errors: Lists and Arrays 
+
+Lists are denoted with `[]` and arrays with `{}`. Lists dynamically allocate memory and accessing elements takes $O(N)$ time. Arrays take a fixed amount of memory and accessing elements is $O(1)$. 
+
+Most Picat functions and predictes are overloaded to work seemlessly on arrays, but not all! And the error isn't always clear that it's a type error.
+
+```
+A = [1,2,3,4], AL = len(A), B=head(A).
+% AL = 4
+% B = 1
+
+A = {1,2,3,4}, AL = len(A), B=head(A).
+% AL = 4
+% *** unresolved_function_call(head({}(1,2,3,4)))
+
+```
+I sometimes switch my code between lists and arrays for the advantages one gives over the other, such as in access time. But refactoring isn't as simple as just making the variables into lists.
+
+## And More Type Errors: `""` vs `''` aka Atoms and Strings, Oh My
+
+In some programming languages double and single-quoted strings are synonymous. (Python) In others, strings are double-quoted and individual characters are single-quoted.
+
+In Picat, `""` means string, which is a list of characters. For example:
+
+```
+A = "hello world". % A = [h,e,l,l,o,' ',w,o,r,l,d]
+```
+
+And `''` means "atom". Atom is a concept from Prolog, which is kind of like an enumerated type, and I'm not going to do justice to explaining it (see below), but basically any lowercase string (less than 1000 characters!) is an atom. So you can do this:
+
+```
+N=5, println(n=N). % output n=5
+N=3, println(my_n_is_set_to_N). % output my_n_is_set_to_3
+```
+Note that in the above, the `=` is unification! (At least I think it is?)
+
+This bites me when I'm pattern matching on a string. For example, the below took me some trial and error to get right. The `'0'` is an atom, but works here like a character, and the `"0"` is a string, which could also have been written as `['0']`. 
+```
+swap10([]) = [].
+swap10(['0'|T]) = "1" ++ swap10(T).
+swap10(['1'|T]) = "0" ++ swap10(T).
+```
+
+*Rabbit Hole: 
+- In Prolog-land all is not so simple with quote marks. 
+https://www.swi-prolog.org/pldoc/man?section=string*
+- Here's the SWI-Prolog definition on an atom: 
+
+    >   Atoms are identifiers. They are typically used in cases where identity comparison is the main operation and that are typically not composed nor taken apart. Examples are RDF resources (URIs that identify something), system identifiers (e.g., 'Boeing 747'), but also individual words in a natural language processing system. 
+    
+    > They are also used where other languages would use enumerated types, such as the names of days in the week. Unlike enumerated types, Prolog atoms do not form a fixed set and the same atom can represent different things in different contexts.
 
 
 ## Unification vs Assignment
@@ -2488,9 +2566,11 @@ Picat lets you put a `println` anywhere. You can even put a `println` in a condi
 
 ```
 println(A). % nice and simple
-println([A,B,C]) % three variables we are wondering about
-println([$parser,slice(A,1,5),A.len]) % where are we? and a piece of A and A's length
+A=5, println(a=A). % outputs "a=5"
+println([A,B,C]). % three variables we are wondering about
+println([$parser,slice(A,1,5),A.len]). % where are we? and a piece of A and A's length
 my_func(A,B,C) = Result, println([$my_func_call,A]) => ...
+
 ```
 `printf` is also good, but it requires formatting codes and the newline `\n` has to be added. There's a full list of formatting codes in the manual, but I just use `%w` because I'm lazy.
 
@@ -2516,10 +2596,12 @@ end.
 
 # Appendix:  Things I Still Don't Fully Understand
 
-The Picat manual can be terse and doesn't provide examples for everything. Here's some commands I don't know how to use or where I felt the documentation could have been better.
+The Picat manual can be succinct and doesn't provide examples for everything. Here's some stuff I don't know how to use or where I still get confused.
 
 - `reduce` I think this is a functional `fold`, but have not been able to make it work.
-- `acyclic_term` "This predicate is true if Term is acyclic, meaning that Term does not contain itself." I don't know what this means or when I would use it.
+
+- `acyclic_term` "This predicate is true if Term is acyclic, meaning that Term does not contain itself." I don't know what this means in terms of a term (how is a term a graph?) or when I would use it.
+
 - `list_to_and(List) = Conj` I understand that this turns a list into a conjunction of facts separated by and (`,`). For example: 
 
     ```
@@ -2534,19 +2616,17 @@ The Picat manual can be terse and doesn't provide examples for everything. Here'
     
 - `->` can be used for `if` `then` as in (A>5 -> X=yes; X=no). It's in a footnote (pg 6) that says, "Picat also accepts Prolog-style if-then-else in the form (If -> Then; Else) and mandates the presence of the else-part." 
     
-    `->` is used in one example (pg 93), and I had to have someone point out the footnote and example after ChatGPT insisted that `->` is the prefered method for Picat `if` `then`. (It is not.)
+    `->` is also sed in one example (pg 93), and I had to have someone point out the example after ChatGPT insisted that `->` is the prefered method for Picat `if` `then`. (It is not.) Regardless, it's not in the index, which is my go to resource.
 
-- Picat also has `cond`, but it's only mentioned in an example about Fibonacci and isn't in the index. It was ChatGPT who told me about it.
-
+- Picat also has `cond`, but it's only mentioned in an example about Fibonacci and isn't in the index. ChatGPT pointed me to `cond`.
+ 
 - `-->` The manual says this syntax supports DCG (Definite Clause Grammar) rules. I don't know much about these and the Prolog manual talks about the `phrase` predicate for processing them, which Picat doesn't seem to have. And without some examples, I'm not sure what I'd use them for. Would they make better/easier parsers for LL, LR or CFG grammars? I do not know.
 
 - In the `neqs` constraint the manual says, "This constraint is equivalent to the conjunction of the inequality constraints in *NeqList*, but it extracts `all_distinct` constraints from the inequality constraints." I don't know what "extracts" means here. Does it not honor `all_distinct`? Something else?
 
-- I don't understand how to use the graph-based constraints: acyclic, hcp, scc, tree, etc. I would like some example.
+- The `regular`,`circuit` and `table_in` constraints  are covered in https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf, but I haven't come up with a use case on my own yet, so I'm not feeling very confident in my understanding.
 
-- The `regular` constraint is covered in https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf, but I need to reread a few dozen more times!
-
-- Table constraints are coverd in the manual and the Constraint solving book. They are also hard for me to grok.
+- `!` aka Prolog cut operator, is something I think I understand and then when I think more, I don't. Luckily Picat seems to obviate the need for `!` through the much more straight forward `?=>` for backtrackable rules.
 
 
 
