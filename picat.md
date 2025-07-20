@@ -209,10 +209,339 @@ CPU time 0.013 seconds.
 ---------------------------------
 
 ```
+## Domain Variables and Constraints, `cp` `::`, `#=`
+
+The core idea of constraint programming are domain variables, which are variables that have a range of potential values that are then solved by adding conditions/constraints they must meet.
+
+Here's an example. Note that the module `cp` must be imported to use domain variables.
+```
+A :: 1..10 % A is a number between 1 and 10
+```
+If you type this into the interative Picat REPL, you get: 
+```
+A = DV_0104d8_1..10
+```
+Let's modify this so that `A` must be even. We do this by adding a constraint with `#=`.
+
+```
+A :: 1..10, A mod 2 #= 0.     
+% REPL says: A = DV_010970_2_4_6_8_10
+```
+## Constraint Example: Some Numbers that Multiply
+
+It's also easy to make a list or array of domain variables. Here's a contrived problem:
+- 5 increasing numbers that differ by 1,2,3, and 4
+- The product of the numbers is less than 100000
+- The first number is as large as possible 
+Let's say we want to find a sequence of 5 numbers between 1 and 100 where their product is less than 100000, but where the first number is as large as possible (but between 1 and 100).
+
+```
+% inspired by https://www.hakank.org/picat/arith.pi
+
+import cp.
+
+main => 
+    N :: 1..100, 
+    X = new_list(5),
+    X :: 1..100,
+    Y :: 0..100000,
+    increasing_strict(X), % not really necessary
+    foreach(I in 1..X.len-1)
+        X[I+1] #= X[I]+I
+    end,
+    X[1] #> N,
+    prod(X)#<Y,
+
+    solve([$max(N)],X ++ [Y]), % find largest N
+
+    println(y=Y),
+    println(x=X),
+    println(n=N).
+```
+Output is :
+```
+y = 72577
+x = [6,7,9,12,16]
+n = 5
+```
+
+## What Constraints are there?
+
+There's lots of constraints that can be applied to via a constraint operator or to a list or expression of domain variables and global constraints. 
+
+*Rabbit Hole: Picat has implemented a lot of constraints, but there are so, so, so many more. There's even a Global Constraint Catalog! Take a look at your own peril to your free time: https://sofdem.github.io/gccat/gccat/sec5.html*
+
+### Constraint Operators
+
+Numeric: `::`, `notin`, `#=`, `#!=`, `#<`, `#=<`, `#<=`, `#>`, `#>=`
+Logical: `#~` (not),`#/\` (and),`#^` (XOR),`#\/` (or),`#=>` (left side implies right),`#<=>` (left and right are equivalent)
+
+### Arithmetic on Lists and Expressions
+
+- `cond`(*BoolConstr*,*ThenExp*,*ElseExp*): if the Boolean constraint is true, then the *ThenExp* else *ElseExp*
+- `count`(*V*,*List*): The number of times *V* occurs in a list of variables
+- `max`(*List*): The maximum a list of domain variables
+- `max`(*Exp1*,*Exp2*): The maximum of *Exp1* and *Exp2*
+- `min`(*List*): The minimum of a list of domain variables
+- `min`(*Exp1*,*Exp2*): The minimum of *Exp1* and *Exp2*
+- `prod`(*List*): The product of a list of domain variables
+- sum(*List*): The sum of a list of domain variables
+
+###  Global Constraints
+
+I copied this list (and the majority of the text) from the Picat manual, but reduced to the high-level points. This means I removed some detail and for the more complex constraints, refer to the manual! https://picat-lang.org/download/picat_guide.pdf
+
+Note: In all cases where there list *List* it can also be an *Array*. 
+
+- `acyclic`(*Vs*,*Es*): The undirected graph represented by *Vs* and *Es* contains no cycles. [*see hcp for how the graph is defined*]
+
+- `acyclic_d`(*Vs*,*Es*): The directed graph represented by *Vs* and *Es* contains no cycles.
+
+- `all_different`(*List*): All variables in the list or array are different.
+
+- `all_distinct`(*List*): The same as `all_different`, but for the `cp` module it maintains a higher level of consistency. For some problems, this is faster, and, for some other problems, it is slower.
+
+- `all_different_except_0`(*List*): This constraint is true if all non-zero values in the *List* are different.
+
+- `assignment`(*List 1*,*List 2*): This constraint ensures that the first *List* is a dual or the second. i.e., if the *ith* element of the first is *j*, then the *jth* element of the second is *i*.
+
+- `at_least`(*N*,*L*,*V*): There are at least *N* elements in *L* that are equal to *V*, all must be integers.
+
+- `at_most`(*N*,*L*,*V*): There are at most *N* elements in *L* that are equal to *V*, all must be integers.
+
+- `circuit`(*List*): The *List* forms a Hamiltonian cycle. This constraint ensures that each variable has a different value, and that the graph formed by the assignment does not contain any sub-cycles. 
+
+    For example, for the constraint `circuit([X1,X2,X3,X4])`, `[3,4,2,1]` is a solution, but `[2,1,4,3]` is not, because `1->2, 2->1, 3->4, 4->3` contains two sub-cycles.
+
+- `count`(*V,*List*,*Rel*,*N*): The number of elements of *List* where *V Rel N* is true. Rel is one of `#=`, `#!=`, `#>`, `#>=`, `#<`, `#=<`, or `#<=`. This constraint can be defined as:
+
+        count(V,L,Rel,N) =>
+            sum([V #= E : E in L]) #= Count,
+            call(Rel,Count,N).
+
+- `count`(*V*,*List*,*N*): The same as `count`(*V*,*List*,*#=*,*N*).
+
+- `cumulative`(*Starts*,*Durations*,*Resources*,*Limit*): This constraint is for describing and solving time-based scheduling problems. The arguments *Starts*, *Durations*, and *Resources*
+are lists of integer-domain variables of the same length, and *Limit* is an integer-domain
+variable. 
+
+    Let *Starts* be *[S1 , S2 , . . ., Sn ]*, *Durations* be *[D1 , D2 , . . ., Dn ]*, and *Resources* be *[R1 , R2 , . . ., Rn ]*.
+
+    For each job *i*, *Si* represents the start time, *Di* represents the duration, and *Ri* represents the units of *Resources* needed. *Limit* is the limit on the units of *Resources* available at any time. This constraint ensures that the limit cannot be exceeded at any time.
+
+- `decreasing`(*List*): The *List* is in (non-strictly) decreasing order.
+
+- `decreasing_strict`(*List*): The *List* is in strictly decreasing order.
+
+- `diffn`(*RectangleList*): This constraint ensures that no two rectangles in *RectangleList*
+overlap with each other. A rectangle in an n-dimensional space is represented by a list of
+2 × n elements *[X1 , X2 , . . ., Xn , S1 , S2 , . . ., Sn ]*, where *Xi* is the starting
+coordinate of the edge in the *ith* dimension, and *Si* is the size of the edge.
+
+- `disjunctive_tasks`(*Tasks*): *Tasks* is a list of terms. Each term has the form
+`disj_tasks(S1,D1,S2,D2)`, where `S1` and `S2` are  integer-domain variables, and `D1` and `D2` are positive integers. This constraint is equivalent to posting the disjunctive constraint `S1+D1 #=< S2 #\/ S2+D2 #=< S1` for each term in `Tasks`;  the
+constraint converts the disjunctive tasks into global constraints.
+
+- `element`(*I*,*List*,*V*): The *Ith* element of *List* is *V*, where all are integer-domain variables.
+
+- `element0`(*I*,*List*,*V*): The same as element(I,List,V), except 0-based, rather than 1-based, indexing is used.
+
+- `exactly`(*N*,*List*,*V*): This constraint succeeds if there are exactly *N* elements in *L* that
+are equal to *V* , all must be
+integer-domain variables.
+
+- `global_cardinality`(*List*,*Pairs*): *List* is a list of integer-domain variables
+*[X1 , . . ., Xd]*, and *Pairs* is a list of pairs *[K1 -V1 , . . ., Kn -Vn]*, where each key
+*Ki* is a unique integer, and each *Vi* is an integer-domain variable. 
+
+    The constraint is true if every element of L*ist is equal to some key, and, for each pair *Ki-Vi* , exactly *Vi* elements of *List* are equal to *Ki*. This constraint can be defined as follows:
+
+        global_cardinality(List,Pairs) =>
+            foreach ($Key-V in Pairs)
+            sum([B : E in List, B#<=>(E#=Key)]) #= V
+            end.
+
+- `hcp`(*Vs*,*Es*): The directed graph represented by Vs and Es forms a Hamiltonian cycle. 
+
+    *Vs* is a list of pairs of the form *{V,B}*, and *Es* is a list of triplets of the form *{V1,V2,B}*. 
+    
+    A pair *{V,B}* in *Vs*, where *V* is a ground term and *B* is a Boolean variable, denotes that *V* is in the graph if and only if *B = 1*. 
+    
+    A triplet *{V1,V2,B}* denotes that *V1* is connected to *V2* by an edge in the graph if and only if *B = 1*. 
+    
+    The circuit and subcircuit constraints can be implemented as follows by using `hcp`:
+
+        circuit(L) =>
+            N = len(L),
+            L :: 1..N,
+            Vs = [{I,1} : I in 1..N],
+            Es = [{I,J,B} : I in 1..N,
+            J in fd_dom(L[I]),
+            J !== I,
+            B #<=> L[I] #= J],
+            hcp(Vs,Es).
+
+        subcircuit(L) =>
+            N = len(L),
+            L :: 1..N,
+            Vs = [{I,B} : I in 1..N,
+            B #<=> L[I] #!= I],
+            Es = [{I,J,B} : I in 1..N,
+            J in fd_dom(L[I]),
+            J !== I,
+            95B #<=> L[I] #= J],
+            hcp(Vs,Es).
+
+- `hcp`(*Vs*,*Es*,*K*): The same as hcp(Vs,Es), except that it also constrains the number of vertices in the graph to be *K*.
+
+- `hcp_grid`(*A*): This constraint ensures that the grid graph represented by *A*, which is
+a two-dimensional array of Boolean (0/1) variables, forms a Hamiltonian cycle.
+
+    In a grid graph, each cell is directly connected horizontally and vertically, but not diagonally, to its neighbors. Only cells labeled 1 are considered as vertices of the graph. This constraint is
+    implemented as follows by using `hcp`:
+
+        hcp_grid(A) =>
+            NRows = len(A),
+            NCols = len(A[1]),
+            Vs = [{(R,C), A[R,C]} :
+            R in 1..NRows,
+            C in 1..NCols],
+            Es = [{(R,C), (R1,C1), _} :
+            R in 1..NRows,
+            C in 1..NCols,
+            (R1,C1) in neibs(A,NRows,NCols,R,C)],
+            hcp(Vs,Es).
+
+        neibs(A,NRows,NCols,R,C) =
+            [(R1,C1) : (R1,C1) in [(R-1,C), (R+1,C),
+            (R,C-1), (R,C+1)],
+            R1 >= 1, R1 =< NRows,
+            C1 >= 1, C1 =< NCols,
+            A[R1,C1] !== 0].
+
+- `hcp_grid`(*A*,*Es*): The same as `hcp_grid`(*A*), except that it also restricts the edges to *Es*, which consists of triplets of the form *{V1,V2,B}*. 
+
+    In a triplet in *Es*, *V1* and *V2* take the form *(R,C)*, where *R* is a row number and *C* is a column number, and *B* is a Boolean variable, which denotes that *V1* is connected to *V2* by an edge in the graph if and only if *B = 1*. If *Es* is a variable, then it is bound to the edges of the grid graph.
+
+- `hcp_grid`(*A*,*Es*,*K*): The same as
+`hcp_grid`(*A*,*Es*), except that it also constrains the number of vertices in the graph to be *K*.
+
+- `increasing`(*List*): The *List* is in (non-strictly) increasing order.
+
+- `increasing_strict`(*List*): The *List* is in strictly increasing order.
+
+- `lex_le`(*List 1*,*List 2*): List 1 is lexicographically less than or equal to List 2. 
+
+- `lex_lt`(L1 ,L2 ): (*List 1*,*List 2*): List 1 is lexicographically less than to List 2. 
+
+- `matrix_element`(*Matrix*,*I*,*J*,*V*): True if the entry at *<I,J>* in *Matrix* is *V*, where all are integer-domain variables.
+
+- `matrix_element0`(*Matrix*,*I*,*J*,*V*): The same as `matrix_element`, except that it uses 0-based, rather than 1-based, indexing.
+
+- `neqs`(*NeqList*): *NeqList* is a list of inequality constraints of the form `X #!= Y` , where `X` and `Y` are integer-domain variables. This constraint is equivalent to the conjunction of the inequality constraints in *NeqList*, but it extracts `all_distinct` constraints from the inequality constraints
+
+- `nvalue`(*N*,*List*): The number of distinct values in *List* is *N*, where *List* is a list of integer-domain variables.
+
+- `path`(Vs*,*Es*,*Src*,*Dest*): The undirected graph represented by *Vs* and *Es* has a path from *Src* to *Dest*. [*see hcp for how the graph is defined*]
+    
+    Note that the graph is assumed to be undirected. If there exists a triplet *{V1,V2,B}* in *Es*, then the triplet *{V2,V1,B}* will be added to *Es* if it is not specified.
+
+- `path_d`(*Vs*,*Es*,*Src*,*Dest*): The same as
+`path`(*Vs*,Es,*Src*,*Dest*), except that the graph is directed.
+
+- `regular`(*List*,*Q*,*S*,*M*,*Q0*,*F*): Given a finite automaton (DFA or NFA) of *Q* states numbered *1, 2,...,Q* with input *1..S*, transition matrix *M* , initial state *Q0 (1 ≤ Q0 ≤ Q)*, and a list of accepting states *F*, True if the *List* is accepted by the automaton.
+
+    The transition matrix M represents a mapping from 1..Q × 1..S to 0..Q, where 0 denotes
+    the error state. For a DFA, every entry in M is an integer, and for an NFA, entries can be a
+    list of integers.
+
+    The `regular` constraint is covered in the [Constraint book](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf)
+
+- `scalar_product`(*A*,*X*,*Product*): The scalar product of A and X is *Product*, where
+*A* and *X* are lists or arrays of integer-domain variables, and *Product* is an integer-domain variable. *A* and *X* must have the same length.
+
+• `scalar_product`(*A*,*X*,*Rel*,*Product*): The scalar product of A and X has the relation *Rel* with *Product*, where *Rel* is one of the following operators: `#=`, `#!=`, `#>=`, `#>`,
+`#=<` (or `#<=`), and `#<`.
+
+- `scc`(*Vs*,*Es*):The undirected graph represented by *Vs* and
+*Es* is strongly connected.
+[*see hcp for how the graph is defined*]
+
+    Note that the graph is assumed to be undirected. If there exists a triplet *{V1,V2,B}* in *Es*, then the triplet *{V2,V1,B}* will be added to *Es* if it is not specified
+
+- `scc`(*Vs*,*Es*,*K*): The same as `scc`(*Vs*,*Es*), except that it also constrains the number of vertices in the graph to be *K*.
+
+- scc_grid(A): This constraint ensures that the grid graph represented by A, which is a
+two-dimensional array of Boolean variables, forms a strongly connected undirected graph.
+
+    In a grid graph, each cell is directly connected horizontally and vertically, but not diagonally, to its neighbors. Only cells labeled 1 are considered as vertices of the graph. 
+    
+    This constraint
+is implemented as follows by using `scc`:
+
+        scc_grid(A) =>
+            NRows = len(A),
+            NCols = len(A[1]),
+            Vs = [{(R,C), A[R,C]} :
+            R in 1..NRows,
+            C in 1..NCols],
+            Es = [{(R,C), (R1,C1), _} :
+            R in 1..NRows,
+            C in 1..NCols,
+            (R1,C1) in neibs(A,NRows,NCols,R,C),
+            (R,C) @< (R1,C1)],
+            scc(Vs,Es).
+
+        neibs(A,NRows,NCols,R,C) =
+            [(R1,C1) : (R1,C1) in [(R-1,C), (R+1,C),
+            (R,C-1), (R,C+1)],
+            R1 >= 1, R1 =< NRows,
+            C1 >= 1, C1 =< NCols,
+            A[R1,C1] !== 0].
+
+Note that there is an edge between each pair of neighboring cells in the resulting graph as
+long as the cells are in the graph.
+
+- `scc_grid`(*A*,*K*): The same as `scc_grid`(*A*,*Es*), except that it also
+constrains the number of vertices in the graph to be *K*.
+
+- `scc_d`(*Vs*,*Es*): The directed graph represented by *Vs* and
+*Es* is strongly connected, where *Vs* and *Es* are the same as those in scc(*Vs*,*Es*), except
+that the graph is directed.
+
+- `scc_d`(*Vs*,*Es*,*K*): The same as `scc_d`(*Vs*,*Es*), except that it also
+constrains the number of vertices in the graph to be *K*.
+
+- `serialized`(*Starts*,*Durations*): This constraint describes a set of non-overlapping
+tasks, where *Starts* and *Durations* are lists of integer-domain variables, and the lists have
+the same length. Let *Os* be a list of *1s* that has the same length as *Starts*. This constraint is
+equivalent to cumulative(*Starts*,*Durations*,*Os*,*1*).
+
+- `subcircuit`(*List*): This constraint is the same as circuit(*List*), except
+that not all of the vertices are required to be in the circuit. If the *ith* element of *List* is *i*, then the vertex *i* is not part of the circuit.
+
+- subcircuit_grid(A): This constraint ensures that the grid graph represented by A,
+which is a two-dimensional array of Boolean (0/1) variables, forms a Hamiltonian cycle. In
+a grid graph, each cell is directly connected horizontally and vertically, but not diagonally,
+to its neighbors. Only non-zero cells are considered as vertices of the graph.
+
+• subcircuit_grid(A,K): This constraint is the same as
+subcircuit_grid(A), except that it also constrains the number of vertices in the graph
+to be K,
+
+- `tree`(Vs,Es): This constraint ensures that the undirected graph represented by Vs and
+Es is a tree. [*see `hcp` for how the graph is defined*]
+
+    Note that the graph to be constructed is assumed to be undirected. If there exists a triplet *{V1,V2,B}* in *Es*, then the triplet *{V2,V1,B}* will be added to *Es* if it is not specified
+
+- `tree`(*Vs*,*Es*,*K*): The same as `tree`(*Vs*,*Es*), except that it also constrains the number of vertices in the tree to be *K*.
+
 ## Constraint Example: Advent of Code 2016 Day 15
 
 https://adventofcode.com/2016/day/15
->Part of the sculpture is even interactive! When a button is pressed, a capsule is dropped and tries to fall through slots in a set of rotating discs to finally go through a little hole at the bottom and come out of the sculpture. If any of the slots aren't aligned with the capsule as it passes, the capsule bounces off the disc and soars away. You feel compelled to get one of those capsules.
+
+The problem from AOC:
+>When a button is pressed, a capsule is dropped and tries to fall through slots in a set of rotating discs to finally go through a little hole at the bottom and come out of the sculpture. If any of the slots aren't aligned with the capsule as it passes, the capsule bounces off the disc and soars away. You feel compelled to get one of those capsules.
 >
 >The discs pause their motion each second and come in different sizes; they seem to each have a fixed number of positions at which they stop. You decide to call the position with the slot 0, and count up for each position it reaches next.
 >
@@ -1968,7 +2297,6 @@ A key feature of logic programming languages is implicit backtracking from failu
 
 # TODO 
 
-- #= domain variable
 - accumulator for base case
 - length is not a constraint, but sum [1: X in …] is
 - $ means literal
@@ -1977,6 +2305,7 @@ A key feature of logic programming languages is implicit backtracking from failu
 - “” vs ‘’ string (check this one)
 - 2d array notation. link to rosetta code
 - time and time2
+- Add solver arguments maybe?
 
 
 
@@ -2210,6 +2539,14 @@ The Picat manual can be terse and doesn't provide examples for everything. Here'
 - Picat also has `cond`, but it's only mentioned in an example about Fibonacci and isn't in the index. It was ChatGPT who told me about it.
 
 - `-->` The manual says this syntax supports DCG (Definite Clause Grammar) rules. I don't know much about these and the Prolog manual talks about the `phrase` predicate for processing them, which Picat doesn't seem to have. And without some examples, I'm not sure what I'd use them for. Would they make better/easier parsers for LL, LR or CFG grammars? I do not know.
+
+- In the `neqs` constraint the manual says, "This constraint is equivalent to the conjunction of the inequality constraints in *NeqList*, but it extracts `all_distinct` constraints from the inequality constraints." I don't know what "extracts" means here. Does it not honor `all_distinct`? Something else?
+
+- I don't understand how to use the graph-based constraints: acyclic, hcp, scc, tree, etc. I would like some example.
+
+- The `regular` constraint is covered in https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf, but I need to reread a few dozen more times!
+
+- Table constraints are coverd in the manual and the Constraint solving book. They are also hard for me to grok.
 
 
 

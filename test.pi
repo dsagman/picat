@@ -1,22 +1,22 @@
+% inspired by https://www.hakank.org/picat/arith.pi
+
 import cp.
 
-main =>
-    Edges = [('A', 'B'), ('A', 'D'),
-             ('B', 'S'),
-             ('C', 'H'),
-             ('D', 'S'), ('D', 'H'),
-             ('S', 'I'),
-             ('F', 'I'),
-             ('G', 'J'),
-             ('H', 'J'), ('H', 'K'),
-             ('I', 'J'), ('I', 'L'),
-             ('J', 'K'), ('J', 'L'),
-             ('K', 'M'), ('K', 'P'), ('K', 'N'),
-             ('L', 'O'),
-             ('M', 'N'), ('M', 'O'),
-             ('N', 'E'),
-             ('O', 'E'),
-             ('Q', 'L')],
-EdgeVars = [(Edge, V) : Edge in Edges, V :: 1..24],
-sum([V : (_, V) in EdgeVars]) #= 30,
-println(EdgeVars).
+main => 
+    N :: 1..100, 
+    X = new_list(5),
+    X :: 1..100,
+    Y :: 0..100000,
+    increasing_strict(X),
+    foreach(I in 1..X.len-1)
+        X[I+1] #= X[I]+I
+    end,
+    X[1] #> N,
+    prod(X)#<Y,
+
+    solve([$max(X[1])],X ++ [Y]),
+
+    println(y=Y),
+    println(x=X),
+    println(n=N).
+
