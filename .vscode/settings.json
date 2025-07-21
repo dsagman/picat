@@ -1,0 +1,35 @@
+{
+    "cSpell.enabledFileTypes": {
+        "markdown": true
+    },
+    "cSpell.words": [
+        "autograde",
+        "autograder",
+        "backtrackable",
+        "cleanroom",
+        "CPLEX",
+        "dilithium",
+        "elerium",
+        "Håkan",
+        "ipicat",
+        "Karlova",
+        "Kjellerstrand",
+        "Neng",
+        "Picat",
+        "println",
+        "Satisfiability",
+        "smush",
+        "Sudoku",
+        "uninstantiated",
+        "Zhou"
+    ],
+    "cSpell.languageSettings": [
+    {
+      "languageId": "markdown",
+      "ignoreRegExpList": [
+        "/^\\s*```[\\s\\S]*?^\\s*```/gm", // Matches fenced code blocks (```language ... ```)
+        "/`.*`/" // Matches inline code blocks (`code`)
+      ]
+    }
+  ]
+}
