@@ -2153,13 +2153,6 @@ B = compare_terms(2,2). % B = 0
 C = compare_terms(2,5). % C = -1
 ```
 
-
-
-## Helper functions for accumulating results
-
-....Haskell fold....
-
-
 ## Example: Global fact = Global state
 The below code recursively parses parenthesis but has different requirements for part 1 and part 2. To do this it uses a global fact: `part(n)` to change the behavior of `parse1` function. The fact is changed from `part(1).` to `part(2).` with the `cl_facts()` command that updates the global fact dictionary.
 
@@ -2321,15 +2314,49 @@ God speed.
 
 
 
+## Helper functions for accumulating results
+
+Haskell (and other languages) have the concept of a *fold* to apply an operation to pairs of elements in a list and accumulate the result. For example:
+
+```
+(Haskell)
+foldl (+) 0 [1..10] -- outputs 55
+```
+And you can leave out the base case with `foldl1` or `foldr1`.
+```
+(Haskell)
+foldl1 (+) [1..10] -- still 55
+```
+
+Picat doesn't have this base case, so you need to include the accumulator in the arguments or call a helper function with the default base case, often `0` or `[]`. The Picat manual gives this example:
+
+```
+min_max([H|T],Min,Max) =>
+    min_max_helper([H|T],H,Min,H,Max).
+
+min_max_helper([],CMin,Min,CMax,Max) => Min = CMin, Max = CMax.
+min_max_helper([H|T],CMin,Min,CMax,Max) =>
+    min_max_helper(T,min(CMin,H),Min,max(CMax,H),Max).
+```
+
+This is not unique to Picat and is common in functional programming with the use of functions named `go` or `aux` often used. Here's an example from an old version of the [Haskell compiler code](https://downloads.haskell.org/~ghc/7.0.3/docs/html/libraries/base-4.3.1.0/src/GHC-Base.html#foldr).
+
+```
+(Haskell)
+    foldr k z = go
+      where
+        go [] = z
+        go (y:ys) = y `k` go ys
+```
+
+
 
 # TODO 
 
-- accumulator for base case
 - $ means literal
 - 2d array notation. link to rosetta code
 - time and time2
 - Add solver arguments maybe?
-
 
 
 # Resources
@@ -2403,7 +2430,6 @@ magic(N) = Square =>
     solve(Square)
 
 ```
-
 
 Here's a potential full solution, this is from the Picat book. https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf
 
@@ -2593,6 +2619,17 @@ foreach (I in 1..100000000)
     end
 end.
 ```
+
+## `time` to calculate execution time
+
+Wrapping predicates and function calls in `time()` will print out the CPU time required. This is more useful for locating more efficient algorithms than basic debugging; after all, I can tell when my fans turn on and there is no output for 5 minutes. For example,
+```
+...a bunch of code...
+time(solve(DVars),
+println(DVars).)
+```
+`time2` will also calculate backtracks, but it doesn't seem to count backtracks from within the `planner` module.
+
 
 # Appendix:  Things I Still Don't Fully Understand
 
