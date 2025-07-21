@@ -1,3 +1,28 @@
+- [What I Wish I Knew When Learning Picat: Introduction](#what-i-wish-i-knew-when-learning-picat-introduction)
+  - [How This Document Is Organized](#how-this-document-is-organized)
+  - [About Picat](#about-picat)
+  - [Picat vs. Other Languages](#picat-vs-other-languages)
+  - [| Logic: Prolog  | + Functions  = Unification, non-determinism, tabling](#-logic-prolog----functions---unification-non-determinism-tabling)
+    - [Picat Has Common Programming Concepts](#picat-has-common-programming-concepts)
+    - [Things Picat Has In Common With Logic Programming (Prolog)](#things-picat-has-in-common-with-logic-programming-prolog)
+    - [Things Picat Has Uniquely (I think)](#things-picat-has-uniquely-i-think)
+    - [Things Picat Doesn't Come With](#things-picat-doesnt-come-with)
+  - [Using the Manual](#using-the-manual)
+  - [Note About Example Code](#note-about-example-code)
+- [Constraint Programming and the Planner](#constraint-programming-and-the-planner)
+  - [Fibonacci and Tabling](#fibonacci-and-tabling)
+  - [Domain Variables and Constraints, `cp` `::`, `#=`](#domain-variables-and-constraints-cp--)
+  - [Constraint Example: Some Numbers that Multiply](#constraint-example-some-numbers-that-multiply)
+  - [What Constraints are there?](#what-constraints-are-there)
+    - [Constraint Operators](#constraint-operators)
+    - [Arithmetic on Lists and Expressions](#arithmetic-on-lists-and-expressions)
+    - [Global Constraints](#global-constraints)
+  - [Constraint Example: Advent of Code 2016 Day 15](#constraint-example-advent-of-code-2016-day-15)
+- [Number of solutions: 2](#number-of-solutions-2)
+- [Message is: RCQPD](#message-is-rcqpd)
+- [Appendix: Things I Still Don't Fully Understand](#appendix-things-i-still-dont-fully-understand)
+
+
 # What I Wish I Knew When Learning Picat: Introduction
 
 July 2025
@@ -2628,7 +2653,7 @@ println(DVars).)
 `time2` will also calculate backtracks, but it doesn't seem to count backtracks from within the `planner` module.
 
 
-# Appendix:  Things I Still Don't Fully Understand
+# Appendix: Things I Still Don't Fully Understand
 
 The Picat manual can be succinct and doesn't provide examples for everything. Here's some stuff I don't know how to use or where I still get confused.
 
