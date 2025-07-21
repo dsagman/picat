@@ -4,7 +4,7 @@ July 2025
 
 I have long been interested in constraint programming, which has been referred to as the "Holy Grail" of programming where the user states the problem and the computer solves it. https://dl.acm.org/doi/fullHtml/10.1145/242224.242304
 
-While this is far from reality, constraint programming can reduce and scan the search space for NP dynamic programming problems without the user having to explictly code the backtracking/search algorithm. Examples include: shortest path, knapsack, n-queens, Soduko and so on. 
+While this is far from reality, constraint programming can reduce and scan the search space for NP dynamic programming problems without the user having to explicitly code the backtracking/search algorithm. Examples include: shortest path, knapsack, n-queens, Sudoku and so on. 
 
 Picat is a great language for learning these concepts and also an interesting general purpose programming language. 
 
@@ -56,12 +56,12 @@ Answer: all of the above.
 
 | Other Language      | Picat                 
 | :----------   | :----                  
-| Imperative: Python, JavaScript   | = Straightforward syntax <br> = Print from any statement to debug  <br> - Libraries are limited <br> - C ommunity is small
+| Imperative: Python, JavaScript   | = Straightforward syntax <br> = Print from any statement to debug  <br> - Libraries are limited <br> - Community is small
 | Functional: Haskell, OCaml | = Functional concepts  <br> - No lambdas
 | Solvers: Z3, MiniZinc  | + Full programming language vs. just a solver
 | Logic: Prolog  | + Functions <br> = Unification, non-determinism, tabling
 ---
-\+ Advantage, = Simliar, - Disadvantage
+\+ Advantage, = Similar, - Disadvantage
 
 ### Picat Has Common Programming Concepts
 
@@ -82,7 +82,7 @@ Answer: all of the above.
 
 Also: Hashmaps, Sets, Ordered Sets and Binary Heaps.
 
-### Things Picat Has In Common With Logic Progmming (Prolog) 
+### Things Picat Has In Common With Logic Programming (Prolog)  
 
 - Variables start with a Capital Letter.
 - Atoms
@@ -111,7 +111,7 @@ More at: https://picat-lang.org/download/picat_compared_to_prolog_haskell_python
 
 https://picat-lang.org/download/picat_guide.pdf
 - The manual is the single most important document for learning Picat. It has everything, but can be very terse, and so must be read closely.
-- The index at the back lists all the commands and hyperlinks to them. I use this more than any other method when programming in Piact.
+- The index at the back lists all the commands and hyperlinks to them. I use this more than any other method when programming in Picat.
 
 ## Note About Example Code 
 
@@ -144,13 +144,13 @@ A=5,B=A+A. %A=5 and B=10.
 
 # Constraint Programming and the Planner
 
-Constraint programming let's you solve problems that require searching through possible solutions. How can you place queens on a chessboard so that no queen is able to take another? (N-queens) Can a knight on chessboard visit every square once and end by returning to its starting square? (Knights tour) The best route for a travelling salesman? (Travelling Salesman) The quickest way out of a maze? (Shortest Path) How best to choose items to fill a suitcase? (Knapsack) How to complete a partially filled Soduku puzzle? (Soduku)
+Constraint programming let's you solve problems that require searching through possible solutions. How can you place queens on a chessboard so that no queen is able to take another? (N-queens) Can a knight on chessboard visit every square once and end by returning to its starting square? (Knights tour) The best route for a traveling salesman? (Traveling Salesman) The quickest way out of a maze? (Shortest Path) How best to choose items to fill a suitcase? (Knapsack) How to complete a partially filled Sudoku puzzle? (Sudoku)
 
 All of these, and many many more can be found via the links in the references section. 
 
 The main concept here is the minimization of a function defined by a set of rules aka constraints. The function has variables whose values are not known, but can be defined to be within a given range.
 
-These variables can be real/floating point values or integers and, in general, real variable solutions are easier to find than integer ones. In most most cases, for integer or "mixed integer" where some of the values are integers, there's no closed form solution. Constraint progamming is NP-Hard. https://en.wikipedia.org/wiki/Integer_programming#Heuristic_methods
+These variables can be real/floating point values or integers and, in general, real variable solutions are easier to find than integer ones. In most most cases, for integer or "mixed integer" where some of the values are integers, there's no closed form solution. Constraint programming is NP-Hard. https://en.wikipedia.org/wiki/Integer_programming#Heuristic_methods
 
 There are many applicable techniques you may have seen in a CS algorithms class: Dijkstra's algorithm, A*, recursion/induction, A/B pruning, branch-and-bound, fail first, breadth first search, depth first search, simplex, gradient descent, satisfiability solver, memoization/tabling or just brute force.
 
@@ -217,7 +217,7 @@ Here's an example. Note that the module `cp` must be imported to use domain vari
 ```
 A :: 1..10 % A is a number between 1 and 10
 ```
-If you type this into the interative Picat REPL, you get: 
+If you type this into the interactive Picat REPL, you get: 
 ```
 A = DV_0104d8_1..10
 ```
@@ -377,29 +377,29 @@ integer-domain variables.
     
     A triplet *{V1,V2,B}* denotes that *V1* is connected to *V2* by an edge in the graph if and only if *B = 1*. 
     
-    The circuit and subcircuit constraints can be implemented as follows by using `hcp`:
+    The `circuit` and `subcircuit` constraints can be implemented as follows by using `hcp`:
+```
+    circuit(L) =>
+        N = len(L),
+        L :: 1..N,
+        Vs = [{I,1} : I in 1..N],
+        Es = [{I,J,B} : I in 1..N,
+        J in fd_dom(L[I]),
+        J !== I,
+        B #<=> L[I] #= J],
+        hcp(Vs,Es).
 
-        circuit(L) =>
-            N = len(L),
-            L :: 1..N,
-            Vs = [{I,1} : I in 1..N],
-            Es = [{I,J,B} : I in 1..N,
-            J in fd_dom(L[I]),
-            J !== I,
-            B #<=> L[I] #= J],
-            hcp(Vs,Es).
-
-        subcircuit(L) =>
-            N = len(L),
-            L :: 1..N,
-            Vs = [{I,B} : I in 1..N,
-            B #<=> L[I] #!= I],
-            Es = [{I,J,B} : I in 1..N,
-            J in fd_dom(L[I]),
-            J !== I,
-            95B #<=> L[I] #= J],
-            hcp(Vs,Es).
-
+    subcircuit(L) =>
+        N = len(L),
+        L :: 1..N,
+        Vs = [{I,B} : I in 1..N,
+        B #<=> L[I] #!= I],
+        Es = [{I,J,B} : I in 1..N,
+        J in fd_dom(L[I]),
+        J !== I,
+        95B #<=> L[I] #= J],
+        hcp(Vs,Es).
+```
 - `hcp`(*Vs*,*Es*,*K*): The same as hcp(Vs,Es), except that it also constrains the number of vertices in the graph to be *K*.
 
 - `hcp_grid`(*A*): This constraint ensures that the grid graph represented by *A*, which is
@@ -407,26 +407,26 @@ a two-dimensional array of Boolean (0/1) variables, forms a Hamiltonian cycle.
 
     In a grid graph, each cell is directly connected horizontally and vertically, but not diagonally, to its neighbors. Only cells labeled 1 are considered as vertices of the graph. This constraint is
     implemented as follows by using `hcp`:
+```
+    hcp_grid(A) =>
+        NRows = len(A),
+        NCols = len(A[1]),
+        Vs = [{(R,C), A[R,C]} :
+        R in 1..NRows,
+        C in 1..NCols],
+        Es = [{(R,C), (R1,C1), _} :
+        R in 1..NRows,
+        C in 1..NCols,
+        (R1,C1) in neibs(A,NRows,NCols,R,C)],
+        hcp(Vs,Es).
 
-        hcp_grid(A) =>
-            NRows = len(A),
-            NCols = len(A[1]),
-            Vs = [{(R,C), A[R,C]} :
-            R in 1..NRows,
-            C in 1..NCols],
-            Es = [{(R,C), (R1,C1), _} :
-            R in 1..NRows,
-            C in 1..NCols,
-            (R1,C1) in neibs(A,NRows,NCols,R,C)],
-            hcp(Vs,Es).
-
-        neibs(A,NRows,NCols,R,C) =
-            [(R1,C1) : (R1,C1) in [(R-1,C), (R+1,C),
-            (R,C-1), (R,C+1)],
-            R1 >= 1, R1 =< NRows,
-            C1 >= 1, C1 =< NCols,
-            A[R1,C1] !== 0].
-
+    neibs(A,NRows,NCols,R,C) =
+        [(R1,C1) : (R1,C1) in [(R-1,C), (R+1,C),
+        (R,C-1), (R,C+1)],
+        R1 >= 1, R1 =< NRows,
+        C1 >= 1, C1 =< NCols,
+        A[R1,C1] !== 0].
+```
 - `hcp_grid`(*A*,*Es*): The same as `hcp_grid`(*A*), except that it also restricts the edges to *Es*, which consists of triplets of the form *{V1,V2,B}*. 
 
     In a triplet in *Es*, *V1* and *V2* take the form *(R,C)*, where *R* is a row number and *C* is a column number, and *B* is a Boolean variable, which denotes that *V1* is connected to *V2* by an edge in the graph if and only if *B = 1*. If *Es* is a variable, then it is bound to the edges of the grid graph.
@@ -486,27 +486,27 @@ two-dimensional array of Boolean variables, forms a strongly connected undirecte
     
     This constraint
 is implemented as follows by using `scc`:
+```
+    scc_grid(A) =>
+        NRows = len(A),
+        NCols = len(A[1]),
+        Vs = [{(R,C), A[R,C]} :
+        R in 1..NRows,
+        C in 1..NCols],
+        Es = [{(R,C), (R1,C1), _} :
+        R in 1..NRows,
+        C in 1..NCols,
+        (R1,C1) in neibs(A,NRows,NCols,R,C),
+        (R,C) @< (R1,C1)],
+        scc(Vs,Es).
 
-        scc_grid(A) =>
-            NRows = len(A),
-            NCols = len(A[1]),
-            Vs = [{(R,C), A[R,C]} :
-            R in 1..NRows,
-            C in 1..NCols],
-            Es = [{(R,C), (R1,C1), _} :
-            R in 1..NRows,
-            C in 1..NCols,
-            (R1,C1) in neibs(A,NRows,NCols,R,C),
-            (R,C) @< (R1,C1)],
-            scc(Vs,Es).
-
-        neibs(A,NRows,NCols,R,C) =
-            [(R1,C1) : (R1,C1) in [(R-1,C), (R+1,C),
-            (R,C-1), (R,C+1)],
-            R1 >= 1, R1 =< NRows,
-            C1 >= 1, C1 =< NCols,
-            A[R1,C1] !== 0].
-
+    neibs(A,NRows,NCols,R,C) =
+        [(R1,C1) : (R1,C1) in [(R-1,C), (R+1,C),
+        (R,C-1), (R,C+1)],
+        R1 >= 1, R1 =< NRows,
+        C1 >= 1, C1 =< NCols,
+        A[R1,C1] !== 0].
+```
 Note that there is an edge between each pair of neighboring cells in the resulting graph as
 long as the cells are in the graph.
 
@@ -1443,7 +1443,7 @@ Phew! Here's the code. And some things to note:
 
 - The problem state is represented by two lists: one with the floor each molecule is on and one with the floor each generator is on.
 - These two arrays are parallel so that the same molecule and generator are paired by index in the problem setup.
-- The names of the molecules/generators are not stored. It is infered by the index into the list, but as you will see, we play fast and loose with this.
+- The names of the molecules/generators are not stored. It is inferred by the index into the list, but as you will see, we play fast and loose with this.
 - The solution speed is very dependent on how the search space is reduced through the constraints. My initial version took 45 seconds for part 1 and 245 seconds for part 2. After many enhancements, the time was reduced to 0.02 and 0.09 seconds, respectively.
 - Here's what made the code run faster:
     - unbounded search (depth first)
@@ -1459,7 +1459,7 @@ Phew! Here's the code. And some things to note:
     - remove `table`. I tried adding `table` everywhere, but it's built into the planner and just slowed things down 
 - I also tried adding a `heuristic` function. In this case it didn't make any difference.
 - In terms of the search method, `best_plan_unbounded` was the fastest. The other methods were about twice as long to complete: `best_plan`, `best_plan_bin`, `best_plan_bb` and `best_plan_nondet`.
-- There a great explantion of how to solve efficiently on Reddit. https://www.reddit.com/r/adventofcode/comments/5hoia9/comment/db1v1ws/
+- There a great explanation of how to solve efficiently on Reddit. https://www.reddit.com/r/adventofcode/comments/5hoia9/comment/db1v1ws/
 - In case you didn't see this syntax elsewhere here `S@[A,B,C]` means that `S` is bound to the list `[A,B,C]` and that it can be referenced wherever you want to use the entire list without decomposing it.
 
 ```
@@ -1752,13 +1752,13 @@ println(A). % If A hasn't been defined/bound then _3d084e8 (or some other memory
 
 The `=` operator performs one function that looks like two. It can assign a variable to an expression for it's first use and it can check the equality of a variable and an expression on subsequent uses. But these are both the same operation: unification. 
 
-Unification is central to logic programming, but it also underlies type inference, type checking and pattern matching in functional programming languages such as Haskell and OCaml. However, unless you have tried to build a type inference engine, you are unlikey to have heard the term used in functional programming. 
+Unification is central to logic programming, but it also underlies type inference, type checking and pattern matching in functional programming languages such as Haskell and OCaml. However, unless you have tried to build a type inference engine, you are unlikely to have heard the term used in functional programming. 
 
 Unification results either in success/true/yes or fail/false/no. The slash here indicates these are the synonyms. The evaluation results in success or failure, the logical value of the evaluation for each respectively is true/false and the Picat interpreter will output `yes` or `no` to indicate this.
 
 Key point: a successful unification results in an unbound variable being bound. Let's look at some examples.
 
-**VERY IMPORTANT:** The explict and central use of unification is the main difference between Prolog and almost all other programming languages. 
+**VERY IMPORTANT:** The explicit and central use of unification is the main difference between Prolog and almost all other programming languages. 
 
 Picat makes it easier for people coming from non-logic programming backgrounds by including functions (see below), `foreach` loops and list comprehensions. 
 
@@ -1877,7 +1877,7 @@ Fun fact: Because a program is a database, you can alter the rules and facts on 
 
 ### The `main` function.
 
-The default entry point for a Picat program is a `main` function. If you call a Picat program from the command line, `main` will be run unless you overrride it.
+The default entry point for a Picat program is a `main` function. If you call a Picat program from the command line, `main` will be run unless you override it.
 
 Also, the standard file extension for Picat is `.pi`.
 
@@ -1959,9 +1959,9 @@ L2 = '[]' ?;
 no
 ```
 
-Technically what is happening here is unification, which we discussed earlier. Unification allows for non-deterministic behavior, which we will go into futher later. But the key point here is what would it be like to write a program with nothing but predicates that work this way? 
+Technically what is happening here is unification, which we discussed earlier. Unification allows for non-deterministic behavior, which we will go into further later. But the key point here is what would it be like to write a program with nothing but predicates that work this way? 
 
-Picat has all of this Prolog-stype behavior, but with functions it's more explicit what the input and output of a called object are. You can use `append` or, if you just want to join two lists, you can do this:
+Picat has all of this Prolog-type behavior, but with functions it's more explicit what the input and output of a called object are. You can use `append` or, if you just want to join two lists, you can do this:
 
 ```
 L3 = L1 ++ L2.
@@ -2155,13 +2155,13 @@ C = compare_terms(2,5). % C = -1
 
 
 
-## Helper functions for accumlating results
+## Helper functions for accumulating results
 
 ....Haskell fold....
 
 
 ## Example: Global fact = Global state
-The below code recursively parses parenthensis but has different requirements for part 1 and part 2. To do this it uses a global fact: `part(n)` to change the behavior of `parse1` function. The fact is changed from `part(1).` to `part(2).` with the `cl_facts()` command that updates the global fact dictionary.
+The below code recursively parses parenthesis but has different requirements for part 1 and part 2. To do this it uses a global fact: `part(n)` to change the behavior of `parse1` function. The fact is changed from `part(1).` to `part(2).` with the `cl_facts()` command that updates the global fact dictionary.
 
 Probably unsafe, but quite neat!
 
@@ -2203,9 +2203,9 @@ Here's an example that simulates a simple assembly language. It invokes the corr
 
 The interesting thing here is that the name of the function is identical to the string in the input. The *cpy* command is performed by the `cpy` function.
 
-The code also makes use of a hash map to store the value of registers and passes state back and forth via unification. Note how `S` isn't explictly returned. It's not a global variable. It's unified with itself resulting in updates meaning it is both input and output.
+The code also makes use of a hash map to store the value of registers and passes state back and forth via unification. Note how `S` isn't explicitly returned. It's not a global variable. It's unified with itself resulting in updates meaning it is both input and output.
 
-The program counter, by contrast, is explictly returned and updated using the function syntax and `:=`.
+The program counter, by contrast, is explicitly returned and updated using the function syntax and `:=`.
 
 One more thing to notice here: the code for converting strings to integers. You may find it useful when parsing input yourself.
 
@@ -2289,7 +2289,7 @@ jnz([X,Y],S,PC) = NPC =>
 
 ## Non-determinism: `?=>` and more `table`
 
-A key feature of logic programming languages is implicit backtracking from failure to try and achieve success. This is also why they lend themselve to constraint programming. 
+A key feature of logic programming languages is implicit backtracking from failure to try and achieve success. This is also why they lend themselves to constraint programming. 
 
 Picat predicates/rules, but not functions, can be defined as backtrackable with `?=>`. The manual provides an example for determining if a a node `Y` is reachable from a node `X` in a graph.
 
@@ -2373,7 +2373,7 @@ God speed.
     from IPython.display import display, HTML, Javascript
     ```
 
-## Optimization/Constraint Programmig Resources
+## Optimization/Constraint Programming Resources
 - COIN-OR open source 
  https://github.com/coin-or/COIN-OR-OptimizationSuite
 - Z3 (Microsoft) https://microsoft.github.io/z3guide/docs/logic/intro/
@@ -2426,7 +2426,7 @@ magic(N) = Square =>
     Sum #= sum([Square[I,N-I+1] : I in 1..N]).
 ```
 
-And the associated grader that puts the result into a file. Consistency in grading is ensured by using the combination of the magic sum and the set solve search method, in this caes: `[ffd,down]`. (Fail first with variable ordered by degree and down variables from largest to smallest.)
+And the associated grader that puts the result into a file. Consistency in grading is ensured by using the combination of the magic sum and the set solve search method, in this case: `[ffd,down]`. (Fail first with variable ordered by degree and down variables from largest to smallest.)
 
 ```
 % grader.pi
@@ -2478,7 +2478,7 @@ Output is below. There's no quote marks around the strings so it's not clear tha
 
 Lists are denoted with `[]` and arrays with `{}`. Lists dynamically allocate memory and accessing elements takes $O(N)$ time. Arrays take a fixed amount of memory and accessing elements is $O(1)$. 
 
-Most Picat functions and predictes are overloaded to work seemlessly on arrays, but not all! And the error isn't always clear that it's a type error.
+Most Picat functions and predicates are overloaded to work seamlessly on arrays, but not all! And the error isn't always clear that it's a type error.
 
 ```
 A = [1,2,3,4], AL = len(A), B=head(A).
@@ -2620,7 +2620,7 @@ The Picat manual can be succinct and doesn't provide examples for everything. He
 
 - Picat also has `cond`, but it's only mentioned in an example about Fibonacci and isn't in the index. ChatGPT pointed me to `cond`.
  
-- `-->` The manual says this syntax supports DCG (Definite Clause Grammar) rules. I don't know much about these and the Prolog manual talks about the `phrase` predicate for processing them, which Picat doesn't seem to have. And without some examples, I'm not sure what I'd use them for. Would they make better/easier parsers for LL, LR or CFG grammars? I do not know.
+<!-- - `-->` The manual says this syntax supports DCG (Definite Clause Grammar) rules. I don't know much about these and the Prolog manual talks about the `phrase` predicate for processing them, which Picat doesn't seem to have. And without some examples, I'm not sure what I'd use them for. Would they make better/easier parsers for LL, LR or CFG grammars? I do not know. -->
 
 - In the `neqs` constraint the manual says, "This constraint is equivalent to the conjunction of the inequality constraints in *NeqList*, but it extracts `all_distinct` constraints from the inequality constraints." I don't know what "extracts" means here. Does it not honor `all_distinct`? Something else?
 
