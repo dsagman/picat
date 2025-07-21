@@ -2313,8 +2313,7 @@ Should you wish, here's some slides about cut from a class I took: https://cours
 God speed.
 
 
-
-## Helper functions for accumulating results
+## Helper Functions for Accumulating Recursive Results
 
 Haskell (and other languages) have the concept of a *fold* to apply an operation to pairs of elements in a list and accumulate the result. For example:
 
@@ -2350,12 +2349,10 @@ This is not unique to Picat and is common in functional programming with the use
 ```
 
 
-
 # TODO 
 
 - $ means literal
 - 2d array notation. link to rosetta code
-- time and time2
 - Add solver arguments maybe?
 
 
