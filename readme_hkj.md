@@ -966,18 +966,24 @@ And here's the code. Some things to note:
 - It doesn't matter which items are in bin 2 vs. bin 3, only that bin 1 represents $\frac{1}{3}$ of the total. 
 - In my initial attempts on the problem I solved for bin 2 and bin3 and it took an order of magnitude longer to solve. 
 - Faster solving depends very much on selecting the right problem to solve!
-- The first algorithm `go_kn` uses a modified version of the knapsack algorithm from the Picat book about constraint solving. https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf It does not use the `cp` solver module, but does use tabling to speed up.
+- The first algorithm `go_kn` uses a modified version of the knapsack algorithm from the [Picat book about constraint solving](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf). It does not use the `cp` solver module. It a standard BFS (or is it DFS) with the amazing `table` to memoize and speed up. 
 - The second algorithm is uses `cp` and `#=` to constrain the solution to the problem statement.
-- Algorithm 1 is much faster than algorithm 2, but both are pretty fast. Interestingly part 1 shows a bigger difference in times than part 2.
+- Algorithm 1 (tabling) is much faster than algorithm 2 (CP), but both are pretty fast. Interestingly part 1 shows a bigger difference in times than part 2.
 
-    |         | Knapsack | CP    |
-    |---------|----------|-------|
-    | Part 1  | 0.005s   | 1.6s  |
-    | Part 2  | 0.001s   | 0.5s  |
+    |         | Knapsack | CP default | CP degree/updown |
+    |---------|----------|-------     | ---------------- |
+    | Part 1  | 0.010s   | 1.6s       | 0.263s           |
+    | Part 2  | 0.001s   | 0.5s       | 0.019s           |
 
-hakank: The CP solution is faster (1.118s -> 0.174 and 0.403s -> 0.011, respectively, on my machine) if you use the labeling (search strategy) degree,updown:
-hakank:    solve($[degree,updown,min(L1), min(QE), 
+- The table has two columns for CP. One is the default search strategy `solve()`, the second specifies `degree` and `updown`, which mean, according to the Manual.
 
+    - `degree`: Variables are first ordered by degree, i.e., the number of connected variables.
+    - `updown`: Values are assigned to variables from the values that are nearest to the middle of the domain.
+
+- A full list of the possible search strategies is on page 100 of the [Manual](https://picat-lang.org/download/picat_guide_html/picat_guide.html#x1-15000012.6).
+- This is where a *little bit of the magic wears off*. Having some sense of your problem and how to search it best does help. On the other hand, you can just try all the methods and see which works best. 
+- It is not usually clear at the outset which will be the fastest method. See pgs 59-61 in the [Picat constraint book](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf) for an example of trying all the combinations of solve options on a Magic Squares problem.
+- **Regardless, I found the CP version of the problem easier to grok and less CS major than the recursive graph search of the standard knapsack. And that's why we're using Picat, right? For the magic of letting the computer search.**
 - As I understand it, Picat does not really support multi-objective optimization with two min/1. So I'm not sure how I got this to work!
 
 
@@ -997,7 +1003,8 @@ main =>
     
 go(Weights,Target,Q) =>
     assign_bin1(Weights,Target,Bins,QE,L1),
-    solve($[min(L1), min(QE), 
+    % solve($[min(L1), min(QE), % using degree and updown is faster
+    solve($[degree,updown,min(L1), min(QE), 
               report(printf("Found %w, %w %w\n", L1, QE, Bins))],
               Bins),
     Bin1Weights = [Weights[I]: I in 1..Weights.length, Bins[I]==0],
@@ -1022,6 +1029,7 @@ go_kn(Weights,Target,Q) =>
 % Val = (Length of Sack, QE)
 % Item is a list of weights
 
+% for the table + is input, - is output, and min is the objective
 table(+,+,-,min)
 knapsack(_,C,Sack,Val), C<=0 =>
     Sack = [], Val = (1,1).
@@ -1295,15 +1303,19 @@ The code is below. Some things to note:
 - This state is passed from each action to the next and modified as needed based on the chosen action.
 - There are two `action` predicates, which are pattern matched on whose turn it is. `0` for the player and `1` for the boss. (And why is Bruce Springsteen always the enemy?)
 - The notation `State@[0,[MaxHP, HP, Mana, BHP, BDamage], Shield, Poison, Recharge, Mode]` binds the variable State to all of the list after the `@` sign. This way it can be referenced in whole in the `Action` variable rather than having to retype all of that.
-- The notation `_` for variables in the `final` predicate mean that the variable isn't being used.
-hakank: This is called a anonymous variable.
+- The notation `_` for variables in the `final` predicate mean that the variable isn't being used. The term of art here is *anonymous variable*. Which is weird to think about. It's still variable, but no one cares.
 - Like Blocks World, this code uses a case statement formed through clauses separated by `;` meaning "or".
 hakank: See the comment above on "case".
 - `sign` is used to avoid having an `if`. For example, `NBHP = BHP - (3 * sign(Poison))` means that if `Poison` is 0, then `sign(Poison)` is 0, but if `Poison` is greater than 0, `sign` returns 1. It didn't run any faster, but I felt like a boss for writing it this way.
-hakank: Indeed, this is a neat trick!
-- The list of possible spells is built up by addition rather than starting with all and removing. At first I tried removing, but the logic was complex and hard to implement. Adding allowed spells was much more straightforward to code.
-hakank: What do you mean by addition (and removing) here? I'm guessing that you mean the concatenation (++/2) of the list. This shows the feature of reassignement in Picat (not available in standard Prolog).
-hakank: Perhaps you also should comment about the role of member/2? It's a powerful concept for generating all possible values.
+- The list of possible spells is built up by addition, `++`, rather than starting with all and removing. At first I tried removing, but the logic was complex to use `delete` and hard to implement. Accumulating allowed spells was much more straightforward to code.
+- Also, the ability to reassign, `:=`, or what the functional people call *mutability*, can be very handy. *Unsafe* as the functional crowd calls it, yes, but oh so nice. However, like any good weapon, one must be careful to not cut off your own foot, so be careful when reassigning variable values. Standard Prolog, fyi, has only immutable variables.
+- **The key to this problem is trying all of the possible spells that are available. That's where `member` comes in.** This line
+
+    `member([Spell,SpellMana],Spells`
+
+    means: non-deterministically select a pair of values from the `Spells` list and then try all the other ones. Or at least all the other ones that meet the criteria of the solver. **And this is the holy grail.** While I have some sense of which values will be picked and how the selection happens, and while to really get the most out of Picat I do need to know this, I also kind of don't need to know.
+- `member` means not having to learn how to write my own depth-first (DFS) or breadth-first search (BFS). **How cool is this?**
+
 ```
 import planner.
 import math.
@@ -1550,7 +1562,6 @@ Phew! Here's the code. And some things to note:
 
 - The problem state is represented by two lists: one with the floor each molecule is on and one with the floor each generator is on.
 - These two arrays are parallel so that the same molecule and generator are paired by index in the problem setup.
-hakank: This mention of parallel is clearer than in day 15 above. 
 - The names of the molecules/generators are not stored. It is inferred by the index into the list, but as you will see, we play fast and loose with this.
 - The solution speed is very dependent on how the search space is reduced through the constraints. My initial version took 45 seconds for part 1 and 245 seconds for part 2. After many enhancements, the time was reduced to 0.02 and 0.09 seconds, respectively.
 - Here's what made the code run faster:
