@@ -51,24 +51,6 @@ Consider this a rough draft representing my personal learning curve. This docume
 
  *Title inspired by What I Wish I Knew When I was Learning Haskell, which helped me learn that language. https://github.com/sdiehl/wiwinwlh*
 
- *Many extra thanks to Håkan Kjellerstrand for editing a draft of this document, and always being ready to answer any question on Picat.*
-
-## Why Am I Interested in Optimization?
-
-My interest in optimization goes back to when I worked on the Optimization Subroutine Library at IBM Kingston in my first job out of college in 1989.
-IBM needed a technical writer for the manual who had a background in computing and math, and as a dual CS/Math major with a writing minor, who also happend to have a father who worked at IBM for 30 years, I was the perfect person.
-
-OSL was a cutting edge Simplex and interior-point barrier method linear optimimzation library of subroutines for IBM mainframes that worked with Fortran, APL, and hard-core 360 Assembly. 
-It could also take advantage of the "vector processing facility" to do multiple operations simultaneously. Today we call that SIMD.
-
-This was software that cost in the hundreds of thousands of dollars and ran on machines that cost millions. But it was in great demand nonetheless: Airlines and trucking companies used OSL for scheduling, oil and gas companies for evaluating the potential of drill sites. 
-
-Nowadays, you can just download for free any of a number of linear programming libraries and run them on your laptop with more compute than any 1990s mainframe. However, at the time, and still today, the math at the center of this is over my head, which is why **I find Picat so appealling. It's a chance to learn about optimization with the linear algebra available, but not required.**
-
-*Fun fact: A couple the researchers from IBM who wrote much of OSL, John Forrest and John Tomlin, were and are instrumental in COIN-OR, an open source optimization software initative. John Forrest was not the friendliest to a young technical writer, but John Tomlin was as kind as possible.
-https://www.informs.org/Recognizing-Excellence/Award-Recipients/John-Forrest 
-https://www.coin-or.org/coinCup/coinCup2007Winner.html*
-
 ## How This Document Is Organized
 
 This document has the following primary sections:
@@ -85,26 +67,28 @@ This document has the following primary sections:
 
 ## About Picat
 
-What is Picat?
+Picat is:
+hakank: Should this be a question: What is Picat? 
 
 1. A dynamically typed hybrid of imperative, logic, functional and constraint programming. 
 2. A programming language with support for Boolean Satisfiability (SAT), Mixed-Integer Programming (MIP), Satisfiability Modulo Theories (SMT), and Finite Domain (FD) Constraint Programming (CP) solvers.
-3. Combines some of the best ideas of Prolog, Python, Haskell, MiniZinc/z3, OR-Tools.
+3. Combines some of the best ideas of Prolog, Python, Haskell, MiniZinc/z3, OR-Tools, COIN-OR.
+   hakank: Why COIN-OR?
 3. A wonderful resource for learning logic and constraint programming.
 
 Answer: all of the above.
 
 ## Picat vs. Other Languages
 
-Let's look at how Picat stacks up against some programming languages you may know.
 
 | Other Language      | Picat                 
 | :----------   | :----                  
 | Imperative: Python, JavaScript   | = Straightforward syntax <br> = Print from any statement to debug  <br> - Libraries are limited <br> - Community is small
 | Functional: Haskell, OCaml | = Functional concepts  <br> - No lambdas
 | Solvers: Z3, MiniZinc  | + Full programming language vs. just a solver
-| Logic: Prolog  | + Functions <br> = Unification, non-determinism, tabling <br> = Most "standard" Prolog features
-
+| Logic: Prolog  | + Functions <br> = Unification, non-determinism, tabling
+  hakank: Picat has support for most of "standard" Prolog features, except good support for meta-interpreters and operator definitions.
+          Many of (B-)Prolog's features are available using the bp module, but that is not documented.
 ---
 \+ Advantage, = Similar, - Disadvantage
 
@@ -113,15 +97,14 @@ Let's look at how Picat stacks up against some programming languages you may kno
 | Concept            |  Picat                        |
 | :----------------  | :------                     |
 | Comments          | `% percent sign for comments. no block comments |
-| Variables          | `A=5, B=3.4, C=(1234 mod 7).` <br> Note: Variables start with a capital letter in Picat.| 
+| Variables          | `A=5, B=3.4, C=(1234 mod 7).` | hakank: Perhaps note that they must be uppercase?
 | Strings            | `println("Hello World.")` |
 | Linked Lists       | `MyList =[3,4,6,1,56,123.65,"a string?",[a,sub,list]]` |
 | Arrays (O(n) access)  | `My2DArray = {{1,2},{3,4}}, println(My2dArray[1,2]).` |
 | List Comprehension |  `Xs = [X : X in 1..5, X != 2].`   |
 | Pattern Matching   |  `head([H\|T])=H.`  |
 | Loops              |  `foreach (X in MyList) Y=X*X,println(X) end.` |
-| Recursion          | `fib(0)=1. fib(1)=1. fib(N)=fib(N-1)+fib(N-2).`|  
-| Functions       | `double(X) = R => R = X*2` |
+| Recursion          | `fib(0)=1. fib(1)=1. fib(N)=fib(N-1)+fib(N-2).`|  % hakank: I would also label this as "Functions"
 | Output           |  `print()`, `println()`, `printf()`  |
 | Input             | `read_file_lines("datafile.txt").`|
 | Higher Order Functions| `map(reverse,MyStringList).` or `MyStringList.map(reverse).`|  % Or using list comprehensions
@@ -137,20 +120,14 @@ hakank: Don't forget "global" variables using get_global_map() etc
 - Finite Domain Variables
 - Tabling (Automatic Memoization)
 - Non-Determinism
-- Definite Clause Grammar (DCG) (Although I don't know how to use them. So if you do, please let me know.)
-
+hakank: I'm not sure if you have tested DCGs, Definite Clause Grammar. Unfortunately only mentioned at page 44.
 
 ### Things Picat Has Uniquely (I think)
 
 - Planner
-
-    There is a planner definition language, [PDDL](https://planning.wiki/guide/whatis/pddl), but it is not a general progamming language like Picat, and I did not find it very easy to learn.
-
-- Solver polymorphism + Turing Complete
-
-    While DSL languages such as MiniZinc is designed to work with multiple backend solvers, and languages such as Prolog and Python are Turing Complete with bindings to solvers, the integrated nature of Picat's solvers along with being a full programming language does stand out as unique.
-    
-
+- Solver polymorphism
+- Full programming language
+  hakank: "Full programming language" compared to what? Prolog is a Turing compliant programming language.
 
 ### Things Picat Doesn't Come With
 
@@ -179,7 +156,9 @@ For example:
 ```
 A=5. % A=5. 
 ```
-But `A` is only `5` in this clause. After the `.`, `A` goes out of scope.
+But `A` only equals `5` in this clause. After the `.`, `A` goes out of scope.
+
+hakank: "equals" is perhaps not the best way of describing this. Prolog people would say "A is unified with 5". I might have said "A is 5".
 
 And if you prefer spaces around your operators, please go ahead.
 
@@ -201,11 +180,14 @@ A=5,B=A+A. %A=5 and B=10.
 
 Constraint programming let's you solve problems that require searching through possible solutions. How can you place queens on a chessboard so that no queen is able to take another? (N-queens) Can a knight on chessboard visit every square once and end by returning to its starting square? (Knights tour) The best route for a traveling salesman? (Traveling Salesman) The quickest way out of a maze? (Shortest Path) How best to choose items to fill a suitcase? (Knapsack) How to complete a partially filled Sudoku puzzle? (Sudoku)
 
-All of these, and many many more can be found via the links in the [resources](#resources) section. 
+All of these, and many many more can be found via the links in the references section. 
 
-The main concept here is the minimization of a function defined by a set of rules aka constraints. The function has variables whose values are not known, but can be defined to be within a given range. These are called "decision variables," and differ from normal variables.
+The main concept here is the minimization of a function defined by a set of rules aka constraints. The function has variables whose values are not known, but can be defined to be within a given range.
 
-Decision variables can be real/floating point values or integers, and in most most cases, there's no closed form solution to obtain their values. Constraint programming is NP-Hard. https://en.wikipedia.org/wiki/Integer_programming#Heuristic_methods
+These variables can be real/floating point values or integers and, in general, real variable solutions are easier to find than integer ones. In most most cases, for integer or "mixed integer" where some of the values are integers, there's no closed form solution. Constraint programming is NP-Hard. https://en.wikipedia.org/wiki/Integer_programming#Heuristic_methods
+
+hakank: I would have introduced "decision variables" somewhere in that paragraph, to keep them distict from plain "variables".
+hakank: I'm not sure I understand (or agree with) "real variable solutions are easier to find than integer ones". In Linear Programming this is true, but that's not really a fair comparison.
 
 There are many applicable techniques you may have seen in a CS algorithms class: Dijkstra's algorithm, A*, recursion/induction, A/B pruning, branch-and-bound, fail first, breadth first search, depth first search, simplex, gradient descent, satisfiability solver, memoization/tabling or just brute force.
 
@@ -213,9 +195,12 @@ A solution is found through iteration and any efficiency over brute force is thr
 
 These algorithms can reduce the time to find a solution from hours to fractions of a second, but learning all of them and implementing them for a specific problem can be challenging. Enter Picat!
 
-Picat has multiple built-in solvers: Boolean Satisfiability (SAT), Mixed-Integer Programming (MIP), Satisfiability Modulo Theories (SMT), and Finite Domain (FD) Constraint Programming (CP). Incredibly, the interface to all of them is largely the same. This lets you switch between CP and SAT, for example by just changing and `import` statement. 
+Picat has multiple built-in solvers: Boolean Satisfiability (SAT), Mixed-Integer Programming (MIP), Satisfiability Modulo Theories (SMT), Finite Domain (FD) Constraint Programming (CP), and a Planner for shortest path/minimum cost. 
 
-There's also the amzaing a Planner for finding minimum cost solutions to problems expressed via actions on a global state. 
+Incredibly, the interface to all of them is essentially the same. This lets you switch between CP and SAT, for example by just changing and `import` statement. 
+
+hakank: "the interface to all of them" is a little misleading since the planner module is a completely different beast from the other four solvers.
+
 
 ## Fibonacci and Tabling
 
@@ -242,8 +227,8 @@ main =>
 
 The solution is to memoize the values into a hash table after they are computed so that they can be looked up rather than brute forced on subsequent calls.
 
-Picat (and many Prolog solutions) make this ridiculously easy. Here's the revised code.
-
+Picat (and Prolog) make this ridiculously easy. Here's the revised code.
+hakank: Note that tabling is not standard in Prolog. Most Prolog supports it, but one major player, SICStus Prolog, does not.
 
 ```
 main =>
@@ -265,11 +250,11 @@ CPU time 0.013 seconds.
 ---------------------------------
 
 ```
-## Domain/Decision Variables and Constraints, `cp` `::`, `#=`
+## Domain Variables and Constraints, `cp` `::`, `#=`
 
-The core idea of constraint programming are decision variables, which are variables that have a range of potential values that are then solved by adding conditions/constraints they must meet. 
+The core idea of constraint programming are domain variables, which are variables that have a range of potential values that are then solved by adding conditions/constraints they must meet.
 
-Terminology Note: the Picat manual calls these *domain* variables and the common term of art is *decision* variable. According to [IBM](https://www.ibm.com/docs/en/icos/22.1.1?topic=expressions-domains-variables), a decision variable has a domain. So there you go. I will largely use *domain* because I cut-and-pasted a good bit from the manual.
+hakank: I'm not against "domain variables", and the Picat guide uses it. But the common term is "decision variable".
 
 Here's an example. Note that the module `cp` must be imported to use domain variables.
 ```
@@ -294,6 +279,9 @@ It's also easy to make a list or array of domain variables. Here's a contrived p
 Let's say we want to find a sequence of 5 numbers between 1 and 100 where their product is less than 100000, but where the first number is as large as possible (but between 1 and 100).
 
 ```
+% inspired by https://www.hakank.org/picat/arith.pi
+hakank: Is this the correct reference? My example is quite different from your much more fun example.
+
 import cp.
 
 main => 
@@ -325,10 +313,9 @@ n = 5
 
 There's lots of constraints that can be applied to via a constraint operator or to a list or expression of domain variables and global constraints. 
 
-Picat has implemented quite a few constraints, but there are so, so, so many more. Hakan has implemented more of them here: https://www.hakank.org/picat/#global.
+*Rabbit Hole: Picat has implemented a lot of constraints, but there are so, so, so many more. There's even a [Global Constraint Catalog!](https://sofdem.github.io/gccat/gccat/sec5.html) Take a look at your own peril to your free time.*
 
-*Rabbit Hole:  There's even a [Global Constraint Catalog!](https://sofdem.github.io/gccat/gccat/sec5.html) Take a look at your own peril to your free time.*
-
+hakank: In case you haven't seen it, I've implemented quite a few global constraints that's not in Picat: https://www.hakank.org/picat/#global .
 
 ### Constraint Operators
 
@@ -2559,7 +2546,7 @@ hakank: The book/site Learn Prolog Now! is quite good for Prolog (and Picat) beg
 ## Code Examples 
 - Rosetta Code. Useful to compare to a language you know https://rosettacode.org/wiki/Category:Picat 
 - The **best** resource https://hakank.org/picat/
-- Hakan's global constraint implementations:  https://www.hakank.org/picat/#global
+hakank: Thank you!
 - Constraint Programming Problems (multiple languages) https://www.csplib.org
 - Advent of Code solutions
     + Neng-Fa Zhou https://github.com/nfzhou/aoc/tree/main
