@@ -110,21 +110,22 @@ Let's look at how Picat stacks up against some programming languages you may kno
 
 ### Picat Has Common Programming Concepts
 
-| Concept            |  Picat                        |
-| :----------------  | :------                     |
-| Comments          | `% percent sign for comments. no block comments |
-| Variables          | `A=5, B=3.4, C=(1234 mod 7).` <br> Note: Variables start with a capital letter in Picat.| 
-| Strings            | `println("Hello World.")` |
-| Linked Lists       | `MyList =[3,4,6,1,56,123.65,"a string?",[a,sub,list]]` |
+| Concept               |  Picat                                          |
+| :----------------     | :------                                         |
+| Comments              | `% percent sign for comments. no block comments |
+| Variables             | `A=5, B=3.4, C=(1234 mod 7).` <br> Note: Variables start with a capital letter in Picat.| 
+| [Numeric Separator](https://rosettacode.org/wiki/Numeric_separator_syntax) | `A=1_000_000.` This is syntactic sugar. |
+| Strings               | `println("Hello World.")` |
+| Linked Lists          | `MyList =[3,4,6,1,56,123.65,"a string?",[a,sub,list]]`|
 | Arrays (O(n) access)  | `My2DArray = {{1,2},{3,4}}, println(My2dArray[1,2]).` |
-| List Comprehension |  `Xs = [X : X in 1..5, X != 2].`   |
-| Pattern Matching   |  `head([H\|T])=H.`  |
-| Loops              |  `foreach (X in MyList) Y=X*X,println(X) end.` |
-| Recursion          | `fib(0)=1. fib(1)=1. fib(N)=fib(N-1)+fib(N-2).`|  
-| Functions       | `double(X) = R => R = X*2` |
-| Output           |  `print()`, `println()`, `printf()`  |
-| Input             | `read_file_lines("datafile.txt").`|
-| Higher Order Functions| `map(reverse,MyStringList).` or `MyStringList.map(reverse).`|  % Or using list comprehensions
+| List Comprehension.   |  `Xs = [X : X in 1..5, X != 2].`                      |
+| Pattern Matching      |  `head([H\|T])=H.`                                    |
+| Loops                 |  `foreach (X in MyList) Y=X*X,println(X) end.`        |
+| Recursion             | `fib(0)=1. fib(1)=1. fib(N)=fib(N-1)+fib(N-2).`.      |  
+| Functions             | `double(X) = R => R = X*2`                            |
+| Output                |  `print()`, `println()`, `printf()`                   |
+| Input                 | `read_file_lines("datafile.txt").`                    |
+| Higher Order Functions| `map(reverse,MyStringList).` or `MyStringList.map(reverse).`| 
 
 Also: Hashmaps, Sets, Ordered Sets and Binary Heaps.
 hakank: Don't forget "global" variables using get_global_map() etc
@@ -151,7 +152,6 @@ hakank: Don't forget "global" variables using get_global_map() etc
     While DSL languages such as MiniZinc is designed to work with multiple backend solvers, and languages such as Prolog and Python are Turing Complete with bindings to solvers, the integrated nature of Picat's solvers along with being a full programming language does stand out as unique.
     
 
-
 ### Things Picat Doesn't Come With
 
 - Classes, Objects   
@@ -168,11 +168,10 @@ https://picat-lang.org/download/picat_guide.pdf
 - The manual is the single most important document for learning Picat. It has everything, but can be very terse, and so must be read closely.
 - The index at the back lists all the commands and hyperlinks to them. I use this more than any other method when programming in Picat.
 
-## Note About Example Code 
+## Some Notes About Example Code 
 
-Each clause in Picat ends with a `.`. In example code each line is fully distinct for variable scope.
-
-`%` begins a comment.
+### Variable Scope
+Each clause in Picat ends with a `.`. In example code each line is fully distinct for variable scope. `%` begins a comment.
 
 For example:
 
@@ -195,6 +194,17 @@ B=A+A. %** Error  : Free variable in expression: '+'
  But using a `,` provides a continuous scope for `A`.
 ```
 A=5,B=A+A. %A=5 and B=10.
+```
+
+### Arity and `/x` notation in predicates and functions
+
+In Prolog and Picat, it's common to refer to a function by the number of arguments it has. This is known as the functions' *arity*. For example, `new_list/1` as in:
+```
+A=new_list(5). % make a list of 5 things
+```
+Why? Because often there's a version of the predicate or function with a different number of arguments.
+```
+A=new_list(5,0). % make a list of 5 things and initialize them all to 0.
 ```
 
 # Constraint Programming and the Planner
@@ -646,9 +656,10 @@ Disc #2 has 2 positions; at time=0, it is at position 1.
 This puzzle is perfect for Picat. Some things to notice:
 
 - Look how long the description is versus the code!
-- The use of parallel lists to encode the problem variables. This is a common approach.
-  hakank: I'm not sure I understand the point of 'parallel lists'. Though it's a little clearer when used in the description of day 11.
-- As the capsule falls, to solve for $T_{start}$ for a given $Disc$ the equation is $(T_{start}+ Distance + Disc_{time-zero}) \mod Disc_{num-positions} = 0$.
+- The use of parallel lists to encode the problem variables. The first list has the number of positions for each disc, `DPos`, and the second list has the position of the disk at time zero, `DTZ`. This is a common approach. 
+- As the capsule falls, the equation for $T_{start}$ for a given $Disc$ is:
+
+    $(T_{start}+ Distance + Disc_{time-zero}) \mod Disc_{num-positions} = 0$
 - We could code this as a `foreach` loop.
     ```
     foreach (D in 1..DPos.len)
@@ -659,8 +670,7 @@ This puzzle is perfect for Picat. Some things to notice:
 - Because we are looking to know the time to press the button, the variable `T` is set to a range of possible values. 
 - The notation `::` means that the variable is within the set of values of the list on the right side of the expression.
 - The notation `1..5` means "a list with items 1 to 5 i.e., [1,2,3,4,5]`
-- We aren't given a range of times, so the program sets the range of the solution T to between 0 and `maxint_small()`, which is not very small. It's 72,057,594,037,927,935.
-  hakank: Thats' 2**56-1, and it the largest possible value that's are allowed in a decision variable, and the smallest value is -2**56-1.
+- We aren't given a range of times, so the program sets the range of the solution T to between 0 and `maxint_small()`, which is not very small: it's 72,057,594,037,927,935, aka $2^{56}-1$, and it the largest possible value that's allowed in a decision variable, and the smallest value is $-2^{56}-1$.
 - `solve` is a predicate and unifies `T` with the solution.
 - If you wanted all the solutions, `solve_all` is a function and looks like `Sols = solve_all(T).`
 - On this problem the `cp` solver is the fastest, but that's not always the case.
@@ -668,13 +678,13 @@ This puzzle is perfect for Picat. Some things to notice:
     | Solver | Part1 | Part2 |
     |--------|-------|-------|
     | cp     | 0.04  | 0.25  |
-    | sat    | DNF   | DNF   |
-    | mip    | 0.4   | 2.4   |
+    | sat*   | 1.88  | 7.32  |
+    | mip    | 0.40  | 2.40  |
 
-  hakank: The reason SAT is so slow here is that the domain of T is so large. Isn't there any way of reducing the domain of T?
-          I use to say that the CP solver tends to be faster than the SAT solver for easy problems, but for harder problem
-          SAT tends to be faster. But most often it's not easy to termine when a problem is easy or hard (apart from testing it).
-          In section "2.4 Minesweeper - Using SAT" in the Picat book (https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf), I'm discussing this a little.
+- The reason SAT is so much sloser is because the domain of T is so large. To get these results the domain was reduced to 10_000_000 to get it to work. 
+- **Important: In general usage, CP solver tends to be faster than SAT for easy problems, but for harder problem SAT tends to be faster. But whether a problem is "easy" or "hard" often can only be determined by testing it.**
+- In section "2.4 Minesweeper - Using SAT" in the [Picat constraint programming book](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf), CP beats SAT for $N \le 430$ and above that SAT wins.
+
 
 ```
 import cp. 
@@ -682,20 +692,20 @@ import cp.
 main =>
     time(Part1 = go([17,3,19,13,7,5],
                     [15,2,4,2,2,0])), %0.04 sec
-    printf("Answer Part 1: %w\n",Part1), % 400589
+    printf("Answer Part 1: %w\n",Part1), % 400_589
 
     time(Part2 = go([17,3,19,13,7,5,11],
                     [15,2,4,2,2,0,0])), % 0.25 sec
-    printf("Answer Part 2: %w\n",Part2). % 3045959
+    printf("Answer Part 2: %w\n",Part2). % 3_045_959
 
 go(DPos,DTZ) = T =>
-    %(Time + Dist + T Zero Position) mod Disc Positions
-    T :: 0..maxint_small(), % 72057594037927935
+    %(Time + Dist + Time Zero Position) mod Disc Positions
+    T :: 0..maxint_small(), % 72_057_594_037_927_935
+    T :: 0..10_000_000, % for SAT also note use of  _ sugar to make large number readable
     sum([(T+D+DTZ[D]) mod DPos[D] : D in 1..DPos.len]) #=0,
-    solve(T).
+    solve([$min(T)],T).
 ```
-hakank: This is neat!
-hakank: Shouldn't that code be in the Git repo? I couldn't find it.
+
 
 ## Constraint Example: Jane Street Bug
 
@@ -716,14 +726,11 @@ https://www.janestreet.com/bug-byte/
 
 In Picat, here's a solution. The nodes and edges are defined and then the constraints about the known values of nodes and possibly values for the edge weights. Each constraint reduces the search space.
 
-A constraint in this program are `all_distinct`, `#=`, `#^` and `#<=`.
-hakank: "_The constraints_ in this program are..."?
+The constraint in this program are `all_distinct`, `#=`, `#^` and `#<=`.
+
 `all_distinct` means that the values of the list of edges are all different from each other. When combined with the previous line that puts them in the range of 1 to 24, that means the edges will contain every possible value between 1 and 24. 
 
-The `#=` constraint syntax means that a valid solution has the left and right side equal. 
-hakank: This description is not wrong, though one could also say something like: left and right sides are _enforced_ (or _ensured_) to be the same.
-This is different from unify, `=`, where the values have to be the same at the time of comparisson. The constraint tells the solver module (in this case `cp`) to try to find a set of values of left and right that can be unified.
-hakank: Does the last sentence refers to the #= constraint? If so, then "unified" is misleading, since that's the role of '='. If it's refering to '=' then the constraint solver has nothing to do with "=".
+The `#=` constraint syntax ensures that the left and right side are equal. Another way to look at this is that the constraint tells the solver module (in this case `cp`) to try to find a set of values of left and right that are equal. 
 
 `#<=` is less than or equal and `#^` is the logical XOR.
 
@@ -737,8 +744,7 @@ The line `EdgeVars = [(Edge, V) : Edge in Edges, V :: 1..24]` results initially 
 [((A,B),_09b8::[1 ..24]),((A,D),_0a80::[1 ..24]),((B,S),_0b48::[1 ..24]),((C,H),_0c10::[1 ..24]),((D,S),_0cd8::[1 ..24]),((D,H),_0da0::[1 ..24]),((S,I),_0e68::[1 ..24]),((F,I),_0f30::[1 ..24]),((G,J),_0ff8::[1 ..24]),((H,J),_010c0::[1 ..24]),((H,K),_01188::[1 ..24]),((I,J),_01250::[1 ..24]),((I,L),_01318::[1 ..24]),((J,K),_013e0::[1 ..24]),((J,L),_014a8::[1 ..24]),((K,M),_01570::[1 ..24]),((K,P),_01638::[1 ..24]),((K,N),_01700::[1 ..24]),((L,O),_017c8::[1 ..24]),((M,N),_01890::[1 ..24]),((M,O),_01958::[1 ..24]),((N,E),_01a20::[1 ..24]),((O,E),_01ae8::[1 ..24]),((Q,L),_01bb0::[1 ..24])]
 ```
 
-The `_xxxx` indicates the memory address of the individual `V` and the `::[1..24]` shows that the variable has a range of possible values that will have to be constrained.
-hakank: The "_xxxx" is not memory a address, it's a unique identifier for the (decision) variable.
+The `_xxxx` is a unique identifier for the individual decision variable `V` and the `::[1..24]` shows that it has a range of possible values that will have to be constrained.
 
 If we added a `sum` constraint:
 
@@ -753,9 +759,14 @@ The result would be:
 [((A,B),_09b8::[1 ..7]),((A,D),_0a80::[1 ..7]),((B,S),_0b48::[1 ..7]),((C,H),_0c10::[1 ..7]),((D,S),_0cd8::[1 ..7]),((D,H),_0da0::[1 ..7]),((S,I),_0e68::[1 ..7]),((F,I),_0f30::[1 ..7]),((G,J),_0ff8::[1 ..7]),((H,J),_010c0::[1 ..7]),((H,K),_01188::[1 ..7]),((I,J),_01250::[1 ..7]),((I,L),_01318::[1 ..7]),((J,K),_013e0::[1 ..7]),((J,L),_014a8::[1 ..7]),((K,M),_01570::[1 ..7]),((K,P),_01638::[1 ..7]),((K,N),_01700::[1 ..7]),((L,O),_017c8::[1 ..7]),((M,N),_01890::[1 ..7]),((M,O),_01958::[1 ..7]),((N,E),_01a20::[1 ..7]),((O,E),_01ae8::[1 ..7]),((Q,L),_01bb0::[1 ..7])]
 ```
 
-hakank: Perhaps clarity that the constraint solver figure out that now the maximum value of of each variable now is 7. Note that sometimes the solver cannot do this domain reduction before the call to solve. I'm not sure if you had read the Picat book, but this - and much more on constraint modeling - is discussed in chapters 2 and 3 in the Picat book. 
+Given the limit of 30 for the sum of all of the decision variables, the constraint solver has determined that the maximum value of each variable now is 7. Note: sometimes the solver cannot do this domain reduction before the call to `solve`. 
 
-But we will need a different set of constraints to solve the bug byte, and here they are!
+We will need a different set of constraints to solve the bug byte, and they are in the code below. But before you look at it, some things to note:
+
+- The comments say that we only need `C`, `F`, and `G` to solve. How was this determined? Through trial and error! Someone smarter than me may have been able to figure it out, but I had to go and manually try and figure out combinations to solve. 
+- This was one of my first Picat programs and it took me a long time and a lot of confusion to start to understand what exactly I was "solving" and how to represent the problem in code.
+- The shortest path code was lifted right out of the Picat book, with a slight modification for this problem. It's a mindbender for me still, and looking at it now, I can't remember how I figured out how to get it working.
+- The shortest path uses `table` and the `(+,+,+,-,min)` indicates that the first three arguments, `Graph`,`X`,`Y`, are inputs, the fourth, `Path`, is an output, and fifth, `WL`, aka weight, is to be minimized.
 
 ```
 import cp.
@@ -871,9 +882,8 @@ save_solution(Solutions) =>
     close(Out).
 ```
 
-hakank: You mention in the comments of KnownPathSums that we only need C, G, and F to reduce the search space, but that's not discussed in the text. Also, it's kind of misleading since one have to manually allow/disallow the combinations of values in KnownPathSums to get some solutions. 
+The output is two potential solutions. Which is close enough for a person to figure out which the right one is. (It's the one that's a word.)
 
-The above outputs two potential solutions.
 ```
 Number of solutions: 2
 =====================
@@ -967,7 +977,8 @@ And here's the code. Some things to note:
 
 hakank: The CP solution is faster (1.118s -> 0.174 and 0.403s -> 0.011, respectively, on my machine) if you use the labeling (search strategy) degree,updown:
 hakank:    solve($[degree,updown,min(L1), min(QE), 
-hakank: Also, as mentioned earlier, Picat does not really support multi-objective optimization with two min/1.
+
+- As I understand it, Picat does not really support multi-objective optimization with two min/1. So I'm not sure how I got this to work!
 
 
 ```
@@ -2551,10 +2562,9 @@ hakank: For some other examples, search for "dcg" or "DCG" at https://hakank.org
 - The Manual https://picat-lang.org/download/picat_guide.pdf 
 - Constraint Solving and Planning with Picat book https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf
 - Karlova University Course https://jbulin.github.io/teaching/fall/nopt042/
-- A ChatGPT version that knows something about Picat. (It can get confused between Picat and Prolog.) https://chatgpt.com/g/g-EEpNUZ9H1-picat-prodigy
-hakan: And - even worse - it can get confused with Picat and Python, and in come cases Picat and Haskell.
+- A ChatGPT version that knows something about Picat. *Warning: It can get confused between Picat, Prolog, Python and Haskell.* https://chatgpt.com/g/g-EEpNUZ9H1-picat-prodigy
 - The SWI-Prolog manual for Prolog-related concepts. https://www.swi-prolog.org/pldoc/doc_for?object=!/0
-hakank: The book/site Learn Prolog Now! is quite good for Prolog (and Picat) beginners: https://lpn.swi-prolog.org/lpnpage.php?pageid=online
+- Learn Prolog Now! for learning Prolog for beginners, which has applicability for Picat given its logic programming roots: https://lpn.swi-prolog.org/lpnpage.php?pageid=online
 
 ## Code Examples 
 - Rosetta Code. Useful to compare to a language you know https://rosettacode.org/wiki/Category:Picat 
@@ -2756,9 +2766,6 @@ hakank:   Welcome to SWI-Prolog (threaded, 64 bits, version 9.2.9)
 hakank: ...
 hakank:   ?- X="Picat".
 hakank:   X = "Picat".
-
-
-
 
 ## Unification vs Assignment
 
