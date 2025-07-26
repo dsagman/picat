@@ -42,11 +42,11 @@ main =>
 
     % Maze = read_file_lines("test24_2016.data").to_array,
     Maze = read_file_lines("day24_2016.data").to_array,
-    save_maze(Maze,"day24_2016_pruned.data"),
-
-    % Neibs are the neibors of each [Y,X] Maze location
+    
+    % Neibs are the neighbors of each [Y,X] Maze location
     % Reqs are the required [Y,X] coordinates to visit
     [Neibs,Reqs] = prune(Maze),
+    save_maze(Maze,"day24_2016_pruned.data"),
     N = Reqs.len,
 
     % Dists is a table of distances between each pair of reqs

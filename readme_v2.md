@@ -163,7 +163,7 @@ hakank: Don't forget "global" variables using get_global_map() etc
 
 - Classes, Objects   
 - Lambdas/Anonymous Functions
-- Strong Typing, Type Hinting, Monads
+- Strong Typing, Type Hinting
 - Monads 
 
 
@@ -1897,12 +1897,12 @@ Attempts and speed:
 
 Attempt 5 eliminated any checks in the `action` predicate. It just finds a path from a given `Start` to `End`. Look how short it is!
 
-- A note on the use of a list element or matrix element as a constraint. In order to constrain on the value of an element in `Dists` we have to use `matrix_element`. Not regular index notation. This had me stuck for a while.
+- **A note on the use of a list element or matrix element as a constraint. In order to constrain on the value of an element in `Dists` we have to use `matrix_element`. Not regular index notation. This had me stuck for a while.**
 ```
     matrix_element(Dists,Path[I+1],Path[I],D)] % works
     Dists[[Path[I+1],Path[I]] : I in 1..N-1] % does not work
 ```
-- Similarly, for a list you will want to use `element(I,List,V )` and not `V #= List[I]`.
+- **Similarly, for a list you will want to use `element(I,List,V )` and not `V #= List[I]`.**
 
 - A note on the repeated use/abuse of `planner`. I had to get Hakan's help to add `table` in front of the `action`, which confused me because I thought `action` was already tabled. But without this extra `table` the code would get stuck somewhere in the loop and this seems to be a bug in Picat. I am using version 3.8#7. By the time you read this, a future version may have fixed it.
 
@@ -1920,7 +1920,7 @@ main =>
     Maze = read_file_lines("day24_2016.data").to_array,
     save_maze(Maze,"day24_2016_pruned.data"),
 
-    % Neibs are the neibors of each [Y,X] Maze location
+    % Neibs are the neighbors of each [Y,X] Maze location
     % Reqs are the required [Y,X] coordinates to visit
     [Neibs,Reqs] = prune(Maze),
     N = Reqs.len,
@@ -2029,7 +2029,16 @@ save_maze(Maze,File) =>
     end.
 ```
 
-The output, with the `show` predicate set to `true` is:
+Here's the upper corner of the "pruned" maze:
+```
+###################################################
+#$$$$$$$#.....#.....#$#$$$$$#$#...#$#$$$$...#$#$.$#
+#$#######.#.#.#.###.#$#####$#$#.#.#$#####.#.#$#####
+#....0#$#.....#.#...#.......#$$.....#$$$#......1#$$
+#.#####$#.#.#.#.#.###.###.#.###.#.#.#$###.#.#.#.###
+```
+
+The output of the above code, with the `show` predicate set to `true` is:
 ```
 vsize_no_prune = 9944
 vsize_prune = 9516
@@ -3025,6 +3034,10 @@ Invariably, I add a new line of code and forget the comma or I accidentally add 
 
 I compensate by adding only a few lines at a time and always saving and rerunning so that I don't have far to hunt for the most recent edit that broke syntax rules.
 hakank: That's a good praxis!
+
+## Trying to use list indexing with decision/domain variable 
+
+When solving constraint problems use `element(I,List,V )` and not `V #= List[I]`. Also `matrix_element` for 2D arrays/lists. I noted this in this [example code](#planner-and-constraint-example-traveling-salesperson).
 
 # Debugging
 

@@ -1,0 +1,38 @@
+
+
+import cp.
+import util. 
+
+main => 
+Schedule = new_array(4,4),
+Schedule :: 1..7,
+
+People = ["Alice","Bob","Carol","David","Emily","Frank","George"],
+Jobs = ["Piano","Prayer","Video","Clean"],
+
+PianoList = [6,7],
+foreach (I in 1..4)
+    % Schedule[1,I] #= 7; Schedule[1,I] #= 6
+    Schedule[1,I] :: 6..7
+    % Schedule[1,I] in PianoList
+end,
+% Week1 = [Schedule[1,I] #= J : I in 1..4, J in PianoList],
+% foreach (C in 1..Schedule.len)
+%     P = Schedule.columns[C]
+% end,
+solve([rand],Schedule),
+print_sched(Schedule,People,Jobs).
+
+print_sched(S,People,Jobs) =>
+    printf("\t"),
+    foreach (I in 1..S[1].len)
+        printf("Week %w\t",I)
+    end,
+    printf("\n"),
+    foreach (I in 1..S.len)
+        printf("%w\t",Jobs[I]),
+        foreach (C in S[I])
+            printf("%w\t",People[C])
+        end,
+        printf("\n")
+    end.
