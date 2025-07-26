@@ -1,17 +1,19 @@
 - [What I Wish I Knew When Learning Picat: Introduction](#what-i-wish-i-knew-when-learning-picat-introduction)
+  - [Why Am I Interested in Optimization?](#why-am-i-interested-in-optimization)
   - [How This Document Is Organized](#how-this-document-is-organized)
   - [About Picat](#about-picat)
   - [Picat vs. Other Languages](#picat-vs-other-languages)
-  - [| Logic: Prolog  | + Functions  = Unification, non-determinism, tabling](#-logic-prolog----functions---unification-non-determinism-tabling)
     - [Picat Has Common Programming Concepts](#picat-has-common-programming-concepts)
     - [Things Picat Has In Common With Logic Programming (Prolog)](#things-picat-has-in-common-with-logic-programming-prolog)
     - [Things Picat Has Uniquely (I think)](#things-picat-has-uniquely-i-think)
     - [Things Picat Doesn't Come With](#things-picat-doesnt-come-with)
   - [Using the Manual](#using-the-manual)
-  - [Note About Example Code](#note-about-example-code)
+  - [Some Notes About Example Code](#some-notes-about-example-code)
+    - [Variable Scope](#variable-scope)
+    - [Arity and `/x` notation in predicates and functions](#arity-and-x-notation-in-predicates-and-functions)
 - [Constraint Programming and the Planner](#constraint-programming-and-the-planner)
   - [Fibonacci and Tabling](#fibonacci-and-tabling)
-  - [Domain Variables and Constraints, `cp` `::`, `#=`](#domain-variables-and-constraints-cp--)
+  - [Domain/Decision Variables and Constraints, `cp` `::`, `#=`](#domaindecision-variables-and-constraints-cp--)
   - [Constraint Example: Some Numbers that Multiply](#constraint-example-some-numbers-that-multiply)
   - [What Constraints are there?](#what-constraints-are-there)
     - [Constraint Operators](#constraint-operators)
@@ -20,7 +22,12 @@
   - [Constraint Example: Advent of Code 2016 Day 15](#constraint-example-advent-of-code-2016-day-15)
 - [Number of solutions: 2](#number-of-solutions-2)
 - [Message is: RCQPD](#message-is-rcqpd)
-- [Appendix: Things I Still Don't Fully Understand](#appendix-things-i-still-dont-fully-understand)
+- [Things I Still Don't Fully Understand](#things-i-still-dont-fully-understand)
+- [Resources](#resources)
+  - [Code Examples](#code-examples)
+  - [Modules](#modules)
+  - [Editor Plugins](#editor-plugins)
+  - [Optimization/Constraint Programming Resources](#optimizationconstraint-programming-resources)
 
 
 # What I Wish I Knew When Learning Picat: Introduction
@@ -56,16 +63,16 @@ Consider this a rough draft representing my personal learning curve. This docume
 ## Why Am I Interested in Optimization?
 
 My interest in optimization goes back to when I worked on the Optimization Subroutine Library at IBM Kingston in my first job out of college in 1989.
-IBM needed a technical writer for the manual who had a background in computing and math, and as a dual CS/Math major with a writing minor, who also happend to have a father who worked at IBM for 30 years, I was the perfect person.
+IBM needed a technical writer for the manual who had a background in computing and math, and as a dual CS/Math major with a writing minor, who also happened to have a father who worked at IBM for 30 years, I was the perfect person.
 
-OSL was a cutting edge Simplex and interior-point barrier method linear optimimzation library of subroutines for IBM mainframes that worked with Fortran, APL, and hard-core 360 Assembly. 
+OSL was a cutting edge Simplex and interior-point barrier method linear optimization library of subroutines for IBM mainframes that worked with Fortran, APL, and hard-core 360 Assembly. 
 It could also take advantage of the "vector processing facility" to do multiple operations simultaneously. Today we call that SIMD.
 
 This was software that cost in the hundreds of thousands of dollars and ran on machines that cost millions. But it was in great demand nonetheless: Airlines and trucking companies used OSL for scheduling, oil and gas companies for evaluating the potential of drill sites. 
 
-Nowadays, you can just download for free any of a number of linear programming libraries and run them on your laptop with more compute than any 1990s mainframe. However, at the time, and still today, the math at the center of this is over my head, which is why **I find Picat so appealling. It's a chance to learn about optimization with the linear algebra available, but not required.**
+Nowadays, you can just download for free any of a number of linear programming libraries and run them on your laptop with more compute than any 1990s mainframe. However, at the time, and still today, the math at the center of this is over my head, which is why **I find Picat so appealing. It's a chance to learn about optimization with the linear algebra available, but not required.**
 
-*Fun fact: A couple the researchers from IBM who wrote much of OSL, John Forrest and John Tomlin, were and are instrumental in COIN-OR, an open source optimization software initative. John Forrest was not the friendliest to a young technical writer, but John Tomlin was as kind as possible.
+*Fun fact: A couple the researchers from IBM who wrote much of OSL, John Forrest and John Tomlin, were and are instrumental in COIN-OR, an open source optimization software initiative. John Forrest was not the friendliest to a young technical writer, but John Tomlin was as kind as possible.
 https://www.informs.org/Recognizing-Excellence/Award-Recipients/John-Forrest 
 https://www.coin-or.org/coinCup/coinCup2007Winner.html*
 
@@ -225,7 +232,7 @@ These algorithms can reduce the time to find a solution from hours to fractions 
 
 Picat has multiple built-in solvers: Boolean Satisfiability (SAT), Mixed-Integer Programming (MIP), Satisfiability Modulo Theories (SMT), and Finite Domain (FD) Constraint Programming (CP). Incredibly, the interface to all of them is largely the same. This lets you switch between CP and SAT, for example by just changing and `import` statement. 
 
-There's also the amzaing a Planner for finding minimum cost solutions to problems expressed via actions on a global state. 
+There's also the amazing a Planner for finding minimum cost solutions to problems expressed via actions on a global state. 
 
 ## Fibonacci and Tabling
 
@@ -765,8 +772,13 @@ We will need a different set of constraints to solve the bug byte, and they are 
 
 - The comments say that we only need `C`, `F`, and `G` to solve. How was this determined? Through trial and error! Someone smarter than me may have been able to figure it out, but I had to go and manually try and figure out combinations to solve. 
 - This was one of my first Picat programs and it took me a long time and a lot of confusion to start to understand what exactly I was "solving" and how to represent the problem in code.
-- The shortest path code was lifted right out of the Picat book, with a slight modification for this problem. It's a mindbender for me still, and looking at it now, I can't remember how I figured out how to get it working.
+- The shortest path code was lifted right out of the Picat book, with a slight modification for this problem. 
 - The shortest path uses `table` and the `(+,+,+,-,min)` indicates that the first three arguments, `Graph`,`X`,`Y`, are inputs, the fourth, `Path`, is an output, and fifth, `WL`, aka weight, is to be minimized.
+- **This Prolog-style shortest path is a mind bender for me still, and it really shows how odd logic programming can feel.** The code says:
+  - If X and Y have an edge between them, that's the shortest path.
+  - If not, the `?=>` on the first rule, then the shortest path is from X to Z and then Z to Y.
+  - What? Huh? How?
+  - Yes, that's it. Picat searches over the entire space and returns the one with the minimum W
 
 ```
 import cp.
@@ -1826,6 +1838,264 @@ stringify([H|T]) = to_string(H)++stringify(T).
 
 ```
 
+## Planner and Constraint Example: Traveling Salesperson
+
+https://adventofcode.com/2016/day/24
+
+Advent of Code has a challenge that is a classic traveling salesperson who has to visit multiple locations and take the overall shortest path.
+
+> --- Day 24: Air Duct Spelunking ---
+> 
+> You've finally met your match; the doors that provide access to the roof are locked tight, and all of the controls and related electronics are inaccessible. You simply can't reach them.
+> 
+> The robot that cleans the air ducts, however, can.
+> 
+> It's not a very fast little robot, but you reconfigure it to be able to interface with some of the exposed wires that have been routed through the HVAC system. If you can direct it to each of those locations, you should be able to bypass the security controls.
+> 
+> You extract the duct layout for this area from some blueprints you acquired and create a map with the relevant locations marked (your puzzle input). 0 is your current location, from which the cleaning robot embarks; the other numbers are (in no particular order) the locations the robot needs to visit at least once each. Walls are marked as #, and open passages are marked as .. Numbers behave like open passages.
+> 
+> For example, suppose you have a map like the following:
+```
+            ###########
+            #0.1.....2#
+            #.#######.#
+            #4.......3#
+            ###########
+```
+> To reach all of the points of interest as quickly as possible, you would have the robot take the following path:
+> 
+>     0 to 4 (2 steps)
+>     4 to 1 (4 steps; it can't move diagonally)
+>     1 to 2 (6 steps)
+>     2 to 3 (2 steps)
+> 
+> Since the robot isn't very fast, you need to find it the shortest route. This path is the fewest steps (in the above example, a total of 14) required to start at 0 and then visit every other location at least once.
+> 
+> Given your actual map, and starting from location 0, what is the fewest number of steps required to visit every non-0 number marked on the map at least once?
+> 
+> Your puzzle answer was 412.
+> 
+> --- Part Two ---
+> 
+> Of course, if you leave the cleaning robot somewhere weird, someone is bound to notice.
+> 
+> What is the fewest number of steps required to start at 0, visit every non-0 number marked on the map at least once, and then return to 0?
+> 
+> Your puzzle answer was 664.
+
+My initial solution took over 4 minutes, and by the time I was done optimizing, it was down to just over 4 seconds. How did I achieve such wizardry? 
+
+*Note: 4 seconds is actually pretty slow compared to the [solutions](https://www.reddit.com/r/adventofcode/comments/5k1he1/2016_day_24_solutions/) others came up with for this problem. But we aren't in this to win, or because we know how to solve this kind of problem with known [algorithms](https://en.wikipedia.org/wiki/Held%E2%80%93Karp_algorithm), but because we wanted to solve it with the holy grail!*
+
+Attempts and speed:
+
+1. A `planner` based solution with the option to move from a given `Maze` location to another if it's in a precomputed set of valid neighbors. As we go, add each Visited required location to a list and compare against the total required list. `Reqs`.
+2. Don't compare the list of visited required locations with `Reqs`, just check its length. (20% speedup)
+3. Rather than building a list of visited, delete from `Reqs` as we visit one. (20% speedup)
+4. Pre-compute dead ends, those locations with only one valid neighbor, and prune them if they aren't in `Reqs`. (25% speedup)
+5. Use `planner` to find all the shortest paths and compute a `Dists` table of distances between all pairs of `Reqs`. Then use `cp` to get the minimum path that meets constraints of the problem. The bulk of the time is the `planner` loop, everything else runs almost instantaneously. (50% speedup) 
+
+Attempt 5 eliminated any checks in the `action` predicate. It just finds a path from a given `Start` to `End`. Look how short it is!
+
+- A note on the use of a list element or matrix element as a constraint. In order to constrain on the value of an element in `Dists` we have to use `matrix_element`. Not regular index notation. This had me stuck for a while.
+```
+    matrix_element(Dists,Path[I+1],Path[I],D)] % works
+    Dists[[Path[I+1],Path[I]] : I in 1..N-1] % does not work
+```
+- Similarly, for a list you will want to use `element(I,List,V )` and not `V #= List[I]`.
+
+- A note on the repeated use/abuse of `planner`. I had to get Hakan's help to add `table` in front of the `action`, which confused me because I thought `action` was already tabled. But without this extra `table` the code would get stuck somewhere in the loop and this seems to be a bug in Picat. I am using version 3.8#7. By the time you read this, a future version may have fixed it.
+
+- And one more note, look at the giant condition in the `parse` function `foreach`. I had originally constructed that with some nested `if` statements, but the conditions take care of that all and the body of the loop is just one statement. *No difference in performance, but it's so cool!*
+
+```
+import planner.
+import cp.
+
+main =>
+    cl_facts([$show(true)]), % globally control progress printing, see my_println
+    % cl_facts([$show(false)]), 
+
+    % Maze = read_file_lines("test24_2016.data").to_array,
+    Maze = read_file_lines("day24_2016.data").to_array,
+    save_maze(Maze,"day24_2016_pruned.data"),
+
+    % Neibs are the neibors of each [Y,X] Maze location
+    % Reqs are the required [Y,X] coordinates to visit
+    [Neibs,Reqs] = prune(Maze),
+    N = Reqs.len,
+
+    % Dists is a table of distances between each pair of reqs
+    Dists = new_array(N,N), bind_vars(Dists,999),
+    foreach (I in 1..N-1, J in I+1..N) 
+        best_plan([Reqs[I],Neibs,Reqs[J]],_,C),
+        Dists[I,J] := C,
+        Dists[J,I] := C,
+        my_println([i=I,j=J,c=C]) % see progress
+    end,
+
+    foreach (Row in Dists) my_println(Row) end, % show Dists
+    
+    % find the best Path from Reqs[1] that includes all other Reqs
+    Path = new_list(N),
+    Path :: 1..N,
+    all_different(Path),
+    Path[1] #= 1, % start at Req[1]
+    Part1 #= sum([D : I in 1..N-1, matrix_element(Dists,Path[I+1],Path[I],D)]),
+    solve([$min(Part1)],Path),
+    my_println(Path), % show Path
+    printf("Answer Part 1: %w\n",Part1),
+
+    % find the best Path from Reqs[1], visit all Reqs, return to Reqs[1]
+    Path2 = new_list(N+1),
+    Path2 :: 1..N,
+    Path2[1] #= 1, Path2[N+1] #= 1,
+    all_different(slice(Path2,1,N)), % neat use of slice
+    Part2 #= sum([D : I in 1..N, matrix_element(Dists,Path2[I+1],Path2[I],D)]),
+    solve([$min(Part2)],Path2),
+    my_println(Path2),% show Path
+    printf("Answer Part 2: %w\n",Part2).
+
+% Planner final and action states
+
+final(S@[CurYX,_Neibs,End]), CurYX=End => true.
+
+% multiple calls to planner cause Picat to freeze
+% adding table seems to eliminate
+table
+action([[Y,X],Neibs,End],NextS,_,Cost) =>
+    member(MoveTo,Neibs[Y,X]),
+    NextS = ([MoveTo,Neibs,End]),
+    Cost = 1.
+
+% Parse maze and prune dead ends
+
+prune(Maze) = [Neibs,Reqs] => 
+    Reqs = parse_reqs(Maze),
+    Neibs = parse(Maze),
+    my_println(vsize_no_prune=get_size(Neibs)), % see progress
+    Flag := true, % flag to keep doing this until no more prunes
+    while (Flag)
+        Flag := false,
+        % if a [Y,X] has only one neighbor, and it isn't in Reqs 
+        % the neighbor can be pruned
+        foreach(Y in 1..Neibs.len, X in 1..Neibs[1].len, 
+                not member([Y,X],Reqs),
+                len(Neibs[Y,X]) == 1)
+            Maze[Y,X] := '$', % mark pruned with $
+            Flag := true,
+        end,
+        Neibs := parse(Maze),
+        my_println(vsize_prune=get_size(Neibs)), % see progress
+    end.
+
+parse(Maze) = Neibs =>
+    MaxY = Maze.len, MaxX = Maze[1].len,
+    Neibs = new_array(MaxY,MaxX), bind_vars(Neibs,[]),
+    foreach (Y in 1..MaxY, X in 1..MaxX, 
+            MYX = Maze[Y,X],
+            [DY,DX] in [[-1,0],[1,0],[0,1],[0,-1]],
+            NX = X+DX, NY = Y+DY, 
+            between(1,MaxY,NY), between(1,MaxX,NX),
+            not member(Maze[NY,NX],['#','$']), % $ is a pruned location
+            not member(MYX,['#','$']))
+        Neibs[Y,X] := Neibs[Y,X] ++ [[NY,NX]]
+    end.
+
+parse_reqs(Maze) = Reqs => 
+    NumLocs = [[Maze[Y,X].to_int,[Y,X]] : Y in 1..Maze.len, X in 1..Maze[1].len, not member(Maze[Y,X],['.','#','$'])],
+    Reqs = [[Y,X] : [_,[Y,X]] in NumLocs.sort(1)].
+
+% Utility functions
+
+get_size(Neibs) = S =>
+    S = 0,
+    foreach(Y in 1..Neibs.len, X in 1..Neibs[1].len)
+        S := S + len(Neibs[Y,X])
+    end.
+
+my_println(X) =>
+    show(Show), % global fact for printing progress info
+    if Show then println(X) end.
+
+save_maze(Maze,File) =>
+    show(Show),
+    if Show then
+        FD = open(File,write),
+        foreach (Row in Maze)
+            println(FD,Row)
+        end,
+        close(FD)
+    end.
+```
+
+The output, with the `show` predicate set to `true` is:
+```
+vsize_no_prune = 9944
+vsize_prune = 9516
+vsize_prune = 9124
+vsize_prune = 8980
+vsize_prune = 8836
+vsize_prune = 8782
+vsize_prune = 8728
+vsize_prune = 8698
+vsize_prune = 8672
+vsize_prune = 8656
+vsize_prune = 8640
+vsize_prune = 8632
+vsize_prune = 8624
+vsize_prune = 8618
+vsize_prune = 8612
+vsize_prune = 8606
+vsize_prune = 8600
+vsize_prune = 8596
+vsize_prune = 8592
+vsize_prune = 8590
+vsize_prune = 8588
+vsize_prune = 8586
+vsize_prune = 8584
+vsize_prune = 8584
+[i = 1,j = 2,c = 92]
+[i = 1,j = 3,c = 30]
+[i = 1,j = 4,c = 288]
+[i = 1,j = 5,c = 66]
+[i = 1,j = 6,c = 234]
+[i = 1,j = 7,c = 224]
+[i = 1,j = 8,c = 270]
+[i = 2,j = 3,c = 82]
+[i = 2,j = 4,c = 204]
+[i = 2,j = 5,c = 86]
+[i = 2,j = 6,c = 154]
+[i = 2,j = 7,c = 148]
+[i = 2,j = 8,c = 190]
+[i = 3,j = 4,c = 278]
+[i = 3,j = 5,c = 48]
+[i = 3,j = 6,c = 224]
+[i = 3,j = 7,c = 214]
+[i = 3,j = 8,c = 260]
+[i = 4,j = 5,c = 258]
+[i = 4,j = 6,c = 70]
+[i = 4,j = 7,c = 84]
+[i = 4,j = 8,c = 34]
+[i = 5,j = 6,c = 200]
+[i = 5,j = 7,c = 190]
+[i = 5,j = 8,c = 236]
+[i = 6,j = 7,c = 22]
+[i = 6,j = 8,c = 44]
+[i = 7,j = 8,c = 58]
+{999,92,30,288,66,234,224,270}
+{92,999,82,204,86,154,148,190}
+{30,82,999,278,48,224,214,260}
+{288,204,278,999,258,70,84,34}
+{66,86,48,258,999,200,190,236}
+{234,154,224,70,200,999,22,44}
+{224,148,214,84,190,22,999,58}
+{270,190,260,34,236,44,58,999}
+[1,3,5,2,7,6,8,4]
+Answer Part 1: 412
+[1,2,4,8,6,7,5,3,1]
+Answer Part 2: 664
+```
 # Picat Isn't Python
 
 My primary programming languages are Python and Haskell. I often make syntax errors or cause logic problems because I forget about these items below. If you come from these or a C-syntax style language, you may also need to read this.
@@ -1833,8 +2103,10 @@ My primary programming languages are Python and Haskell. I often make syntax err
 ## Variables
 - Variable names must have an initial capital letter or underscore. 
 - Like Prolog, Picat programmers tend towards short, often single character variable names.
-- Long variable names are bi-capitalized. 
-hakank: This is just a stylistic recommentation
+- Long variable names tend to be bi-capitalized, but this is just a style recommendation.
+  
+Personally, I find the whole "Prolog, we don't use variables more than a two characters long" a little hard to follow. I can see where it comes from the history of logic programming coming from symbolic logic, but for reading other people's code, somewhat longer names would be perfectly fine by me.
+
 hakank: And: All statements/expressions must be ended by ","
 ```
 A = 5. % OK
@@ -1847,9 +2119,9 @@ A=5,b=4. % Parses, but fails because the atom b!=4, and therefore A does not get
 
 b=4;A=5. % A is bound to 5. because b!=4 and ';' means 'or'.
 
-NoJavaVariableNamesHere=true. % OK, but this is not normal Picat style, but you live your best self however you want.
-hakank: I don't see any big problem with this. Though I agree that it is unusual with these long variable names in Picat (and Prolog).
+NoJavaVariableNamesHere=true. % OK, but this is not normal Picat style, but you do you however you want.
 ```
+
 
 ## Assignment (Binding) vs. Unification (Bind or Fail) vs. Equality (Only Numbers)
 
@@ -2276,12 +2548,8 @@ The `then` keyword is optional if you enclose the condition in `()`
 
 ```
 curve(Grade) = Letter => 
-if (Grade > 50) (Letter = A) else (Letter = F) end. 
+if (Grade > 50) Letter = 'A' else Letter = 'F' end. 
 ```
-hakank: Do you mean 'A' and 'F' instead of A and F?
-hakank: This can be written without parenthesis in the then and else part:
-hakank:   if (Grade > 50) Letter = 'A' else Letter = 'F' end
-
 
 Picat also allow Prolog style if statements with `->` and `;`. The syntax is $if -> then ; else$.
 
@@ -2567,58 +2835,7 @@ hakank: For some other examples, search for "dcg" or "DCG" at https://hakank.org
 
 
 
-# Resources
-
-- Picat website https://picat-lang.org/ 
-- The Manual https://picat-lang.org/download/picat_guide.pdf 
-- Constraint Solving and Planning with Picat book https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf
-- Karlova University Course https://jbulin.github.io/teaching/fall/nopt042/
-- A ChatGPT version that knows something about Picat. *Warning: It can get confused between Picat, Prolog, Python and Haskell.* https://chatgpt.com/g/g-EEpNUZ9H1-picat-prodigy
-- The SWI-Prolog manual for Prolog-related concepts. https://www.swi-prolog.org/pldoc/doc_for?object=!/0
-- Learn Prolog Now! for learning Prolog for beginners, which has applicability for Picat given its logic programming roots: https://lpn.swi-prolog.org/lpnpage.php?pageid=online
-
-## Code Examples 
-- Rosetta Code. Useful to compare to a language you know https://rosettacode.org/wiki/Category:Picat 
-- The **best** resource https://hakank.org/picat/
-- Hakan's global constraint implementations:  https://www.hakank.org/picat/#global
-- Constraint Programming Problems (multiple languages) https://www.csplib.org
-- Advent of Code solutions
-    + Neng-Fa Zhou https://github.com/nfzhou/aoc/tree/main
-    + https://github.com/DestyNova/advent_of_code_2024
-- My Advent of Code
-    + 2016 https://github.com/dsagman/advent-of-code/tree/main/2016
-    + Planner https://github.com/dsagman/advent-of-code/blob/main/2015/day22/day22.pi
-    + Knapsack https://github.com/dsagman/advent-of-code/blob/main/2015/day24/day24.pi
-
-
-## Modules
-
-- JSON encoder https://github.com/nfzhou/json-picat
-
-## Editor Plugins
-
-- VS Code https://marketplace.visualstudio.com/items?itemName=arthurwang.vsc-picat
-- Emacs https://github.com/nfzhou/emacs-picat-mode/tree/main
-- Jupyter Kernel ipicat https://pypi.org/project/picat-kernel/
-
-    ipicat has a bug. change
-    ```
-    from IPython.core.display import display, HTML, Javascript
-    ```
-    to
-    ```
-    from IPython.display import display, HTML, Javascript
-    ```
-
-## Optimization/Constraint Programming Resources
-- COIN-OR open source 
- https://github.com/coin-or/COIN-OR-OptimizationSuite
-- Z3 (Microsoft) https://microsoft.github.io/z3guide/docs/logic/intro/
-- OR-Tools (Google) https://developers.google.com/optimization
-- CPLEX (IBM) https://ibmdecisionoptimization.github.io/tutorials/html/Linear_Programming.html
-- Global Constraint Catalog https://sofdem.github.io/gccat/gccat/index.html
-
-# Appendix: Using Picat For Instruction
+# Using Picat For Instruction
 
 To use Picat with an autograder, the student code can be imported as a module into the grader. For example, students could be given the magic square problem from the Picat Constraint Solving book. 
 
@@ -2682,7 +2899,7 @@ main =>
 hakank: The example import_test/grade.pi contains solve_all/2 (without return value) which is not correct.
 hakank: Also, you don't want to do solve_all/2 on magic(5) since it has 275 305 224 solutions.
 
-# Appendix: Errors I Always Make and How I Compensate
+# Errors I Always Make and How I Compensate
 
 ## Type Errors, Numbers and Characters
 
@@ -2809,10 +3026,11 @@ Invariably, I add a new line of code and forget the comma or I accidentally add 
 I compensate by adding only a few lines at a time and always saving and rerunning so that I don't have far to hunt for the most recent edit that broke syntax rules.
 hakank: That's a good praxis!
 
-# Appendix: Debugging
+# Debugging
 
-Picat has a debugger, and it works as advertised and if you want to use it I will point you at the Manual. But for me the key has been `println`, `printf`, and, in extreme cases, `readchar`.
-hakank: Again, I agree with you. Though for strange error messages I'm using the debugger with 'r' (run) to let it run until the program stops.
+Picat has a debugger, and it works as advertised and if you want to use it I will point you at the [Manual](https://picat-lang.org/download/picat_guide_html/picat_guide.html#x1-450002.2). But for me the key has been `println`, `printf`, and, in extreme cases, `readchar`. 
+
+*Note: For strange error messages Hakan says he uses the debugger with 'r' (run) to let it run until the program stops.*
 
 ## Print and Printf are Your Friends
 
@@ -2823,17 +3041,31 @@ Picat lets you put a `println` anywhere. You can even put a `println` in a condi
 ```
 println(A). % nice and simple
 A=5, println(a=A). % outputs "a=5"
-println([A,B,C]). % three variables we are wondering about
+println([[a=A,b=B,l=L,t=T,s=S]]). % multiple variables we are wondering about
 println([$parser,slice(A,1,5),A.len]). % where are we? and a piece of A and A's length
 my_func(A,B,C) = Result, println([$my_func_call,A]) => ...
 ```
-hakank: My version to print a lot of variables is to "chain" them with =, e.g. println(A=B=L=T=S), or using a list:
-hakank:   println([a=A,b=B,l=L,t=T,s=S])
-
 
 `printf` is also good, but it requires formatting codes and the newline `\n` has to be added. There's a full list of formatting codes in the manual, but I just use `%w` because I'm lazy.
 ```
 printf("Answer is: %w, %w, %w\n",A,B,C).
+```
+
+## Globally Control Progress/Debug Println
+
+Using my "trick" for setting global state variables, you can turn and and off progress/debug print statements.
+
+````
+main =>
+    cl_facts([$show(true)]), % use my_println instead of println
+    % or cl_facts([$show(false)]), 
+
+    [...your program...]
+
+my_println(X) =>
+    show(Show), 
+    if Show then println(X) end.
+
 ```
 
 ## `readchar` to step
@@ -2844,14 +3076,13 @@ This can be adjusted to only fire on a given condition and further limit the str
 
 ```
 R = 0,
-foreach (I in 1..100000000)
-    R := do_thing(R) & mutations, yikes!
+foreach (I in 1..100_000_000)
+    R := do_thing(R) % mutations, yikes!
     if (I mod 10000 = 0)  % stop every 10,000 loops
         then println([$r,R]), read_char() % wait for enter key
     end
 end.
 ```
-hakank: Should the "&" be a "%" above?
 
 ## `time` to calculate execution time
 
@@ -2861,12 +3092,10 @@ Wrapping predicates and function calls in `time()` will print out the CPU time r
 time(solve(DVars),
 println(DVars).)
 ```
-`time2` will also calculate backtracks, but it doesn't seem to count backtracks from within the `planner` module.
-hakank: time2/1 is using statistics/2 to get the time (End), and backtracks
+`time2` will also calculate backtracks, but it doesn't count backtracks from within the `planner` module.
 
 
-
-# Appendix: Things I Still Don't Fully Understand
+# Things I Still Don't Fully Understand
 
 The Picat manual can be succinct and doesn't provide examples for everything. Here's some stuff I don't know how to use or where I still get confused.
 
@@ -2879,8 +3108,7 @@ hakank: X = 65
 hakank: What did you try that didn't work?
 
 
-- `acyclic_term` "This predicate is true if Term is acyclic, meaning that Term does not contain itself." I don't know what this means in terms of a term (how is a term a graph?) or when I would use it.
-hakank: Beside from porting some Prolog programs that use this, I've never used it.
+- `acyclic_term` "This predicate is true if Term is acyclic, meaning that Term does not contain itself." I don't know what this means in terms of a term (how is a term a graph?) or when I would use it. And I'm not alone. Hakan notes: "Beside from porting some Prolog programs that use this, I've never used it."
 
 - `list_to_and(List) = Conj` I understand that this turns a list into a conjunction of facts separated by and (`,`). For example: 
 
@@ -2905,21 +3133,67 @@ hakank: You mentions (-> ; ) above whithj the curve/1 example.
 
 - Picat also has `cond`, but it's only mentioned in an example about Fibonacci and isn't in the index. ChatGPT pointed me to `cond`.
  
-<!-- - `-->` The manual says this syntax supports DCG (Definite Clause Grammar) rules. I don't know much about these and the Prolog manual talks about the `phrase` predicate for processing them, which Picat doesn't seem to have. And without some examples, I'm not sure what I'd use them for. Would they make better/easier parsers for LL, LR or CFG grammars? I do not know. -->
+- `-->` The manual says this syntax supports DCG (Definite Clause Grammar) rules. I don't know much about these and the Prolog manual talks about the `phrase` predicate for processing them, which Picat doesn't seem to have. And without some examples, I'm not sure what I'd use them for. Would they make better/easier parsers for LL, LR or CFG grammars? I do not know. 
 
-hakank: See my comment above about DCGs. And note that Picat does not support phrase/N for some reason.
+- In the `neqs` constraint the manual says, "This constraint is equivalent to the conjunction of the inequality constraints in *NeqList*, but it extracts `all_distinct` constraints from the inequality constraints." I find this explanation confusing. There's an example of it here: https://www.hakank.org/picat/color_neqs.pi. Perhaps it will make sense to you?
 
-- In the `neqs` constraint the manual says, "This constraint is equivalent to the conjunction of the inequality constraints in *NeqList*, but it extracts `all_distinct` constraints from the inequality constraints." I don't know what "extracts" means here. Does it not honor `all_distinct`? Something else?
-hakank: See https://www.hakank.org/picat/color_neqs.pi for an example. I very rarely using neqs/1.
-hakank: My interpretration of "extracts all_distinct constraints" is that it converts it to a all_distinct/1 constraint.
-
-- The `regular`,`circuit` and `table_in` constraints  are covered in https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf, but I haven't come up with a use case on my own yet, so I'm not feeling very confident in my understanding.
-hakank: Here are some examples of of circuit/1, but you might know these already
-hakank: https://www.hakank.org/picat/knight_tour_circuit.pi
-hakank: In https://www.hakank.org/picat/circuit.pi I define circuit_path/2 which also extracts the path taken.
+- The `regular`,`circuit` and `table_in` constraints  are covered in the [Picat Constraint book]h(ttps://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf), but I haven't come up with a use case on my own yet, so I'm not feeling very confident in my understanding. The examples from the book are here: 
+    - https://www.hakank.org/picat/knight_tour_circuit.pi
+    - https://www.hakank.org/picat/circuit.pi, in this Hakan defines `circuit_path/2`, which also extracts the path taken.
 
 - `!` aka Prolog cut operator, is something I think I understand and then when I think more, I don't. Luckily Picat seems to obviate the need for `!` through the much more straight forward `?=>` for backtrackable rules.
 
+
+# Resources
+
+- Picat website https://picat-lang.org/ 
+- The Manual https://picat-lang.org/download/picat_guide.pdf 
+- Constraint Solving and Planning with Picat book https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf
+- Karlova University Course https://jbulin.github.io/teaching/fall/nopt042/
+- A ChatGPT version that knows something about Picat. *Warning: It can get confused between Picat, Prolog, Python and Haskell.* https://chatgpt.com/g/g-EEpNUZ9H1-picat-prodigy
+- The SWI-Prolog manual for Prolog-related concepts. https://www.swi-prolog.org/pldoc/doc_for?object=!/0
+- Learn Prolog Now! for learning Prolog for beginners, which has applicability for Picat given its logic programming roots: https://lpn.swi-prolog.org/lpnpage.php?pageid=online
+
+## Code Examples 
+- Rosetta Code. Useful to compare to a language you know https://rosettacode.org/wiki/Category:Picat 
+- The **best** resource https://hakank.org/picat/
+- Hakan's global constraint implementations:  https://www.hakank.org/picat/#global
+- Constraint Programming Problems (multiple languages) https://www.csplib.org
+- Advent of Code solutions
+    + Neng-Fa Zhou https://github.com/nfzhou/aoc/tree/main
+    + https://github.com/DestyNova/advent_of_code_2024
+- My Advent of Code
+    + 2016 https://github.com/dsagman/advent-of-code/tree/main/2016
+    + Planner https://github.com/dsagman/advent-of-code/blob/main/2015/day22/day22.pi
+    + Knapsack https://github.com/dsagman/advent-of-code/blob/main/2015/day24/day24.pi
+
+
+## Modules
+
+- JSON encoder https://github.com/nfzhou/json-picat
+
+## Editor Plugins
+
+- VS Code https://marketplace.visualstudio.com/items?itemName=arthurwang.vsc-picat
+- Emacs https://github.com/nfzhou/emacs-picat-mode/tree/main
+- Jupyter Kernel ipicat https://pypi.org/project/picat-kernel/
+
+    ipicat has a bug. change
+    ```
+    from IPython.core.display import display, HTML, Javascript
+    ```
+    to
+    ```
+    from IPython.display import display, HTML, Javascript
+    ```
+
+## Optimization/Constraint Programming Resources
+- COIN-OR open source 
+ https://github.com/coin-or/COIN-OR-OptimizationSuite
+- Z3 (Microsoft) https://microsoft.github.io/z3guide/docs/logic/intro/
+- OR-Tools (Google) https://developers.google.com/optimization
+- CPLEX (IBM) https://ibmdecisionoptimization.github.io/tutorials/html/Linear_Programming.html
+- Global Constraint Catalog https://sofdem.github.io/gccat/gccat/index.html
 
 
 
