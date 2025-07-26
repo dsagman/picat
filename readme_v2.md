@@ -3068,7 +3068,7 @@ printf("Answer is: %w, %w, %w\n",A,B,C).
 
 Using my "trick" for setting global state variables, you can turn and and off progress/debug print statements.
 
-````
+```
 main =>
     cl_facts([$show(true)]), % use my_println instead of println
     % or cl_facts([$show(false)]), 
@@ -3081,7 +3081,7 @@ my_println(X) =>
 
 ```
 
-## `readchar` to step
+## `readchar` for single step execution
 
 If I'm really lost as to what's going on in a big loop or recursion, single step debugging can be emulated with `read_char`, which defaults to taking a character from stdin.
 
