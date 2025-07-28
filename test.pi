@@ -6,10 +6,7 @@ block comment
 
 
 main =>
-    List = [a,b,c,d,b,c],
-    Pattern = [b,c],
-    append(Left, Pattern, Right, List),
-    println([Left, Right]),
-    fail
-;
-    true.
+    cl_facts([$part(1)]),
+    cl_facts([part(1)]).
+
+

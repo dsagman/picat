@@ -45,3 +45,19 @@ hakank: You will get a small speedup (0.32s -> 0.2s) by using table on action/4.
 hakank: I'm not sure I understand "unified with itself" and "is both input and output". The point of S as a map is rather that it's mutable (as maps usually are). 
 
     I thought you said that variables in Picat aren't mutable. :-)
+
+`reduce` I think this is a functional `fold`, but have not been able to make it work.
+hakank: Yes, reduce/2 and reduce/3 are the fold variants. Note the order of the arguments, especially reduce/3.
+hakank: Picat> X=reduce(+,1..10)
+hakank: X = 55
+hakank: Picat> X=reduce(+,1..10,10)
+hakank: X = 65
+hakank: What did you try that didn't work?
+
+    Once again, I failed to distinguish between a predicate and a function! I tried Picat> reduce(+,1..10), and when it didn't work, I didn't realize I needed to assign it to a value.
+
+    If the error message said something like, "reduce is a function, not a predicate" it would help me a lot more than the current error message: "*** Undefined procedure: reduce/2"
+
+    This happens to me so often, but I still forget.
+
+    Also, now I know how to use `reduce` and I added some examples and I also really like your Haskell Prelude in Picat.

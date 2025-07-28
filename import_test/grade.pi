@@ -5,7 +5,7 @@ main =>
     Writer = open("grade_file.txt", write),
     % println("Hello").
     Square = magic(5),
-    solve_all([ffd,down],Square), % tell students the solve method, say ffd
+    solve([ffd,down],Square), % tell students the solve method, say ffd
     if 
     Square == {{23,17,12,11,2},{16,6,4,24,15},{7,9,25,5,19},{18,13,10,3,21},{1,20,14,22,8}}
     then println(Writer,["Correct!",Square]) % or write to a file

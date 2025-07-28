@@ -2111,32 +2111,38 @@ Answer Part 2: 664
 
 My primary programming languages are Python and Haskell. I often make syntax errors or have problems because I forget about these items below. If you come from these or a C-syntax style language, you may also need to read this. 
 
-## Do You Already Know Prolog?
+## Maybe You Already Know Prolog?
 
 This whole section is *predicated* on the idea that you are largely unfamiliar with the concepts of Prolog and other logic programming languages. But maybe you already k1now Prolog? If that's the case, did you see what I did with predicated? Ha! Hahahahah. Ahem. Yes. Anyway...
 
 If you do know Prolog you should know that Picat supports:
 
-- Horn clauses using the Prolog syntax of `:-/2` instead of `?=>/2` and `=>`. This makes it straightforward to port your Prolog programs. 
+- Horn clauses using the Prolog syntax of `:-/2`. This makes it straightforward to port Prolog programs. 
 - Prolog style *if-then-else* in the form *(If -> Then; Else)* and mandates the presence of the else-part.
-- The `!` cut operator.
+- The `!` cut operator, however because Picat has `=>/2` (deterministic) and `?=>/2` (non-deterministic) (in contrast to just Horn clauses with `:-/2`), the `!/0` is unnecessary in Picat. In other words, `!/0` is only used with `:-/2`, but not with `=>/2` and `?=>/2`.
+    
+    *Note: For me, I find `!` confusing and have managed to completely avoid it with Picat. Should you wish, here's some slides about cut from a class I took: https://courses.grainger.illinois.edu/cs421/sp2020/slides/11.2.1-prolog-cut.pdf and the SWI-Prolog manual's explanation: https://www.swi-prolog.org/pldoc/doc_for?object=!/0. God speed.*
+
 - `cl_facts` for adding facts to the database, but it doesn't have Prolog's `clause/2` for metaprogramming.
+  
 - Definite Clause Grammar (DCG) rules for parsing  strings with `-->`, but does not have the `phrase` predicate for processing them. 
 
-If none of this makes any sense, then the rest of this section is for you.
+    *Note: should you want to use DCGs in Picat:* 
+    - *Here's an [introduction](https://lpn.swi-prolog.org/lpnpage.php?pagetype=html&pageid=lpn-htmlse29)*
+    - *And some [examples](https://www.hakank.org/picat/dcg_utils_test.pi) which require this [module](https://www.hakank.org/picat/dcg_utils.pi)*
+    - *And more examples: search for "dcg" or "DCG" at https://hakank.org/picat/.*
 
-*Note: For a more in-depth comparison, look [here](https://picat-lang.org/download/picat_compared_to_prolog_haskell_python.html).*
 
-*Note: should you want to use DCGs:* 
-- *Here's an introduction: https://lpn.swi-prolog.org/lpnpage.php?pagetype=html&pageid=lpn-htmlse29*
-- *And some examples: https://www.hakank.org/picat/dcg_utils_test.pi which requires the module https://www.hakank.org/picat/dcg_utils.pi*
-- *And more examples: search for "dcg" or "DCG" at https://hakank.org/picat/.*
+*Note: For a more in-depth comparison of Picat and Prolog, look [here](https://picat-lang.org/download/picat_compared_to_prolog_haskell_python.html).*
 
-*Rabbit Hole: Picat is a descendent of the [B-Prolog language(https://en.wikipedia.org/wiki/B-Prolog)], and therefore is part of the whole [Prolog family](https://en.wikipedia.org/wiki/Comparison_of_Prolog_implementations) and also [logic programming family](https://en.wikipedia.org/wiki/Logic_programming#Variants_and_extensions).*
+*Rabbit Hole: Picat is a descendent of the [B-Prolog language](https://en.wikipedia.org/wiki/B-Prolog), and therefore is part of the whole [Prolog family](https://en.wikipedia.org/wiki/Comparison_of_Prolog_implementations) and also [logic programming family](https://en.wikipedia.org/wiki/Logic_programming#Variants_and_extensions).*
 
 *Giant Rabbit Hole: Logic programming dates back to 1972, but its roots go deep into the math of predicate/symbolic logic and it was central to the first wave of Artificial Intelligence (AI). The idea was to encode knowledge into systems of rules sometimes known as "expert systems". And this is also why the Picat constraint programming book's cover says "Springer Briefs in Intelligent Systems: Artificial Intelligence, Multiagent Systems and Cognitive Robotics".*
 
 *This is in contrast to the "AI" of today, which is statistically based. Someday someone may find a way to unite these two branches of thought: encoded knowledge and statistically inferred likelihood, but until then, Prolog and its ilk have been [pushed somewhat aside](https://eugeneasahara.com/2024/08/04/does-prolog-have-a-place-in-the-llm-era/) by the neural networks and transformers...and now we might consider all of concepts of epistemology and what it is to "know" and if knowledge graphs and [ontologies](https://www.ontotext.com/knowledgehub/fundamentals/what-is-a-knowledge-graph/) hold the key. But was Plato right that all knowledge is subjective? Perhaps dependent type systems should be considered as solutions for encoding high order [kinds](https://app.scinito.ai/article/W4406222352), if these levels of logic really are necessary in the real world, and...um...where was I?*
+
+If none of this makes any sense, then the rest of this section is for you.
+
 
 ## Variables
 - Variable names must have an initial capital letter or underscore. 
@@ -2509,6 +2515,8 @@ If you want to return two or more values, you can pack them into a list, array, 
 longer(L1,L2) = [R,Len(R)] => if len(L1) >= len(L2) then R = L1 else R = L2 end.
 ```
 
+*Note: An argument of a function can also be updated just like in the predicate `append/3` allowing for more than just the explicitly returned function value to be updated. See this [example](#example-dynamic-dispatch-with-apply-and-call).*
+
 ### Is it a Predicates or a Function?
 
 **Key point: The Picat manual identifies functions with the notation `= Val`, `= ResList` or similar. If you try to call a predicate like a function or visa-versa you will get an error an `undefined procedure` or a fail that you didn't expect.**
@@ -2598,27 +2606,58 @@ L1 = length([X,Y,Z]),
 L2 = length(All).  % L1 is identical L2,
 ```
 
+### When to use `$` and when not to
+
+`$` is used to denote a literal. This instructs Picat to not treat the token after the `$` as something to interpret right then and there.
+
+For example:
+```
+solve([$min(Part1)],Path) % pass the argument "min(Part1)" as an option to solve. Don't attempt to evaluate the min of Part1 here.
+```
+
+Or if we want to add a fact to the global environment and not call the predicate when it's added.
+
+```
+cl_facts([$part(1)]) % adds the fact part(1) to the global environment.
+cl_facts([part(1)]) %tries to call part(1) here and errors: *** Undefined procedure: part/1
+
+
+part(Part),  % if we used $part(1) above, then this works later in the code
+if Part = 1 then println("Yes") end % and we can test the Part variable now 
+```
+And sometimes we can use `$` or not and both are ok. For example when assigning an [`action` for the `planner`](#the-planner).
+```
+Action = $("1->2",NewS1,NewS2,NewS3) % works
+Action = ("1->2",NewS1,NewS2,NewS3) % also fine, nothing in here will be evaluated
+```
+Another use of `$` is [here](#globally-control-progressdebug-println).
+
+
 ### Function call syntax: `()` and `.`
 
 Functions can be called by placing arguments in parenthesis or by using dot notation. This is just syntactic sugar. The `.` notation makes the code a little shorter (1 character versus 2), and looks more like functional programming, Rust, JavaScript. This syntax is used in lots of languages and commonly referred to as [*method chaining*](https://en.wikipedia.org/wiki/Method_chaining). You may find it easier to follow the logic with the dot notation, and you can mix-and-match the notations however you like.
 
 Personally, I find the dot notation easier to understand if there's more than function being applied. Many nested parenthesis feels more like Lisp to me. For example:
 
+Parentheses form:
 ```
-% parentheses
 Steps = map(my_parser,map(split,read_file_lines("day.txt"))),
 init_bots(Steps,Bots,Bins),
 Answer = prod(map(dec,take(3,(to_list(step([S : S in Steps, S[1]=$gives],Bots,Bins)))))),
-
-% dot notation
+```
+Dot notation form:
+```
 Steps = ("day.txt").read_file_lines.map(split).map(my_parser),
 init_bots(Steps,Bots,Bins),
 Answer = step([S : S in Steps, S[1]=$gives],Bots,Bins).to_list.take(3).map(dec).prod,
+```
+A mixture of both:
 
-% mixed
+```
 Steps = read_file_lines("day.txt").map(split).map(my_parser),
 % etc.
 ```
+
 Note: Obligatory xkcd [reference](https://xkcd.com/859/). Or where you expecting [this](https://xkcd.com/297/)?
 
 
@@ -2650,7 +2689,7 @@ The `then` keyword is optional if you enclose the condition in `()`
 
 ```
 curve(Grade) = Letter => 
-if (Grade > 50) Letter = 'A' else Letter = 'F' end. 
+    if (Grade > 50) Letter = 'A' else Letter = 'F' end. 
 ```
 
 Picat also allow Prolog style if statements with `->` and `;`. The syntax is $if -> then ; else$. 
@@ -2659,7 +2698,6 @@ Picat also allow Prolog style if statements with `->` and `;`. The syntax is $if
 
 ```
 (A>5 -> println("Big"); println("small")).
-
 ```
 
 `foreach` is a loop structure like any other programming language. Picat also has `while` and `do ... while`. The condition in `foreach` has to be enclosed in `()`. And, like `if`, you need an `end` at the end.
@@ -2677,6 +2715,7 @@ foreach(X in 1..10, Y in 1..10, X + Y mod 4 <= 2)
   % ...
 end.
 ```
+
 Or a lot of conditions and thereby remove having any `if` statements in your loop body. Here's an example from one of my [programs](#planner-and-constraint-example-traveling-salesperson) to get the valid neighbors of a given 2 dimensional array item. 
 
 Neighbors are those coordinates that do not have a `#` or `$` in them and are within the bounds of the array. Look at all those conditions and only one line in the loop body!
@@ -2768,11 +2807,9 @@ Here's an example that simulates a simple assembly language. It invokes the corr
 
 The interesting thing here is that the name of the function is identical to the string in the input. The *cpy* command is performed by the `cpy` function.
 
-The code also makes use of a hash map to store the value of registers and passes state back and forth via unification. Note how `S` isn't explicitly returned. It's not a global variable. It's unified with itself resulting in updates meaning it is both input and output.
+The code also makes use of a hash map to store the value of registers and passes state back and forth via unification. Note how `S` isn't explicitly returned. It's a mutable map and it is both an input and output just like any predicate in Prolog. This is just like `append/3`, as discussed [here](#predicates-and-logic-programming-weirdness-append3). 
 
-hakank: I'm not sure I understand "unified with itself" and "is both input and output". The point of S as a map is rather that it's mutable (as maps usually are). 
-
-The program counter, by contrast, is explicitly returned and updated using the function syntax and `:=`.
+This is true even though `S` is an argument to a function, which has an explicit return value namely the program counter, `PC` which is updated using the function syntax and `:=`.
 
 One more thing to notice here: the code for converting strings to integers. You may find it useful when parsing input yourself.
 
@@ -2844,7 +2881,7 @@ run(Program,S,PC) = NewS =>
 parse([H|T]) = [(H).to_atom,T.map(parse_n)].
 parse_n(X) = Xn => if between(97,122,ord(X[1])) then Xn = X else Xn = X.to_int end.
 
-cpy([X,Y],S,PC) = NPC=> NPC = PC+1,
+cpy([X,Y],S,PC) = NPC => NPC = PC+1,
     if number(X) then put(S,Y,X) else V = get(S,X), put(S,Y,V) end.
 
 inc([X],S,PC) = NPC => NPC = PC+1, V = get(S,X), put(S,X,V+1).
@@ -2876,37 +2913,76 @@ reach(X,Y) => reach(X,Z), edge(Z,Y).
 
 ```
 
-## More Backtracking, Cut aka `!`.
 
-The Picat manuals says this about cut, which it has inherited from Prolog:
-
-> !: This special predicate, called a cut, is provided for controlling backtracking. A cut in the body of a rule has the effect of removing the choice points, or alternative rules, of the goals to the left of the cut.
-
-This, given my prior limited understanding of `!` is as clear as mud, but because Picat has `?=>` I, at least, have never seen use for `!`.
-hakank: The use of =>/2 (in constrast to Prolog's :-/2 and ?=>/2) makes the !/0 unnecesary, since =>/2 is deterministic. So if one want a deterministic predicate when =>/2 is used instead of ?=>/2.
-hakank: What I can remember, I've only seen !/0 when using :-/2, but not together with =>/2 and ?=>/2.
-hakank: Personal note: I tend to use :-/2 instead of ?=>/2 when dealing with more complex non-deterministic programs, in part because the rule of how the variables are handled in the head might be easier for a certain task.
-hakank: But - as you indicate - this is a muddy topic.
-
-*Rabbit Hole: Should you wish, here's some slides about cut from a class I took: https://courses.grainger.illinois.edu/cs421/sp2020/slides/11.2.1-prolog-cut.pdf and the SWI-Prolog manual's explanation: https://www.swi-prolog.org/pldoc/doc_for?object=!/0. God speed.*
-hakank: Perhaps this section should be labeled as more targeted to Prolog people than beginners in Picat.
-
-## Helper Functions for Accumulating Recursive Results
+## `reduce` for functional folds
 
 Haskell (and other languages) have the concept of a *fold* to apply an operation to pairs of elements in a list and accumulate the result. For example:
 
 ```
 (Haskell)
 foldl (+) 0 [1..10] -- outputs 55
+-- we can also use an anonymous lambda function for x - y
+foldl (\x y -> x - y) 30 [1..10] -- outputs -25
 ```
 And you can leave out the base case with `foldl1` or `foldr1`.
 ```
 (Haskell)
 foldl1 (+) [1..10] -- still 55
+foldl1 (\x y -> x - y) [1..10] -- 53
 ```
 
-Picat doesn't have this base case, so you need to include the accumulator in the arguments or call a helper function with the default base case, often `0` or `[]`. The Picat manual gives this example:
-hakank: reduce/2 works: X=reduce(+,1..10) % -> 55
+While Picat doesn't have anonymous lambda functions, we can accomplish the same thing with a named function. 
+
+```
+main =>
+    L = 1..10,
+    P = reduce(+,L), % standard +
+    println(p=P),
+    D = reduce(diff,L), % user defined function, diff
+    println(d=D),
+    D30 = reduce(diff,L,30), % initial value of 30
+    println(d30=D30).
+
+diff(X,Y) = R => 
+    R = X-Y,
+    println([x=X,y=Y,r=R]).
+```
+
+Outputs:
+
+```
+p = 55
+[x = 1,y = 2,r = -1]
+[x = -1,y = 3,r = -4]
+[x = -4,y = 4,r = -8]
+[x = -8,y = 5,r = -13]
+[x = -13,y = 6,r = -19]
+[x = -19,y = 7,r = -26]
+[x = -26,y = 8,r = -34]
+[x = -34,y = 9,r = -43]
+[x = -43,y = 10,r = -53]
+d = -53
+[x = 30,y = 1,r = 29]
+[x = 29,y = 2,r = 27]
+[x = 27,y = 3,r = 24]
+[x = 24,y = 4,r = 20]
+[x = 20,y = 5,r = 15]
+[x = 15,y = 6,r = 9]
+[x = 9,y = 7,r = 2]
+[x = 2,y = 8,r = -6]
+[x = -6,y = 9,r = -15]
+[x = -15,y = 10,r = -25]
+d30 = -25
+```
+
+*Note: while the Haskell and Picat versions do the same thing, it's so much easier to add a debugging `println` to Picat. And yes, I know you can use `trace` from [Debug.Trace](https://hackage.haskell.org/package/base-4.21.0.0/docs/Debug-Trace.html), but it's not as straightforward.*
+
+
+## Helper functions for accumulators
+
+When doing arbitrary recursion with accumulation you either need to include the accumulator in the arguments or call a helper function with the default base case, often `0` or `[]`. 
+
+The Picat manual gives this example:
 ```
 min_max([H|T],Min,Max) =>
     min_max_helper([H|T],H,Min,H,Max).
@@ -2925,26 +3001,54 @@ This is not unique to Picat and is common in functional programming with the use
         go [] = z
         go (y:ys) = y `k` go ys
 ```
+## More Haskell Functions in Picat
 
-hakank: Perhaps you are interested in my attempt to port most of the Haskell Prelude function to Picat: https://hakank.org/picat/haskell_prelude.pi
-hakank: Here are my definitions of foldl/3 and foldl1/2 (fold right is also included)
+If you have a Haskell background and want to see what it's like to implement much of the Haskell Prelude in Picat, the amazing Hakan has you covered here as well.
+
+His port most of the Haskell Prelude function to Picat: https://hakank.org/picat/haskell_prelude.pi
+
+Some examples below. I quite like the run length encoding one.
+
+```
 % 15 foldl
 foldl(_F,E,[]) = E.
 foldl(F,E,[X|Xs]) = foldl(F, apply(F,E,X), Xs).
 
-% 16 fold1
 foldl1(F,[]) = _ => throw $error(empty_list,foldl1,F, []).
 foldl1(F,[X|Xs]) = foldl(F,X,Xs).
 
+% Run Length Encoding
+% http://www.shlomifish.org/lecture/Perl/Haskell/slides/basic/lists.html
+rle([]) = [].
+rle([A|[]]) = [(A=1)].
+rle([X|Xs]) = cond(X == A, 
+                   [(A=Count+1)|As],
+                   [(X=1),(A=Count)|As]) => [(A=Count)|As] = rle(Xs).
+
+% Haskell's group/1: 
+% Groups together consecutive elements of L into sublists.
+%    Picat> G = grouph([1,2,3,2,1,2,2,2,3,3,21])               
+%    G = [[1],[2],[3],[2],[1],[2,2,2],[3,3],[21]]
+%
+grouph(L) = Group =>
+    Group = [],
+    Tmp = [L[1]],
+    foreach(I in 2..L.length) 
+       if L[I] == L[I-1] then
+          Tmp := [L[I]|Tmp]
+       else
+          Group := Group ++ [Tmp],
+          Tmp := [L[I]]
+       end
+    end,
+    Group := Group ++ [Tmp].  
+```
+
 # TODO 
 
-- $ means literal
-hakank: Yes, this is an important one.
+
 - 2d array notation. link to rosetta code
 - Add solver arguments maybe?
-
-
-
 
 
 # Using Picat For Instruction
@@ -3008,39 +3112,31 @@ main =>
         else println(Writer,"Wrong!")
     end.
 ```
-hakank: The example import_test/grade.pi contains solve_all/2 (without return value) which is not correct.
-hakank: Also, you don't want to do solve_all/2 on magic(5) since it has 275 305 224 solutions.
 
 # Errors I Always Make and How I Compensate
 
-## Type Errors, Numbers and Characters
+## Type Errors, Numbers and Characters, `println` vs `writeln`
 
 Since Picat isn't strongly typed, the programmer has to keep track of what's what. Also, lists and arrays can be heterogeneous, meaning you can mix types freely in them.
 
 For example, Picat doesn't show the difference between a string and an integer when printing output of a list or array. Here's some code:
 
 ```
+
 main =>
     D = "12345",
     C = 1..5,
     E = D++C,
-    println(E),
+    println(printlnE=E), % [1,2,3,4,5,1,2,3,4,5]
+    writeln(writelnE=E), % ['1','2','3','4','5',1,2,3,4,5]
     E[6]:=E[6]+10,
-    println(E),
-    E[1]:=E[1]+10,
-    println(E).
+    println(printlnE=E), % [1,2,3,4,5,11,2,3,4,5]
+    writeln(writelnE=E), % ['1','2','3','4','5',11,2,3,4,5]
+    E[1]:=E[1]+10. % *** error(type_error(number,1),(+)/2)
 ```
-Output is below. There's no quote marks around the strings so it's not clear that the first 5 items are strings and the second 5 are integers. You just have to be careful. 
-```
-[1,2,3,4,5,1,2,3,4,5]
-[1,2,3,4,5,11,2,3,4,5]
+Output is below. There's no quote marks around the strings when using `println` so it's not clear that the first 5 items are strings and the second 5 are integers. 
 
-*** error(type_error(number,1),(+)/2)
-
-   ===>  (1) main
-```
-hakank: The trick I use for checking these errors is to use writeln/1 instead of println/1. With writeln(E) the output is ['1','2','3','4','5',1,2,3,4,5] which makes it a little clearer what's going on.
-
+You can use `writeln` instead, which puts quotes around atoms and strings. This was not something I realized until it was pointed out to me that `write` is different than `print`!
 
 ## More Type Errors: Lists and Arrays 
 
@@ -3060,8 +3156,6 @@ A = {1,2,3,4}, AL = len(A), B=head(A).
 ```
 I sometimes switch my code between lists and arrays for the advantages one gives over the other, such as in access time. But refactoring isn't as simple as just making the variables into lists.
 
-hakank: Yes, that's really annoying.
-
 ## And More Type Errors: `""` vs `''` aka Atoms and Strings, Oh My
 
 In some programming languages double and single-quoted strings are synonymous. (Python) In others, strings are double-quoted and individual characters are single-quoted.
@@ -3078,8 +3172,7 @@ And `''` means "atom". Atom is a concept from Prolog, which is kind of like an e
 N=5, println(n=N). % output n=5
 N=3, println(my_n_is_set_to_N). % output my_n_is_set_to_3
 ```
-Note that in the above, the `=` is unification! (At least I think it is?)
-hakank: Yes, N=3 and N=3 are unification, though I would call it binding. 
+Note that in the above, the `=` is binding/unification! 
 
 This bites me when I'm pattern matching on a string. For example, the below took me some trial and error to get right. The `'0'` is an atom, but works here like a character, and the `"0"` is a string, which could also have been written as `['0']`. 
 ```
@@ -3088,32 +3181,30 @@ swap10(['0'|T]) = "1" ++ swap10(T).
 swap10(['1'|T]) = "0" ++ swap10(T).
 ```
 
-*Rabbit Hole: 
-- In Prolog-land all is not so simple with quote marks. 
-https://www.swi-prolog.org/pldoc/man?section=string*
-- Here's the SWI-Prolog definition on an atom: 
+*Rabbit Hole: In Prolog-land all is not so simple with strings and quote marks. Here's what SWI-Prolog says about [strings](https://www.swi-prolog.org/pldoc/man?section=string). It's 8 pages long!*
 
-    >   Atoms are identifiers. They are typically used in cases where identity comparison is the main operation and that are typically not composed nor taken apart. Examples are RDF resources (URIs that identify something), system identifiers (e.g., 'Boeing 747'), but also individual words in a natural language processing system. 
-    
-    > They are also used where other languages would use enumerated types, such as the names of days in the week. Unlike enumerated types, Prolog atoms do not form a fixed set and the same atom can represent different things in different contexts.
+*And here's the SWI-Prolog definition of an atom:*
 
-hakank: A string in traditional Prolog is actually a list of the ASCII-representation. For example in B-Prolog (Picat's precursor):
-hakank:   B-Prolog Version 8.1, All rights reserved, (C) Afany Software 1994-2014.
-hakank:   | ?- X = "Picat".
-hakank:   X = [80,105,99,97,116]
-hakank: Though SWI-Prolog (and some other Prolog system) it's represented differently:
-hakank:   Welcome to SWI-Prolog (threaded, 64 bits, version 9.2.9)
-hakank: ...
-hakank:   ?- X="Picat".
-hakank:   X = "Picat".
+> *Atoms are identifiers. They are typically used in cases where identity comparison is the main operation and that are typically not composed nor taken apart. Examples are RDF resources (URIs that identify something), system identifiers (e.g., 'Boeing 747'), but also individual words in a natural language processing system.*
+>    
+> *They are also used where other languages would use enumerated types, such as the names of days in the week. Unlike enumerated types, Prolog atoms do not form a fixed set and the same atom can represent different things in different contexts.*
+
+*Another Rabbit Hole: Despite the fact that one of Prolog's origins is in translation of English weather forecasts to French (look for [METEO](https://www.softwarepreservation.org/projects/prolog)), it originally represented strings as lists of ASCII values. [SICStus Prolog](https://sicstus.sics.se/sicstus/docs/latest4/html/sicstus.html/ref_002dsyn_002dcpt_002dsli.html#ref_002dsyn_002dcpt_002dsli) and B-Prolog both do this:*
+
+```
+B-Prolog Version 8.1, All rights reserved, (C) Afany Software 1994-2014.
+| ?- X = "Picat".
+X = [80,105,99,97,116]
+```
 
 ## Unification vs Assignment
 
-Invariably I make an error where I use `=` when I need to use `:=`. This happens when I am editing code and moving things around and lose track of the first time I bind a variable versus when I either test it or mutate it. 
+Invariably I make an error where I use `=` when I need to use `:=`. This happens when I am editing code and moving things around and lose track of the first time I bind a variable versus when I either test it or update it. 
 
-You could try to only ever use `:=` to do assignment and `==` to test equality. But without unification Picat is hobbled and there's no non-deterministic binding.
-hakank: I would say "You could try to only ever use `:=` to do _re_assignment".
-hakank: Also, your use of "either test it or mutate it" is a little confusing since A = B is unification. Though, to mudding the water, it does a test that the two terms A and B unifies. But perhaps this is too picky of me here since I agree that this is a gotcha.
+And thus, when I think I'm assigning, Picat is actually unifying and therefore failing because the new value doesn't equal the old value.
+
+You could try to only ever use `:=` to do reassignment (because it's frowned upon to sue `:=` for initial assignment) and `==` to test equality. But without unification Picat is hobbled and there's no non-deterministic binding.
+
 
 ## Forgetting a comma or a period (or having an extra one)
 
@@ -3131,12 +3222,10 @@ main =>
 
 ```
 This can make it easier to move lines around, but I think it looks weird and it doesn't work in all cases.
-hakank: I agree that this is looking weird. 
 
 Invariably, I add a new line of code and forget the comma or I accidentally add a period. Picat is improving in its ability to locate the error, but it can be vague and give a large range of possible lines to check.
 
 I compensate by adding only a few lines at a time and always saving and rerunning so that I don't have far to hunt for the most recent edit that broke syntax rules.
-hakank: That's a good praxis!
 
 ## Trying to use list indexing with decision/domain variable 
 
@@ -3152,7 +3241,7 @@ Picat has a debugger, and it works as advertised and if you want to use it I wil
 
 Picat lets you put a `println` anywhere. You can even put a `println` in a condition in a function definition! As such, I make extensive use of my friend `println` when debugging.
 
-`println` only has one argument. To print more than one variable, they can be enclosed in `()` or `[]`. And a literal, that starts with `$`, can be added to give some extra info about where in the code the print is coming from and eliminates the risk that the atom has some specific meaning.
+`println` only has one argument. To print more than one variable, they can be enclosed in `()` or `[]`. And a [literal](#when-to-use--and-when-not-to), that starts with `$`, can be added to give some extra info about where in the code the print is coming from and eliminates the risk that the atom has some specific meaning.
 
 ```
 println(A). % nice and simple
@@ -3225,15 +3314,6 @@ println(DVars).)
 
 The Picat manual can be succinct and doesn't provide examples for everything. Here's some stuff I don't know how to use or where I still get confused.
 
-- `reduce` I think this is a functional `fold`, but have not been able to make it work.
-hakank: Yes, reduce/2 and reduce/3 are the fold variants. Note the order of the arguments, especially reduce/3.
-hakank: Picat> X=reduce(+,1..10)
-hakank: X = 55
-hakank: Picat> X=reduce(+,1..10,10)
-hakank: X = 65
-hakank: What did you try that didn't work?
-
-
 - `acyclic_term` "This predicate is true if Term is acyclic, meaning that Term does not contain itself." I don't know what this means in terms of a term (how is a term a graph?) or when I would use it. And I'm not alone. Hakan notes: "Beside from porting some Prolog programs that use this, I've never used it."
 
 - `list_to_and(List) = Conj` I understand that this turns a list into a conjunction of facts separated by and (`,`). For example: 
@@ -3246,20 +3326,16 @@ hakank: What did you try that didn't work?
     C = (A = 5,B = 3,A != B)
     yes
     ```
-    Which is neat, and kind of like building up an expression that can then be dynamically evaluated, but how do I evaluate `C`? I have no idea. This is the only use of `Conj` as an output value in the entire manual.
+    Which is neat, and kind of like building up an expression that can then be dynamically evaluated, but how do I evaluate `C` to get the logical value of `true`? I have no idea. This is also the only use of the term `Conj` as an output value in the entire manual.
 
 hakank: I think that you are thinking in Haskell here. And I don't think that it's possible to do what you want.
 hakank: But that depends on exactly you mean by "evaluating C".
 
-- `->` can be used for `if` `then` as in (A>5 -> X=yes; X=no). It's in a footnote (pg 6) that says, "Picat also accepts Prolog-style if-then-else in the form (If -> Then; Else) and mandates the presence of the else-part." 
-    
-    `->` is also sed in one example (pg 93), and I had to have someone point out the example after ChatGPT insisted that `->` is the prefered method for Picat `if` `then`. (It is not.) Regardless, it's not in the index, which is my go to resource.
-
-hakank: You mentions (-> ; ) above whithj the curve/1 example.
+- The option to use the notation (If -> Then; Else) is in a footnote and one example, but it's not in the index, which is my go to resource.
 
 - Picat also has `cond`, but it's only mentioned in an example about Fibonacci and isn't in the index. ChatGPT pointed me to `cond`.
  
-- The manual says Picat supports DCG (Definite Clause Grammar) rules with `-->`, but provides no examples.
+- The manual says Picat supports DCG (Definite Clause Grammar) rules with `-->`, but provides no examples. (Although there's copious resources referenced [here](#do-you-already-know-prolog))
 
 - In the `neqs` constraint the manual says, "This constraint is equivalent to the conjunction of the inequality constraints in *NeqList*, but it extracts `all_distinct` constraints from the inequality constraints." I find this explanation confusing. There's an example of it here: https://www.hakank.org/picat/color_neqs.pi. Perhaps it will make sense to you?
 
