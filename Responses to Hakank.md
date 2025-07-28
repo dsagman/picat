@@ -32,6 +32,12 @@ hakank: Using the "case" analogy is interesting, but is misleading since in Pica
 
     I did not know that. If stmtA, the first item in a list of statements: (stmtA);(stmtB);(stmtC), succeeds then the other two, stmtB and stmtC are still tried?
 
+
+Another way to do an `if` is with `cond`. While it's not listed in the Picat manual index, it does define the function in this example:
+hakank: Good catch about the omission from the index. I'll mention this to Neng-Fa.
+
+    That index is my most used part of the manual!
+
 hakank: You will get a small speedup (0.32s -> 0.2s) by using table on action/4.
 
     I thought planner automatically tables action and final. See figure 5.1 in the Picat manual.
