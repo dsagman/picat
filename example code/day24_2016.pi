@@ -52,6 +52,7 @@ main =>
     % Dists is a table of distances between each pair of reqs
     Dists = new_array(N,N), bind_vars(Dists,999),
     foreach (I in 1..N-1, J in I+1..N) 
+        % initialize_table, % this can also fix if Picat gets "stuck" on repeated calls
         best_plan([Reqs[I],Neibs,Reqs[J]],_,C),
         Dists[I,J] := C,
         Dists[J,I] := C,

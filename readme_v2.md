@@ -119,7 +119,7 @@ Let's look at how Picat stacks up against some programming languages you may kno
 
 | Concept               |  Picat                                          |
 | :----------------     | :------                                         |
-| Comments              | `% percent sign for comments. no block comments |
+| Comments              | `% percent sign for comments. /* */ for block comments |
 | Variables             | `A=5, B=3.4, C=(1234 mod 7).` <br> Note: Variables start with a capital letter in Picat.| 
 | [Numeric Separator](https://rosettacode.org/wiki/Numeric_separator_syntax) | `A=1_000_000.` This is syntactic sugar. |
 | Strings               | `println("Hello World.")` |
@@ -363,20 +363,20 @@ Logical: `#~` (not),`#/\` (and),`#^` (XOR),`#\/` (or),`#=>` (left side implies r
 - `prod`(*List*): The product of a list of domain variables
 - `sum`(*List*): The sum of a list of domain variables
 
-Note:
-Length of a list is not a built-in constraint, but you can achieve this with:
+I often think I need to constrain on the length of a list, but that's because I'm thinking about the problem from my Python/Haskell view. What I really want is usually `count` or `max` or `sum`. 
+
+For example, in this Advent of Code [problem](#constraint-example-santas-knapsack), I want to minimize the number of items in the list `Bins` assigned to bin 1. Item`Bins[X] = 0` for an assignment of that element to bin 1 and `Bins[X] != 0` for any other bin. 
+
+My initial thought: `Bins` should be shortest. Therefore, filter `Bins` and then minimize `len(Bins)`. But this is functional programming,. What I really need is just: The count of items in `Bins` equal to 0. I can do this a few ways:
 
 ```
-LenL #= sum([1: _ in L]).
-LenLCond #= sum([1: X in L, X > 100]).
+L1 #= sum([(Bins[I] #= 0) : I in 1..N]), % L1 = Bin 1 size
+L1 #= sum([1 : I in 1..N, Bins[I]] #= 0) % condition on right hand side of list comprehension
+L1 #= count(0,Bins)
+% and then in when we invoke solve, we use min
+solve($[min(L1)],Bins).
 ```
 
-hakank: I'm unsure when the first snippet is needed (in a constraint model) since the length of a list/array of decision variables can be simply obtained with X.len.
-        The second snippet might be misleading since in order to work with decision variables, it should rather be a constraint in the
-        condition part (assuming that L is a list/array of decision variables), e.g.
-           LenLCond #= sum([1: X in L, X #> 100])
-        or
-           LenLCond #= sum([X #> 100: X in L])
 
 
 ###  Global Constraints
@@ -996,6 +996,7 @@ And here's the code. Some things to note:
 - This is where a *little bit of the magic wears off*. Having some sense of your problem and how to search it best does help. On the other hand, you can just try all the methods and see which works best. 
 - It is not usually clear at the outset which will be the fastest method. See pgs 59-61 in the [Picat constraint book](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf) for an example of trying all the combinations of solve options on a Magic Squares problem.
 - **Regardless, I found the CP version of the problem easier to grok and less CS major than the recursive graph search of the standard knapsack. And that's why we're using Picat, right? For the magic of letting the computer search.**
+- I used `println` via `report` inside of `solve` to track what's going on because I was having a hard time to get this code to work.
 - As I understand it, Picat does not really support multi-objective optimization with two min/1. So I'm not sure how I got this to work!
 
 
@@ -1017,7 +1018,7 @@ go(Weights,Target,Q) =>
     assign_bin1(Weights,Target,Bins,QE,L1),
     % solve($[min(L1), min(QE), % using degree and updown is faster
     solve($[degree,updown,min(L1), min(QE), 
-              report(printf("Found %w, %w %w\n", L1, QE, Bins))],
+              report(printf("Found %w, %w %w\n", L1, QE, Bins))],  % debug info from inside solve!
               Bins),
     Bin1Weights = [Weights[I]: I in 1..Weights.length, Bins[I]==0],
     printf("Bin 1: %w\n",Bin1Weights),
@@ -1084,8 +1085,8 @@ Here's an example from the documentation for the programming language Curry, whi
 
 Here's a solution with the Picat `planner`.
 
-NOTE: A neat trick here is the use of `()` and `;` (meaning "or") to create the equivalent of a `case` statement in another language. 
-hakank: Using the "case" analogy is interesting, but is misleading since in Picat - as in Prolog - all alternatives are tried, not just the first one that "match".
+*Note: A neat trick here is the use of `()` and `;` (meaning "or") to create the equivalent of a `case` statement in another language. Although it's not really a case statement. More detail on this [here](#control-flow-the--aka-or-operator).*
+
 ```
 import planner.
 
@@ -1121,32 +1122,32 @@ action([[S1,S2,S3],G],NextS,Action,Cost) =>
         NewS1 = T1,      
         NewS2 = [H1|S2], 
         NewS3 = S3,      
-        Action = $("1->2",NewS1,NewS2,NewS3);
-
+        Action = $("1->2",NewS1,NewS2,NewS3)
+        ;
     S1 = [H1|T1], 
         NewS1 = T1,      
         NewS2 = S2,      
         NewS3 = [H1|S3], 
-        Action = $("1->3",NewS1,NewS2,NewS3);
-
+        Action = $("1->3",NewS1,NewS2,NewS3)
+        ;
     S2 = [H2|T2], 
         NewS1 = S1,      
         NewS2 = T2,      
         NewS3 = [H2|S3], 
-        Action = $("2->3",NewS1,NewS2,NewS3);
-
+        Action = $("2->3",NewS1,NewS2,NewS3)
+        ;
     S2 = [H2|T2], 
         NewS1 = [H2|S1], 
         NewS2 = T2,      
         NewS3 = S3,      
-        Action = $("2->1",NewS1,NewS2,NewS3);
-
+        Action = $("2->1",NewS1,NewS2,NewS3)
+        ;
     S3 = [H3|T3], 
         NewS1 = [H3|S1], 
         NewS2 = S2,      
         NewS3 = T3,      
-        Action = $("3->1",NewS1,NewS2,NewS3);
-
+        Action = $("3->1",NewS1,NewS2,NewS3)
+        ;
     S3 = [H3|T3], 
         NewS1 = S1,      
         NewS2 = [H3|S2], 
@@ -1157,7 +1158,6 @@ action([[S1,S2,S3],G],NextS,Action,Cost) =>
     NextS = [[NewS1,NewS2,NewS3],G]. % the next state.
 
 ```
-hakank: A stylistic note. For clearity, it's recommended that the ";" is on a separate line.
 
 This outputs:
 
@@ -1578,7 +1578,7 @@ Phew! Here's the code. And some things to note:
 - The solution speed is very dependent on how the search space is reduced through the constraints. My initial version took 45 seconds for part 1 and 245 seconds for part 2. After many enhancements, the time was reduced to 0.02 and 0.09 seconds, respectively.
 - Here's what made the code run faster:
     - unbounded search (depth first)
-    - `Item2 < Item1`
+    - `Item2 < Item1` removes the symmetric solutions where `Item1 >= Item2`
     - extract `get_move` into its own function
     - precompute the number of items and pass as state (`MolE.len` for example)
     - `Action` is set to `[]`
@@ -1588,7 +1588,6 @@ Phew! Here's the code. And some things to note:
     - only go down if items are on floors below the elevator
     - *Biggest gain* zipped pairs of `{Mol,Gen}` sorted rather than `[Mol ++ Gen]` this allows for symmetry breaking meaning that moving a pair {2,0}, for example, doesn't matter if it's one molecule or another, the move is identical.
     - remove `table`. I tried adding `table` everywhere, but it's built into the planner and just slowed things down 
-hakank: This is a great list of optimizations.
 - I also tried adding a `heuristic` function. In this case it didn't make any difference.
 - In terms of the search method, `best_plan_unbounded` was the fastest. The other methods were about twice as long to complete: `best_plan`, `best_plan_bin`, `best_plan_bb` and `best_plan_nondet`.
 - There a great explanation of how to solve efficiently on Reddit. https://www.reddit.com/r/adventofcode/comments/5hoia9/comment/db1v1ws/
@@ -1904,9 +1903,11 @@ Attempt 5 eliminated any checks in the `action` predicate. It just finds a path 
 ```
 - **Similarly, for a list you will want to use `element(I,List,V )` and not `V #= List[I]`.**
 
-- A note on the repeated use/abuse of `planner`. I had to get Hakan's help to add `table` in front of the `action`, which confused me because I thought `action` was already tabled. But without this extra `table` the code would get stuck somewhere in the loop and this seems to be a bug in Picat. I am using version 3.8#7. By the time you read this, a future version may have fixed it.
+
 
 - And one more note, look at the giant condition in the `parse` function `foreach`. I had originally constructed that with some nested `if` statements, but the conditions take care of that all and the body of the loop is just one statement. *No difference in performance, but it's so cool!*
+
+*Note: I had problems with the repeated use/abuse of `planner`. Hakan did some research and suggested to add `table` in front of the `action`, which confused me because I thought `action` was already tabled. But without this extra `table` the code would get stuck somewhere in the loop. Another option is `initialize_table`, which is commented out, but can also "unstick" the completion of the code. I am using version 3.8#7. By the time you read this, a future version may have fixed it. The beta version notes, "+ Avoid segfault caused by c_INITIALIZE_TABLE." which may or may not be related to what's happening here.*
 
 ```
 import planner.
@@ -1928,6 +1929,7 @@ main =>
     % Dists is a table of distances between each pair of reqs
     Dists = new_array(N,N), bind_vars(Dists,999),
     foreach (I in 1..N-1, J in I+1..N) 
+        % initialize_table, % this can also fix if Picat gets "stuck" on repeated calls
         best_plan([Reqs[I],Neibs,Reqs[J]],_,C),
         Dists[I,J] := C,
         Dists[J,I] := C,
@@ -3163,6 +3165,16 @@ my_func(A,B,C) = Result, println([$my_func_call,A]) => ...
 `printf` is also good, but it requires formatting codes and the newline `\n` has to be added. There's a full list of formatting codes in the manual, but I just use `%w` because I'm lazy.
 ```
 printf("Answer is: %w, %w, %w\n",A,B,C).
+```
+
+## Print within `solve`!
+
+You can use `println` to see what's going on inside the constrain solver. Very handy when things aren't going as expected. Also just super cool. Here's an example from my code [here](#constraint-example-santas-knapsack).
+
+```
+solve($[min(L1), min(QE), 
+              report(printf("Found %w, %w %w\n", L1, QE, Bins))],
+              Bins),
 ```
 
 ## Globally Control Progress/Debug Println

@@ -1,3 +1,10 @@
+/* 
+
+block comment
+
+*/
+
+
 main =>
     List = [a,b,c,d,b,c],
     Pattern = [b,c],

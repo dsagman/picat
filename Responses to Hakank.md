@@ -32,4 +32,10 @@ hakank: Using the "case" analogy is interesting, but is misleading since in Pica
 
     I did not know that. If stmtA, the first item in a list of statements: (stmtA);(stmtB);(stmtC), succeeds then the other two, stmtB and stmtC are still tried?
 
-    
+hakank: You will get a small speedup (0.32s -> 0.2s) by using table on action/4.
+
+    I thought planner automatically tables action and final. See figure 5.1 in the Picat manual.
+
+hakank: I'm not sure I understand "unified with itself" and "is both input and output". The point of S as a map is rather that it's mutable (as maps usually are). 
+
+    I thought you said that variables in Picat aren't mutable. :-)
