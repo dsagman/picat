@@ -2119,17 +2119,22 @@ If you do know Prolog you should know that Picat supports:
 - Prolog style *if-then-else* in the form *(If -> Then; Else)* and mandates the presence of the else-part.
 - The `!` cut operator.
 - `cl_facts` for adding facts to the database, but it doesn't have Prolog's `clause/2` for metaprogramming.
-
-For a more in-depth comparison, look [here](https://picat-lang.org/download/picat_compared_to_prolog_haskell_python.html).
-
+- Definite Clause Grammar (DCG) rules for parsing  strings with `-->`, but does not have the `phrase` predicate for processing them. 
 
 If none of this makes any sense, then the rest of this section is for you.
 
+*Note: For a more in-depth comparison, look [here](https://picat-lang.org/download/picat_compared_to_prolog_haskell_python.html).*
+
+*Note: should you want to use DCGs:* 
+- *Here's an introduction: https://lpn.swi-prolog.org/lpnpage.php?pagetype=html&pageid=lpn-htmlse29*
+- *And some examples: https://www.hakank.org/picat/dcg_utils_test.pi which requires the module https://www.hakank.org/picat/dcg_utils.pi*
+- *And more examples: search for "dcg" or "DCG" at https://hakank.org/picat/.*
+
 *Rabbit Hole: Picat is a descendent of the [B-Prolog language(https://en.wikipedia.org/wiki/B-Prolog)], and therefore is part of the whole [Prolog family](https://en.wikipedia.org/wiki/Comparison_of_Prolog_implementations) and also [logic programming family](https://en.wikipedia.org/wiki/Logic_programming#Variants_and_extensions).*
 
-*Giant Rabbit Hole: Logic programming dates back to 1972, but its roots go deep into the math of predicate/symbolic logic and it was central to the first wave of Artificial Intelligence (AI). The idea was to encode knowledge into systems of rules sometimes known as "expert systems". And this is also why the Picat constraint programming book's cover says "Springer Briefs in Intelligent Systems: Artificial Intelligence, Multiagent Systems and Cognitive Robotics".
+*Giant Rabbit Hole: Logic programming dates back to 1972, but its roots go deep into the math of predicate/symbolic logic and it was central to the first wave of Artificial Intelligence (AI). The idea was to encode knowledge into systems of rules sometimes known as "expert systems". And this is also why the Picat constraint programming book's cover says "Springer Briefs in Intelligent Systems: Artificial Intelligence, Multiagent Systems and Cognitive Robotics".*
 
-This is in contrast to the "AI" of today, which is statistically based. Someday someone may find a way to unite these two branches of thought: encoded knowledge and statistically inferred likelihood, but until then, Prolog and its ilk have been [pushed somewhat aside](https://eugeneasahara.com/2024/08/04/does-prolog-have-a-place-in-the-llm-era/) by the neural networks and transformers...and now we might consider all of concepts of epistemology and what it is to "know" and if knowledge graphs and [ontologies](https://www.ontotext.com/knowledgehub/fundamentals/what-is-a-knowledge-graph/) hold the key. But was Plato right that all knowledge is subjective? Perhaps dependent type systems should be considered as solutions for encoding high order [kinds](https://app.scinito.ai/article/W4406222352), if these levels of logic really are necessary in the real world, and...um...where was I?*
+*This is in contrast to the "AI" of today, which is statistically based. Someday someone may find a way to unite these two branches of thought: encoded knowledge and statistically inferred likelihood, but until then, Prolog and its ilk have been [pushed somewhat aside](https://eugeneasahara.com/2024/08/04/does-prolog-have-a-place-in-the-llm-era/) by the neural networks and transformers...and now we might consider all of concepts of epistemology and what it is to "know" and if knowledge graphs and [ontologies](https://www.ontotext.com/knowledgehub/fundamentals/what-is-a-knowledge-graph/) hold the key. But was Plato right that all knowledge is subjective? Perhaps dependent type systems should be considered as solutions for encoding high order [kinds](https://app.scinito.ai/article/W4406222352), if these levels of logic really are necessary in the real world, and...um...where was I?*
 
 ## Variables
 - Variable names must have an initial capital letter or underscore. 
@@ -2881,10 +2886,7 @@ hakank: What I can remember, I've only seen !/0 when using :-/2, but not togethe
 hakank: Personal note: I tend to use :-/2 instead of ?=>/2 when dealing with more complex non-deterministic programs, in part because the rule of how the variables are handled in the head might be easier for a certain task.
 hakank: But - as you indicate - this is a muddy topic.
 
-*Rabbit Hole:
-Should you wish, here's some slides about cut from a class I took: https://courses.grainger.illinois.edu/cs421/sp2020/slides/11.2.1-prolog-cut.pdf and the SWI-Prolog manual's explanation: https://www.swi-prolog.org/pldoc/doc_for?object=!/0.*
-
-God speed.
+*Rabbit Hole: Should you wish, here's some slides about cut from a class I took: https://courses.grainger.illinois.edu/cs421/sp2020/slides/11.2.1-prolog-cut.pdf and the SWI-Prolog manual's explanation: https://www.swi-prolog.org/pldoc/doc_for?object=!/0. God speed.*
 hakank: Perhaps this section should be labeled as more targeted to Prolog people than beginners in Picat.
 
 ## Helper Functions for Accumulating Recursive Results
@@ -2939,11 +2941,7 @@ hakank: Yes, this is an important one.
 - 2d array notation. link to rosetta code
 - Add solver arguments maybe?
 
-hakank: Have you played with Picat's support for DCG (Definite Clause Grammar) for parsing strings?
-hakank: Here's an introduction: https://lpn.swi-prolog.org/lpnpage.php?pagetype=html&pageid=lpn-htmlse29
-hakank: Compared to standard Prolog, Picat's version does not support the phrase/2-3 predicate which is often used.
-hakank: See for example my https://www.hakank.org/picat/dcg_utils_test.pi which requires the module https://www.hakank.org/picat/dcg_utils.pi
-hakank: For some other examples, search for "dcg" or "DCG" at https://hakank.org/picat/ .
+
 
 
 
@@ -3249,7 +3247,7 @@ hakank: You mentions (-> ; ) above whithj the curve/1 example.
 
 - Picat also has `cond`, but it's only mentioned in an example about Fibonacci and isn't in the index. ChatGPT pointed me to `cond`.
  
-- `-->` The manual says this syntax supports DCG (Definite Clause Grammar) rules. I don't know much about these and the Prolog manual talks about the `phrase` predicate for processing them, which Picat doesn't seem to have. And without some examples, I'm not sure what I'd use them for. Would they make better/easier parsers for LL, LR or CFG grammars? I do not know. 
+- The manual says Picat supports DCG (Definite Clause Grammar) rules with `-->`, but provides no examples.
 
 - In the `neqs` constraint the manual says, "This constraint is equivalent to the conjunction of the inequality constraints in *NeqList*, but it extracts `all_distinct` constraints from the inequality constraints." I find this explanation confusing. There's an example of it here: https://www.hakank.org/picat/color_neqs.pi. Perhaps it will make sense to you?
 
