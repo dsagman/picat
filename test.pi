@@ -1,0 +1,8 @@
+main =>
+    List = [a,b,c,d,b,c],
+    Pattern = [b,c],
+    append(Left, Pattern, Right, List),
+    println([Left, Right]),
+    fail
+;
+    true.

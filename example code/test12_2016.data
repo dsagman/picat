@@ -1,0 +1,7 @@
+cpy 41 a
+cpy a b
+inc a
+inc a
+dec a
+jnz a 2
+dec a

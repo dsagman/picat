@@ -1113,7 +1113,7 @@ final(State), State[1] == State[2] => true.
 action([[S1,S2,S3],G],NextS,Action,Cost) =>
 
     % pattern match on all the possible moves
-    % this is essentially a case statement
+    % this works like a case statement although all options are evaluated
     % Goal is G and is passed through as part of the state
 
     (
@@ -1316,8 +1316,8 @@ The code is below. Some things to note:
 - There are two `action` predicates, which are pattern matched on whose turn it is. `0` for the player and `1` for the boss. (And why is Bruce Springsteen always the enemy?)
 - The notation `State@[0,[MaxHP, HP, Mana, BHP, BDamage], Shield, Poison, Recharge, Mode]` binds the variable State to all of the list after the `@` sign. This way it can be referenced in whole in the `Action` variable rather than having to retype all of that.
 - The notation `_` for variables in the `final` predicate mean that the variable isn't being used. The term of art here is *anonymous variable*. Which is weird to think about. It's still variable, but no one cares.
-- Like Blocks World, this code uses a case statement formed through clauses separated by `;` meaning "or".
-hakank: See the comment above on "case".
+- Like Blocks World, this code uses a construct similar to a  case statement formed through clauses separated by `;` meaning "or". (It's not exactly a case statement because backtracking/failure will automatically evaluate the other alternatives. Logic programming! See this [section](#control-flow-the--operator).)
+
 - `sign` is used to avoid having an `if`. For example, `NBHP = BHP - (3 * sign(Poison))` means that if `Poison` is 0, then `sign(Poison)` is 0, but if `Poison` is greater than 0, `sign` returns 1. It didn't run any faster, but I felt like a boss for writing it this way.
 - The list of possible spells is built up by addition, `++`, rather than starting with all and removing. At first I tried removing, but the logic was complex to use `delete` and hard to implement. Accumulating allowed spells was much more straightforward to code.
 - Also, the ability to reassign, `:=`, or what the functional people call *mutability*, can be very handy. *Unsafe* as the functional crowd calls it, yes, but oh so nice. However, like any good weapon, one must be careful to not cut off your own foot, so be careful when reassigning variable values. Standard Prolog, fyi, has only immutable variables.
@@ -2105,9 +2105,31 @@ Answer Part 1: 412
 [1,2,4,8,6,7,5,3,1]
 Answer Part 2: 664
 ```
-# Picat Isn't Python
+# Picat Isn't Python (or Exactly Prolog)
 
-My primary programming languages are Python and Haskell. I often make syntax errors or cause logic problems because I forget about these items below. If you come from these or a C-syntax style language, you may also need to read this.
+My primary programming languages are Python and Haskell. I often make syntax errors or have problems because I forget about these items below. If you come from these or a C-syntax style language, you may also need to read this. 
+
+## Do You Already Know Prolog?
+
+This whole section is *predicated* on the idea that you are largely unfamiliar with the concepts of Prolog and other logic programming languages. But maybe you already k1now Prolog? If that's the case, did you see what I did with predicated? Ha! Hahahahah. Ahem. Yes. Anyway...
+
+If you do know Prolog you should know that Picat supports:
+
+- Horn clauses using the Prolog syntax of `:-/2` instead of `?=>/2` and `=>`. This makes it straightforward to port your Prolog programs. 
+- Prolog style *if-then-else* in the form *(If -> Then; Else)* and mandates the presence of the else-part.
+- The `!` cut operator.
+- `cl_facts` for adding facts to the database, but it doesn't have Prolog's `clause/2` for metaprogramming.
+
+For a more in-depth comparison, look [here](https://picat-lang.org/download/picat_compared_to_prolog_haskell_python.html).
+
+
+If none of this makes any sense, then the rest of this section is for you.
+
+*Rabbit Hole: Picat is a descendent of the [B-Prolog language(https://en.wikipedia.org/wiki/B-Prolog)], and therefore is part of the whole [Prolog family](https://en.wikipedia.org/wiki/Comparison_of_Prolog_implementations) and also [logic programming family](https://en.wikipedia.org/wiki/Logic_programming#Variants_and_extensions).*
+
+*Giant Rabbit Hole: Logic programming dates back to 1972, but its roots go deep into the math of predicate/symbolic logic and it was central to the first wave of Artificial Intelligence (AI). The idea was to encode knowledge into systems of rules sometimes known as "expert systems". And this is also why the Picat constraint programming book's cover says "Springer Briefs in Intelligent Systems: Artificial Intelligence, Multiagent Systems and Cognitive Robotics".
+
+This is in contrast to the "AI" of today, which is statistically based. Someday someone may find a way to unite these two branches of thought: encoded knowledge and statistically inferred likelihood, but until then, Prolog and its ilk have been [pushed somewhat aside](https://eugeneasahara.com/2024/08/04/does-prolog-have-a-place-in-the-llm-era/) by the neural networks and transformers...and now we might consider all of concepts of epistemology and what it is to "know" and if knowledge graphs and [ontologies](https://www.ontotext.com/knowledgehub/fundamentals/what-is-a-knowledge-graph/) hold the key. But was Plato right that all knowledge is subjective? Perhaps dependent type systems should be considered as solutions for encoding high order [kinds](https://app.scinito.ai/article/W4406222352), if these levels of logic really are necessary in the real world, and...um...where was I?*
 
 ## Variables
 - Variable names must have an initial capital letter or underscore. 
@@ -2116,7 +2138,6 @@ My primary programming languages are Python and Haskell. I often make syntax err
   
 Personally, I find the whole "Prolog, we don't use variables more than a two characters long" a little hard to follow. I can see where it comes from the history of logic programming coming from symbolic logic, but for reading other people's code, somewhat longer names would be perfectly fine by me.
 
-hakank: And: All statements/expressions must be ended by ","
 ```
 A = 5. % OK
 
@@ -2131,7 +2152,6 @@ b=4;A=5. % A is bound to 5. because b!=4 and ';' means 'or'.
 NoJavaVariableNamesHere=true. % OK, but this is not normal Picat style, but you do you however you want.
 ```
 
-
 ## Assignment (Binding) vs. Unification (Bind or Fail) vs. Equality (Only Numbers)
 
 Here be dragons. Or at least a sharp corner to hit your head on when you realize your program is failing because you used the wrong one.
@@ -2143,31 +2163,30 @@ Logic programming uses the concepts of binding and unification. Binding is simil
 When a variable is first parsed by Picat, it is in an uninstantiated state. Trying to use it will result in an error.
 
 ```
-A. %*** error(instantiation_error,call). 
+A. % in the REPL: *** error(instantiation_error,call). 
+A. % as a standalone predicate in a program *** SYNTAX ERROR *** (22-22) wrong head.
 ```
-hakank: Perhaps this is too picky, but the error depends on the context. That message is when it's using in the context of evalutation, e.g. in the REPL or in the main/0 predicate. However, if it's a single line outside a predicate the error is
-hakank:   *** SYNTAX ERROR *** (22-22) wrong head.
+"Wrong head" here means that Picat is expecting either a predicate or a function that have a `=`, `=>`, or `?=>`, not a standalone variable reference. 
 
-However, it can be accessed because Picat will instantiate an unbounded variable that points to an empty memory location. 
+However, when it's first referenced the variable will be given a unique identifier, which can be seen if we try to print an unbound variable: 
 
 ```
-println(A). % If A hasn't been defined/bound then _3d084e8 (or some other memory address) 
+println(A). % If A hasn't been defined/bound then _3d084e8 (or some other unique identifier) 
 ```
 
 ### Unification: the `=` and `is` operators
 
-The `=` operator performs one function that looks like two. 
-hakank: The explanation of unification is always tricky since it's a unusual concepts. The use of "function" seems a little strange to me here. I would rather say it can perform two "things" or something like that.
-hakank: The Picat Guide explains unification like this: "The unification T1 = T2 is true if term T1 and term T2 are already identical, or if they can be made identical by instantiating the variables in the terms."
-hakank: Though that isn't really explaining anything. 
-hakank: And remember that this is also unification in force, i.e. it's not just LHS that's simply "assigned"/checked with RHS
-hakank: Picat> [A,3] = [hello,B]
-hakank:   A = hello
-hakank:   B = 3
+It is always tricky to try to explain unification, which is expressed by the  `=` operator. It performs one thing that looks like two. [The Picat manual](https://picat-lang.org/download/picat_guide_html/picat_guide.html#x1-590003.5) says, "The unification T1 = T2 is true if term T1 and term T2 are already identical, or if they can be made identical by instantiating the variables in the terms." Which, in my opinion, feels a bit like "a monad is a monoid in the category of endofunctors". True, but useful only once you already know what the concept means.
 
-It can assign a variable to an expression for it's first use and it can check the equality of a variable and an expression on subsequent uses. But these are both the same operation: unification. 
+Assigning a variable to an expression for it's first use and checking the equality of a variable and an expression on subsequent uses are both aspects of unification. 
 
-Unification is central to logic programming, but it also underlies type inference, type checking and pattern matching in functional programming languages such as Haskell and OCaml. However, unless you have tried to build a type inference engine, you are unlikely to have heard the term used in functional programming. 
+Unification is also, central to its functioning, bidirectional, for example:
+
+```
+[A,3] = [hello,B] % A becomes hello and B becomes 3.
+```
+
+Unification is at the heart of logic programming, but it also underlies type inference, type checking and pattern matching in functional programming languages such as Haskell and OCaml. However, unless you have tried to build a type inference engine, you are unlikely to have heard the term used in functional programming. 
 
 Unification results either in success/true/yes or fail/false/no. The slash here indicates these are the synonyms. The evaluation results in success or failure, the logical value of the evaluation for each respectively is true/false and the Picat interpreter will output `yes` or `no` to indicate this.
 
@@ -2178,10 +2197,10 @@ Key point: a successful unification results in an unbound variable being bound. 
 Picat makes it easier for people coming from non-logic programming backgrounds by including functions (see below), `foreach` loops and list comprehensions. 
 
 However, Picat is still a member of the Prolog family and as such, understanding how unification works is required for anything but the simplest program.
-hakank: That's a good point!
+
+*Rabbit Hole: Unification is central to type inference in languages such as Haskell. There's the Hindley-Milner algorithm W, for example, which use unification to determine if the type of an expression. Here's a link to [algorithm W](https://jeremymikkola.com/posts/2018_03_25_understanding_algorithm_w.html). Someone even made a [t-shirt](https://www.zazzle.com/hindley_milner_type_inference_t_shirt-235812502357339841?srsltid=AfmBOoqfsJFxLIaP58Hyh0MSh5UJFZW3iNL76iSjdQLdOAOl2zWFyTfw)!*
 
 *Rabbit Hole: Mercury is a functional/logic language that includes unification. Unlike Picat, it is purely function and strongly typed. https://mercurylang.org/ Verse is also functional/logic, but is not yet publicly available except for programming games such as Fortnight. Yes, really. https://files.gotocon.com/uploads/slides/conference_65/2896/original/GOTO.pdf*
-hakank: I checked out Verse in 2022 and it was quite interesting. I would have thought that they had released it now...
 
 ```
 A=5, println(A). % A is bound to the value 5, and the unification succeeds allowing the statement to print 5. 
@@ -2190,14 +2209,19 @@ A=5, println(A). % A is bound to the value 5, and the unification succeeds allow
 ```
 
 Read the above as 
- 1. `A` points to an empty memory location as a default binding.
-hakank: Is the use of memory location needed here? From the Picat book section "1.2.1 Terms, Variables, and Values": A variable gets a type once it is bound to a value. Variables in Picat, like variables in mathematics, are value holders. Unlike variables in imperative languages, Picat variables are not symbolic addresses of memory locations. A variable is said to be free if it does not hold any value. A variable is instantiated when it is bound to a value."
+ 1. `A` is given a unique identifier as a default binding.
+ 
+    From the Picat manual "A variable gets a type once it is bound to a value. Variables in Picat, like variables in mathematics, are value holders. Unlike variables in imperative languages, Picat variables are not symbolic addresses of memory locations. A variable is said to be free if it does not hold any value. A variable is instantiated when it is bound to a value."
+
  2. The default binding can be made/shown to be equivalent to `5` through unification.
- 3. The unification binds `5` to `A` at the memory address.
- 4. `,` means the logical and operation.
-hakank: And it's the logic programming version if end of expression/statement separator (; or infered newline).
- 5. Because the left side of the `,` is true we can output the value of memory address of `A` to the terminal.
- 6. As noted above `A=5` is identical to `5=A` because unification is bidirectional. <- Important
+   
+ 3. Unification binds `5` to `A`'s unique identifier.
+   
+ 4. `,` means the logical "and" operation.
+
+ 5. Because the left side of the `,` is true we can output the value of `A` with a `println`.
+   
+ 6. As noted above `A=5` is identical to `5=A` because unification is bidirectional. **<- Important**
 
 Compare this with:
 
@@ -2209,7 +2233,7 @@ Read the above as:
 1. `A=5 `binds/unifies/assigns `5` to `A`. 
 2. `A=3` attempts to unify `A` with `3`. This fails `5` cannot be made to equal `3`.
 3. Because step 2 is false, the overall `,` clause is false and the `println` doesn't happen.
-4. The entire clause fails. `A` will not be bound to `5` after this clause! <- Important
+4. The entire clause fails. `A` will not be bound to `5` after this clause! ** <- Important**
 
 ```
 A=5, A!=3, println(A). % Succeeds/true/yes.
@@ -2222,29 +2246,30 @@ A!=3, A=5, println(A). % Fails/false/no.
 Now look at this. Did you expect it?
 
 ```
-A=B, println([A,B]). % A and B point to the same memory -> [_10a58,_10a58]
-hakank: Again, this is not memory location, but the unique identifier of the variable.
+A=B, println([A,B]). % A and B point to the same unique identifier -> [_10a58,_10a58]
 
 B=5,A=B, println(A). % B unifies/binds to 5, A binds to B, A is 5 -> 5.
 
 A=B,B=5, println(A) % B unifies with A, B binds to 5, A is now 5. <- Important
 ```
 
-Above is a two variable example. Both left and right in `A=B` are unbound variables, which means the unification points them to same memory location. Therefore whenever A or B gets bound to a value A will be also.
-hakank: "memory location"
+Above is a two variable example. Both left and right in `A=B` are unbound variables, which means the unification points them to same unique identifier. Therefore whenever A or B gets bound to a value A will be also.
+
 `is` comes from Prolog and is for unifying on numeric values only. It allows binding across integer and float numeric data types. I have never found a reason to use it instead of `=`.
+
 hakank: Actually, in Prolog it's a huge difference between is/2 and =/2: is/2 requires a numerical context "LHS is RHS", and requires that RHS is a numerical evaluation. In Prolog "X = 2+2" means that X is unified with 2+2, i.e. does not do any evaluation.
 hakank: Picat blurs this difference by evaluating 2+2. Both Prolog and Picat gives an error for this: "4 is A" ("Free variable in expression: is"). 
+
 ```
  A is 5. % A is bound to 5.
  
- 5.0 is 5 % Succeds/true/yes. Equivalent to =.= below.
+ 5.0 is 5 % Succeds/true/yes. Equivalent to =:= below.
  ```
-hakank: This should be "=:=". 
+ 
 
 ### Equality: the `==` and `=:=` operators
 
-If you want to test equality without unifying or binding, then `==` does this, just like Python or JavaScript. (Well, not like JavaScript, which has `===` and more rabbit holes about equality.)
+If you want to test equality without unifying or binding, then `==` does this, just like Python or JavaScript. Well, not like JavaScript, which has [`===`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Equality_comparisons_and_sameness) and more rabbit holes about equality. Why is equality so complex? Because it's both about the value and type of the objects on the left and right-hand sides.
 
 ```
 A=5,A==5. % Succeeds/true/yes
@@ -2256,8 +2281,7 @@ A=3,A!==5. % Succeeds/true/yes
 A=5,A!==5. % Fails/false/no. A is not bound to 5. <- Important
 ```
 
-Note: Two terms can be equivalent with `==` even if they don't point to the same memory.
-hakank: Again "memory".
+Note: Two terms can be equivalent with `==` even if they don't point to the same unique identifier.
 
 Numerical equality can also be checked with `=:=`, which considers float and interger types the same and allows for a difference of 0.00000001. Also, not numerically equal is `=\=`. For example:
 
@@ -2275,44 +2299,51 @@ Numerical equality can also be checked with `=:=`, which considers float and int
 5=\=6 % Succeeds/true/yes
 ```
 
-### Assignment: The `:=` operator, `bind_vars()` 
+### Assignment and Re-assignment: `=`, `:=` and `bind_vars()` 
 
-hakank: In logic programming =/2 is unification or binding. The Picat Guide (section "1.4 Assignments and Loops") talks about assignment in the context of something different from unification/binding. Personally I prefer to call :=/2 "reassignment" since it is really only useful when reassinging a variable.
-hakank: Using A := 5 for the first occurrence of A is considering bad style.
-To force the binding of a value to a variable, `:=` is the operator.
-hakank: Perhaps "rebinding" instead of "binding"?
-Variables in Picat are mutable, meaning `:=` overwrites the previous value. `bind_vars()` lets you assign a value to a structure such as a list or array. Some examples.
-hakank: It's not really correct to say that variables are mutable. What is happening with :=/2 is that a new variable is created under the hood, and then is given the same variable name. See the section 1.4 in Picat Guide for the details.
-hakank: Yes, I know I'm picky about this.
+
+In logic programming, as noted above, `=` is unification, binding, and initial assignment. And for initial assignment of a structure such as a list or array there is `bind_vars()`. 
+
+
+However, variables in Picat are re-assignable, meaning `:=` overwrites the previous value. The manual says, "In order to simulate imperative language variables, Picat provides the assignment operator :=."
+
+*Note: Using A := 5 for the first occurrence of A is considering bad style.
+To force the re-binding of a value to a variable, `:=` is the operator.*
+
+*Note: It's not really correct to say that variables are "mutable". What is happening with `:=/2` is that a new variable is created under the hood, and then is given the same variable name. More info [here](https://picat-lang.org/download/picat_guide_html/picat_guide.html#x1-780005.1). 
+
+This matters because backtracking can undo this re-assignment when evaluating alternatives. Which means it will work the way you expect it to. The manual says, "When LHS is an access in the form X[I], the component of X indexed I is updated. This update is undone if execution backtracks over this assignment." 
+
+And while I find this confusing, it also seems to "just work the way I expect" so I've stopped worrying about it.*
+
+Anyway, here's some examples!
 
 ```
-A:=5. % A is bound to 5.
+A:=5. % A is re-assigned to 5, we assume that A was already bound previously.
 
-A=3,A:=5. % A is bound to 5.
+A=3,A:=5. % A is re-assigned to 5.
 
 A:=5,A=3. % Fails/false/no. A is not bound to 5.
 
-A=new_list(5), bind_vars(A,"b"). A = [[b],[b],[b],[b],[b]]
+A=new_list(5), bind_vars(A,"b"). % A = [[b],[b],[b],[b],[b]]
 
-A=new_array(2,3), bind_vars(A,0). A = {{0,0,0},{0,0,0}}
+A=new_list(5), bind_vars(A,"b"), A[1]:="c". % A = [[c],[b],[b],[b],[b]]
+
+A=new_array(2,3), bind_vars(A,0). % A = {{0,0,0},{0,0,0}}
 ```
-hakank: Good example with bind_vars/2. It's in these cases one have to use use :=/2, e.g. reassigning a value such as A[1,1] := 3.
 
 ## Program Structure and Control Flow
 
 Picat programs consist of statements which can be combined into longer clauses inside procedures or functions. Picat statements are either rules or facts. This is more correct than thinking of them as statements because all of the rules and facts are stored in a database of the program. This is also how Prolog works.
 
-Fun fact: Because a program is a database, you can alter the rules and facts on the fly with `cl_facts`. See the later of this section for a perfectly legitimate abuse of this.
-hakank: In Prolog also predicate is available for probing, e.g. using clause/2. But this feature is - unfortunately - removed from Picat. Perhaps this should be mentioned for the - few - people with a Prolog background.
+*Fun fact: Because a program is a database, you can alter the rules and facts on the fly with `cl_facts`. See this [section](#example-global-fact--global-state) and also [this](#globally-control-progressdebug-println) for perfectly legitimate abuses of `cl_facts`.*
 
 
-### The `main` function.
+### The `main` predicate and Picat file extension.
 
-The default entry point for a Picat program is a `main` function. If you call a Picat program from the command line, `main` will be run unless you override it.
-hakank: Picky: main is the main _predicate_, not a function.
+The default entry point for a Picat program is a `main` predicate. (Similar to C, Haskell, etc.). If you call a Picat program from the command line, `main` will be run unless you override it.
 
-Also, the standard file extension for Picat is `.pi`.
-hakank: .pi is the mandatory extension for Picat programs (and modules).
+Also, the mandatory file extension for Picat programs and modules is `.pi`.
 ```
 % hello.pi
 main => println("Hello Picat!").
@@ -2326,13 +2357,11 @@ Hello Picat!
 
 ### Whitespace
 
-Whitespace does not matter except for one space needed after the end of clauses Picat doesn't care if you smush everything together.
-hakank: shouldn't this be something like "... the end of clauses _since_ Picat doesn't care..."
+Whitespace does not matter except for one space needed after the end of clauses because Picat doesn't care if you smush everything together.
 
-### A convention: `_`
+### Anonymous Variables: `_` aka underscore 
 
-`_` is used when you have a variable in a function or predicate and don't need to use that variable in it's body.
-hakank: For documentation, one can name it as _A, _ThisVariableIsNotNeededHere.
+`_` is used when you have a variable in a function or predicate and don't need to use it. The `_` can be used by itself of in the front of a name to help code-readability; but the meaning is the same. For example, `_A` or `_ThisVariableIsNotNeededHere`.
 
 Here's an example from the Picat manual with a definition of `zip` for combinging two lists into pairs of elements from each list. The result is the same length as the shorter list and any extra is thrown away. Thus, we don't care about what the other list contains if one of the lists is `[]`.
 
@@ -2343,21 +2372,19 @@ zip([X|Xs],[Y|Ys]) = [{X,Y}|zip(Xs,Ys)]. % recursive zip if both are non-empty
 
 A = zip(1..2,3..6). % A = [{1,3},{2,4}]
 ```
-Of course, you could also just list the variables and not use them.
+
+Of course, you could also just list the variables and not use them, but the use of the `_` helps clarify that the variable isn't being used.
+
 ```
 zip([],Ys) = []. % works the same.
 zip(Xs,[]) = []. 
 zip([X|Xs],[Y|Ys]) = [{X,Y}|zip(Xs,Ys)]. 
 ```
 
+### Predicates and Logic Programming "Weirdness": `append/3`
 
-### Predicates vs. Functions 
+In Prolog, everything is a predicate and there's no direct concept of a "returned value". Let's look at the classic example of a predicate: Prolog's `append/3` predicate, which Picat also has and it let's you join two lists.
 
-A key difference of Picat vs. Prolog is the inclusion of functions. In Prolog, everything is a predicate and there's no direct concept of a "returned value". 
-
-The classic example of this is Prolog's `append` predicate, which Picat also has and it let's you join two lists.
-hakank: What does "this" refers to? As it stand it seems to refer to "function". Oh, I see now. You are refering to "no direct concept of 'returned value'. Then the first sentence abou functions is "hanging in the air".
-hakank: I really like that you explain append/3 since it shows the power of logic programming, Prolog/Picat style.
 It takes the form `append(L1,L2,L3)`. Note the standard use of terse variable names. 
 
 ```
@@ -2380,7 +2407,6 @@ L2 = [1,2,3,4] ?
 ```
 This means `[1,2,3,4]` can be formed by an empty `L1` and `L2` being the same as `L3`. And then there's this `?`. Picat is asking if you want more. If you enter `;`, which means "or", the output continues with all possibilities until there are no more, which is indicated with `no`.
 
-
 ```
 Picat> append(L1,L2,[1,2,3,4]).
 L1 = '[]'
@@ -2397,9 +2423,57 @@ L2 = '[]' ?;
 no
 ```
 
+You can even have all arguments be variables!
+
+```
+Picat> append(L1,L2,L3).
+L1 = '[]'
+L3 = L2 ?;
+L1 = [_113c0]
+L3 = [_113c0|L2] ?;
+L1 = [_113c0,_113e0]
+L3 = [_113c0,_113e0|L2] ?;
+L1 = [_113c0,_113e0,_11400]
+L3 = [_113c0,_113e0,_11400|L2] ?;
+L1 = [_113c0,_113e0,_11400,_11420]
+L3 = [_113c0,_113e0,_11400,_11420|L2] ?;
+% etc. forever!
+```
+
 Technically what is happening here is unification, which we discussed earlier. Unification allows for non-deterministic behavior, which we will go into further later. But the key point here is what would it be like to write a program with nothing but predicates that work this way? 
 
-Picat has all of this Prolog-type behavior, but with functions it's more explicit what the input and output of a called object are. You can use `append` or, if you just want to join two lists, you can do this:
+### `append/4` for parsing
+
+Since we brought up `append/3` there's also `append/4` which splits up a list into multiple parts. The manual says: 
+
+> `append(W,X,Y,Z)` (nondet): This predicate is defined as:
+> `append(W,X,Y,Z) => append(W,X,WX), append(WX,Y,Z)`.
+
+Which is true, but also, hey, how about an example? Since the manual doesn't give one, I went to ChatGPT, which helpfully gave this for parsing all occurrences of a pattern from a list.
+
+```
+main =>
+    List = [a,b,c,d,b,c],
+    Pattern = [b,c],
+    append(Left, Pattern, Right, List),
+    println([Left, Right]),
+    fail
+;
+    true.
+```
+Note the use of `fail`, `;` and `true` to extract all possible unifications/solutions. We will also cover this [here](#control-flow-the--operator). This code outputs:
+
+```
+[a,dbc]
+[abcd,[]]
+
+yes
+
+```
+
+### Functions!
+
+A key difference/advantage of Picat vs. Prolog is the inclusion of functions. With functions it's more explicit what the input and output of a called object are. You can use `append` as above or, if you just want to join two lists, you can do this:
 
 ```
 L3 = L1 ++ L2.
@@ -2408,20 +2482,31 @@ L3 = [1,2] ++ [3,4]. % L3 = [1,2,3,4].
 L3 := [1,2] ++ [3,4]. % L3 = [1,2,3,4].
 
 ```
-This is deterministic and unifies or explicitly assigns `L1` followed by `L2` to `L3`. Again note that unification is bidirectional.
 
-hakank: I like the example ++/2 (when contrasting with append/3) but it's misleading in the context of functions. Prolog's "X is 3+2" can be seen as a function, but that's very limited. A better example of function would be the fibonacci function you defined earlier.
+This is deterministic and unifies or explicitly assigns `L1` followed by `L2` to `L3`. Again note that unification is bidirectional. For example:
 
-
-***Key point:*** The Picat manual identifies functions with the notation `= Val`, `= ResList` or similar. If you try to call a predicate like a function or visa-versa you will get an error an `undefined procedure` or a fail that you didn't expect.
-
-For example:
 ```
 A = append(1,2,3). % *** Undefined procedure: append/3
 [3,4] = [1,2] ++ L2. println(L2). % Fails/false/no.
 ```
 
-These seem like simple errors to avoid, but the distinction between a function that returns a value versus a predicate that unifies one or more of its arguments can be subtle. It's important to read the manual. 
+While `++/2` is absolutely a function, an example you're more likely to think of is something like our [Fibonacci](#fibonacci-and-tabling) function earlier, or here's a function that returns the longer of two lists. Here we use the notation `= R` to identify a return value that will be set inside the body of the function. 
+
+```
+longer(L1,L2) = R => if len(L1) >= len(L2) then R = L1 else R = L2 end.
+```
+
+If you want to return two or more values, you can pack them into a list, array, etc.
+
+```
+longer(L1,L2) = [R,Len(R)] => if len(L1) >= len(L2) then R = L1 else R = L2 end.
+```
+
+### Is it a Predicates or a Function?
+
+**Key point: The Picat manual identifies functions with the notation `= Val`, `= ResList` or similar. If you try to call a predicate like a function or visa-versa you will get an error an `undefined procedure` or a fail that you didn't expect.**
+
+This seems like a simple error to avoid, but the distinction between a function that returns a value versus a predicate that unifies one or more of its arguments can be subtle. It's important to read the manual. 
 
 For example to get a single solution or all solutions to a constraint programming problem the manual says:
 
@@ -2432,17 +2517,18 @@ Calling `solver(MyVariable)` will unify `MyVariable` with the solution. In other
 
 But `solve_all(MyVariable)` gives a `** Error  : function_used_as_predicate:import(cp,solve_all / 2)`. You need to write something like `Sols = solve_all(MyVariable)`.
 
-Note the reason for the difference is that before calling `solve`, `Vars` is a domain variable that has the shape of the solution. Solving binds `Vars` to the solution, so it is a predicate. All the solutions is a list, which is not the same shape as a single solution, and therefore needs to be assigned to a new variable. 
+Note the reason for the difference is that before calling `solve`, `Vars` is a domain variable. Solving binds `Vars` to the solution, so it is a predicate. `solve` is also non-deterministic and can generate additional solutions via the use of `fail`. (See `append/4` below for an example of using `fail`.)
 
-Don't worry if this doesn't make perfect sense yet. Personally this took me quite some time to understand.
-hakank: And I'm not sure I understand what you mean by "shape of the solution" in this context. 
-hakank: In my view, the difference between solve/1-2 and solve_all/1-2 is more that solve/2 is non-deterministic and generates one solution and then might generate another solution in a failure context (e.g. when using fail/0). solve_all/1-2 collects all the possible solutions and returns them as a list of MyVariable. Though, I'm not sure if that's much clearer...
+`solve_all` is deterministic and can generate one or more solutions and collects these into a list, which cannot be unified with `Vars`, a single solution, and therefore needs to be assigned to a new variable. 
+
+For me, I think about this from a Haskell/strongly-typed language perspective. `MyVariable` above is a single variable. `Sols` is a list of type `[MyVariable]`. Whether this helps you also, or adds to the confusion, I cannot say. Just remember to read the manual and see if it uses a `=` in the definition.
+
 
 ### `=>` vs `=` and conditions
 
-Functions and predicates can be defined with `=` if they are simply a unifiation or `=>` if there are multiple clauses in the body. Also, when using `=>` you can add a condition after the assignment of the result. For example.
-hakank: Predicates cannot not be defined with "=", it's only for defining functions. The use of => here is to add a body to a function, but since it has a return value it's a function. 
-hakank: Do you mention somewhere the ?=>/2 variant for defining non-deterministic predicates?
+Functions can be defined with `=` if they are simply a single expression or `=>` if there are multiple clauses in the body. When using `=>` you can add a condition after the assignment of the result. For example.
+
+(The non-deterministic/backtracking `?=>` is described [here](#non-determinism--and-more-table).)
 
 ```
 main =>
@@ -2507,14 +2593,15 @@ L2 = length(All).  % L1 is identical L2,
 
 ### Function call syntax: `()` and `.`
 
-Functions can be called by placing arguments in parenthesis or by using dot notation. This is just syntactic sugar. The `.` notation makes the code a little shorter (1 character versus 2), and looks more like functional programming (or Rust) as opposed to lots of parentheses. You may find it easier to follow the logic with the dot notation, and you can mix-and-match the notations however you like.
-For example:
+Functions can be called by placing arguments in parenthesis or by using dot notation. This is just syntactic sugar. The `.` notation makes the code a little shorter (1 character versus 2), and looks more like functional programming, Rust, JavaScript. This syntax is used in lots of languages and commonly referred to as [*method chaining*](https://en.wikipedia.org/wiki/Method_chaining). You may find it easier to follow the logic with the dot notation, and you can mix-and-match the notations however you like.
+
+Personally, I find the dot notation easier to understand if there's more than function being applied. Many nested parenthesis feels more like Lisp to me. For example:
 
 ```
 % parentheses
 Steps = map(my_parser,map(split,read_file_lines("day.txt"))),
 init_bots(Steps,Bots,Bins),
-Answer = prod(map(dec,take(3,(to_list(step([S : S in Steps, S[1]=$gives],Bots,Bins))))),
+Answer = prod(map(dec,take(3,(to_list(step([S : S in Steps, S[1]=$gives],Bots,Bins)))))),
 
 % dot notation
 Steps = ("day.txt").read_file_lines.map(split).map(my_parser),
@@ -2525,8 +2612,7 @@ Answer = step([S : S in Steps, S[1]=$gives],Bots,Bins).to_list.take(3).map(dec).
 Steps = read_file_lines("day.txt").map(split).map(my_parser),
 % etc.
 ```
-
-hakank: I usually call this "function chaining" (and tend to overuse it :, but perhaps this term is not used in functional programming.
+Note: Obligatory xkcd [reference](https://xkcd.com/859/). Or where you expecting [this](https://xkcd.com/297/)?
 
 
 ### Statement delimiters
@@ -2560,14 +2646,14 @@ curve(Grade) = Letter =>
 if (Grade > 50) Letter = 'A' else Letter = 'F' end. 
 ```
 
-Picat also allow Prolog style if statements with `->` and `;`. The syntax is $if -> then ; else$.
+Picat also allow Prolog style if statements with `->` and `;`. The syntax is $if -> then ; else$. 
+
+*Note: Parentheses are **highly** recommended around these constructs to be explicit about what statements are can be "or" with each other and thereby avoid having Picat to do something you didn't intend.*
 
 ```
 (A>5 -> println("Big"); println("small")).
 
 ```
-hakank: Please add an explicit comment that parenthesis is recommended around these constructs.
-
 
 `foreach` is a loop structure like any other programming language. Picat also has `while` and `do ... while`. The condition in `foreach` has to be enclosed in `()`. And, like `if`, you need an `end` at the end.
 
@@ -2577,24 +2663,45 @@ foreach(X in 1..10, Y in 1..10)
    	A[X,Y] := my_hash_function(X,Y) % <- line end comma optional
 end.
 ```
+You can also put a condition inside the `foreach`, similar to list comprehension in Haskell and other languages. For example:
 
-hakank: Perhaps you can mention that a condition can be placed in the "head", e.g.
-hakank:    foreach(X in 1..10, Y in 1..10, X + Y mod 4 <= 2)
-hakank:      % ...
-hakank:    end.
+```
+foreach(X in 1..10, Y in 1..10, X + Y mod 4 <= 2)
+  % ...
+end.
+```
+Or a lot of conditions and thereby remove having any `if` statements in your loop body. Here's an example from one of my [programs](#planner-and-constraint-example-traveling-salesperson) to get the valid neighbors of a given 2 dimensional array item. 
 
-### Control flow: `;` operator
+Neighbors are those coordinates that do not have a `#` or `$` in them and are within the bounds of the array. Look at all those conditions and only one line in the loop body!
+
+```
+parse(Maze) = Neibs =>
+    MaxY = Maze.len, MaxX = Maze[1].len,
+    Neibs = new_array(MaxY,MaxX), bind_vars(Neibs,[]),
+    foreach (Y in 1..MaxY, X in 1..MaxX, 
+            MYX = Maze[Y,X],
+            [DY,DX] in [[-1,0],[1,0],[0,1],[0,-1]],
+            NX = X+DX, NY = Y+DY, 
+            between(1,MaxY,NY), between(1,MaxX,NX),
+            not member(Maze[NY,NX],['#','$']), % $ is a pruned location
+            not member(MYX,['#','$']))
+        Neibs[Y,X] := Neibs[Y,X] ++ [[NY,NX]]
+    end.
+
+```
+
+### Control flow: the `;` aka "or" operator
 
 `if ... then ... else` are familiar control flow for almost all programming languages. Prolog/Picat can also use the concept of "or". There's an example of this in [Blocks World](#a-planner-example-blocks-world).
 
-The structure is essentially a case statement in other languages: `(A; B; C; D)`, which reads as perform `A`, if it fails, perform `B`, etc. Enclose these in `()` to make sure that the case statement doesn't get mixed up with other parts of the predicate or function.
-hakank: As mentioned earlier ";" might - in contrast to the case statements in other language - also generates all possible solutions.
-hakank: For examplem, (A = 3 ; A = 4 ; A = 5) will bind A to 3, 4, and 5 respectively.
+The structure is similar to a case statement in other languages: `(A; B; C; D)`, which reads as perform `A`, if it fails, perform `B`, etc. Enclose these in `()` to make sure that the options doesn't get mixed up with other parts of the predicate or function.
 
-### `cond` and `compare_terms`
+However, it's not exactly a case statement. For example, `(A = 3 ; A = 4 ; A = 5)` will bind `A` to `3`, `4`, and `5` respectively on backtracking/failure.
+
+
+### Control flow: `cond` and `compare_terms`
 
 Another way to do an `if` is with `cond`. While it's not listed in the Picat manual index, it does define the function in this example:
-hakank: Good catch about the omission from the index. I'll mention this to Neng-Fa.
 
 > The fib function can also be defined as follows:
 >
@@ -2609,14 +2716,12 @@ A = compare_terms(5,2). % A = 1
 B = compare_terms(2,2). % B = 0
 C = compare_terms(2,5). % C = -1
 ```
-hakank: Note that cond/3 is also available as a constraint, e.g. C #= cond(A#>3,A+B,A-B).
+*Note: For constraint programming `cond/3` is also available as a constraint, for example: `C #= cond(A#>3,A+B,A-B)`.*
 
 ## Example: Global fact = Global state
 The below code recursively parses parenthesis but has different requirements for part 1 and part 2. To do this it uses a global fact: `part(n)` to change the behavior of `parse1` function. The fact is changed from `part(1).` to `part(2).` with the `cl_facts()` command that updates the global fact dictionary.
 
 Probably unsafe, but quite neat!
-
-hakank: Agree, it's neat.
 
 https://adventofcode.com/2016/day/9
 
@@ -2657,6 +2762,7 @@ Here's an example that simulates a simple assembly language. It invokes the corr
 The interesting thing here is that the name of the function is identical to the string in the input. The *cpy* command is performed by the `cpy` function.
 
 The code also makes use of a hash map to store the value of registers and passes state back and forth via unification. Note how `S` isn't explicitly returned. It's not a global variable. It's unified with itself resulting in updates meaning it is both input and output.
+
 hakank: I'm not sure I understand "unified with itself" and "is both input and output". The point of S as a map is rather that it's mutable (as maps usually are). 
 
 The program counter, by contrast, is explicitly returned and updated using the function syntax and `:=`.
@@ -2719,7 +2825,10 @@ main =>
 run(Program,S,PC) = NewS =>
     while (between(1,Program.len,PC))
         [Op,Args] = Program[PC],
-        PC := apply(Op,Args,S,PC), % hakank: Perhaps a comment indicating apply/N? "% <=="
+        % here's the dynamic dispatch
+        % apply calls the function stored in the variable Op 
+        % with the arguments: Args, S and PC.
+        PC := apply(Op,Args,S,PC), 
     end,
     NewS = S.
 
@@ -2740,14 +2849,10 @@ jnz([X,Y],S,PC) = NPC =>
     if Xn != 0 then NPC = PC+Y else NPC = PC+1 end.
 
 ```
-hakank: This program is not available in the 'example code' library (and not the input file "day.txt" either).
 
 ## Non-determinism: `?=>` and more `table`
 
-A key feature of logic programming languages is implicit backtracking from failure to try and achieve success.
-hakank: And so is explicit backtracking.
-This is also why they lend themselves to constraint programming.
-hakank: I'm not sure I understand this connection between backtracking and constraint programming. The backtracking in Picat (and Prolog) is based on a different mechanism than constraint programming.
+A key feature of logic programming languages is explicit and implicit backtracking from failure to try and achieve success. Recall our friends [`append/3`](#predicates-vs-functions) and [`append/4`](#append4-for-parsing). 
 
 Picat predicates/rules, but not functions, can be defined as backtrackable with `?=>`. The manual provides an example for determining if a a node `Y` is reachable from a node `X` in a graph.
 
@@ -2761,8 +2866,6 @@ The manual notes that this takes exponential time to compute and by applying `ta
 table  % so much faster
 reach(X,Y) ?=> edge(X,Y). 
 reach(X,Y) => reach(X,Z), edge(Z,Y).
-
-hakank: Somewhere you might comment that Picat also support Horn clauses, using the Prolog syntax of :-/2 instead of ?=>/2 and =>. This makes it often quite easier to port Prolog programs. 
 
 ```
 
