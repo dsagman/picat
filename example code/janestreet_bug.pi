@@ -104,7 +104,7 @@ sp(Graph,X,Y,Path,WL) =>
 
 % Save to file for use with Python
 save_solution(Solutions) =>
-    Out = open("solutions.txt", write),
+    Out = open("jane_street_bug.txt", write),
     foreach(Solution in Solutions)
         println(Out, Solution)
     end,

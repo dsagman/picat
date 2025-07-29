@@ -1,5 +1,6 @@
 - [What I Wish I Knew When Learning Picat: Introduction](#what-i-wish-i-knew-when-learning-picat-introduction)
-  - [Why Am I Interested in Optimization?](#why-am-i-interested-in-optimization)
+  - [A Motivating Example](#a-motivating-example)
+  - [My Personal Vendetta With Optimization](#my-personal-vendetta-with-optimization)
   - [How This Document Is Organized](#how-this-document-is-organized)
   - [About Picat](#about-picat)
   - [Picat vs. Other Languages](#picat-vs-other-languages)
@@ -19,6 +20,14 @@
     - [Constraint Operators](#constraint-operators)
     - [Arithmetic on Lists and Expressions](#arithmetic-on-lists-and-expressions)
     - [Global Constraints](#global-constraints)
+  - [Using `solve` and `solve_all` with `cp`, `sat`, `mip` and `smt`](#using-solve-and-solve_all-with-cp-sat-mip-and-smt)
+    - [Common Options Across All Solvers](#common-options-across-all-solvers)
+    - [The Four Solver Modules](#the-four-solver-modules)
+      - [CP, Constraint Programming or Constraint Logic Programming (Integer)](#cp-constraint-programming-or-constraint-logic-programming-integer)
+      - [SAT, Boolean Satisfiability (Integer)](#sat-boolean-satisfiability-integer)
+      - [MIP, Mixed-Integer Programming (Integer and Real)](#mip-mixed-integer-programming-integer-and-real)
+      - [SMT, Satisfiability Modulo Theories (Integer)](#smt-satisfiability-modulo-theories-integer)
+- [Constraint and Planner Example Programs](#constraint-and-planner-example-programs)
   - [Constraint Example: Advent of Code 2016 Day 15](#constraint-example-advent-of-code-2016-day-15)
 - [Number of solutions: 2](#number-of-solutions-2)
 - [Message is: RCQPD](#message-is-rcqpd)
@@ -30,9 +39,11 @@
   - [Optimization/Constraint Programming Resources](#optimizationconstraint-programming-resources)
 
 
+
+
 # What I Wish I Knew When Learning Picat: Introduction
 
-July 2025
+August 2025
 
 I have long been interested in constraint programming, which has been referred to as the "Holy Grail" of programming where the user states the problem and the computer solves it. https://dl.acm.org/doi/fullHtml/10.1145/242224.242304
 
@@ -60,7 +71,53 @@ Consider this a rough draft representing my personal learning curve. This docume
 
  *Many extra thanks to Håkan Kjellerstrand for editing a draft of this document, and always being ready to answer any question on Picat.*
 
-## Why Am I Interested in Optimization?
+## A Motivating Example
+
+Remember simultaneous linear equations? For example, here's a [problem](ttps://www.reddit.com/r/learnmath/comments/wdgk6x/ways_to_solve_system_of_equations_with_4_unkowns/) from Reddit's Learn Math:
+
+$$
+x + y = 2 \\
+y + z = 7 \\
+z + w = 13 \\
+w + x = 8 \\
+w \ge 0 \\
+x \ge 0 \\
+$$
+Think how you might solve this with any programming languages you know. Maybe nested `for` loops over possible values? Or a `filter` with conditions? Or just do it in your head?
+
+With Picat, this is straightforward:
+```
+import cp. % the constraint solver module
+
+main =>
+    X + Y #= 2, % #= means RHS equals LHS in valid solutions
+    Y + Z #= 7, 
+    Z + W #= 13, 
+    W + X #= 8, 
+    W #>= 0, X #>= 0,
+
+    Sols = solve_all([W,X,Y,Z]), % find all solutions
+    
+    foreach (S in Sols) 
+        [W1,X1,Y1,Z1] = S, % pattern match on the variables
+        println([w=W1,x=X1,y=Y1,z=Z1]) % print them out
+    end.
+```
+This outputs:
+```
+    [w = 0,x = 8,y = -6,z = 13]
+    [w = 1,x = 7,y = -5,z = 12]
+    [w = 2,x = 6,y = -4,z = 11]
+    [w = 3,x = 5,y = -3,z = 10]
+    [w = 4,x = 4,y = -2,z = 9]
+    [w = 5,x = 3,y = -1,z = 8]
+    [w = 6,x = 2,y = 0,z = 7]
+    [w = 7,x = 1,y = 1,z = 6]
+    [w = 8,x = 0,y = 2,z = 5]
+```
+Nice!
+
+## My Personal Vendetta With Optimization
 
 My interest in optimization goes back to when I worked on the Optimization Subroutine Library at IBM Kingston in my first job out of college in 1989.
 IBM needed a technical writer for the manual who had a background in computing and math, and as a dual CS/Math major with a writing minor, who also happened to have a father who worked at IBM for 30 years, I was the perfect person.
@@ -70,7 +127,9 @@ It could also take advantage of the "vector processing facility" to do multiple 
 
 This was software that cost in the hundreds of thousands of dollars and ran on machines that cost millions. But it was in great demand nonetheless: Airlines and trucking companies used OSL for scheduling, oil and gas companies for evaluating the potential of drill sites. 
 
-Nowadays, you can just download for free any of a number of linear programming libraries and run them on your laptop with more compute than any 1990s mainframe. However, at the time, and still today, the math at the center of this is over my head, which is why **I find Picat so appealing. It's a chance to learn about optimization with the linear algebra available, but not required.**
+Nowadays, you can just download for free any of a number of linear programming libraries and run them on your laptop with more compute than any 1990s mainframe. 
+
+However, at the time, and still today, the math at the center of this is over my head, and I never really understood how the optimization worked or how to use it myself. Which is why I find Picat so appealing. **Picat enables learning about constraint programming and optimization with the linear algebra and discrete mathematics quietly in the background.**
 
 *Fun fact: A couple the researchers from IBM who wrote much of OSL, John Forrest and John Tomlin, were and are instrumental in COIN-OR, an open source optimization software initiative. John Forrest was not the friendliest to a young technical writer, but John Tomlin was as kind as possible.
 https://www.informs.org/Recognizing-Excellence/Award-Recipients/John-Forrest 
@@ -132,7 +191,8 @@ Let's look at how Picat stacks up against some programming languages you may kno
 | Functions             | `double(X) = R => R = X*2`                            |
 | Output                |  `print()`, `println()`, `printf()`                   |
 | Input                 | `read_file_lines("datafile.txt").`                    |
-| Higher Order Functions| `map(reverse,MyStringList).` or `MyStringList.map(reverse).`| 
+| Higher Order Functions| `map(reverse,MyStringList).` or `MyStringList.map(reverse).`|
+||| 
 
 Also: Hashmaps, Sets, Ordered Sets and Binary Heaps.
 hakank: Don't forget "global" variables using get_global_map() etc
@@ -626,6 +686,156 @@ to be *K*.
 
 - `tree`(*Vs*,*Es*,*K*): The same as `tree`(*Vs*,*Es*), except that it also constrains the number of vertices in the tree to be *K*.
 
+
+## Using `solve` and `solve_all` with `cp`, `sat`, `mip` and `smt`
+
+Let's go back to the [example](#a-motivating-example) I used in the intro. I fibbed a little. Yes, it's easy to solve this toy problem and yes it can be done with all the solvers, but using each solver is slightly different. They aren't fully "hot swappable".
+
+Here's the full version of that code where all the solvers are specified. You can try this by uncommenting a different solver from the one in the code.
+
+```
+% import cp. % solve with cp
+
+% import sat. % solve with sat
+
+% import mip. % solve with mip, uou need to install cbc, glpk, gurobi or compile Picat from scratch for scip 
+
+import smt. % solve with smt, you need to install cvc or z3
+
+main =>
+    % for sat and smt, need to explictly make new dvars
+    % also works for cp and mip, 
+    % but if you want non-integer solutions for mip
+    % need to specify they can be real numbers with something after the decimal point
+    % for example, instead of new_dvar use W :: 0.0..100.0
+    W = new_dvar(), 
+    X = new_dvar(),
+    Y = new_dvar(),
+    Z = new_dvar(),
+    X + Y #= 2, 
+    Y + Z #= 7, 
+    Z + W #= 13, 
+    W + X #= 8, 
+    W #>= 0, X #>= 0,
+
+    Sols = solve_all([W,X,Y,Z]), % cp, sat or smt which defaults to calling z3
+    % Sols = solve_all($[cbc],[W,X,Y,Z]), % one option for mip
+    
+    foreach (S in Sols) 
+        [S1,S2,S3,S4] = S,
+        println([w=S1,x=S2,y=S3,z=S4])
+    end.
+
+```
+
+### Common Options Across All Solvers
+
+When calling `solve` and `solve_all` there's some common options you can select. 
+
+- `$limit`(*N*): Search up to *N* solutions.
+- `$max`(*Var*): Maximize the variable *Var*.
+- `$min`(*Var*): Minimize the variable *Var*.
+- `$report`(*Call*): Execute Call each time a better answer is found while searching for an optimal answer. (Not available with `mip`.) I used this for debugging in this [program](#constraint-example-santas-knapsack).
+
+**Options are the first argument in a `solve` call and have to be inside a list, even if there's only one.**
+For example, in the above we could write:
+```
+Sols = solve_all([$min(W)],[W,X,Y,Z]). 
+```
+or
+```
+Sols = solve_all($[limit(3),report(printf("Got one! %w",W))],[W,X,Y,Z]). 
+```
+Note the use of `$`. This means that Picat should not attempt to evaluate the term as an immediate function call. Also note that the `$` can be outside of the list for multiple options. Or inside on both options. More on `$` [here](#when-to-use--and-when-not-to).
+
+### The Four Solver Modules
+
+Let's look at the four solver modules and what makes them different from each other, and the options you can provide to the solver for them. 
+
+*Note: Picat is primarily focused on problems with integer aka finite-domain solutions. (Yes, integers are infinite, but not in computer programs that are expected to halt.) While MIP provides the ability to have real-valued solutions, if you are really looking for non-linear optimization, Picat is not the right tool.* 
+
+*On the other hand, Picat does have a neural network modules that interfaces to the [FAAN neural network library](https://leenissen.dk/). I'm sure someone could use it for non-linear optimzation, given that this is exactly what neural networks do. However, that person is not me. Hakan, of course, has some [example code](https://www.hakank.org/picat/nn_hakank/).*
+
+
+#### CP, Constraint Programming or Constraint Logic Programming (Integer)
+
+Finds feasible values for decision variables by searching through and reducing the domains of those variables via algorithmic techniques such as: breadth and depth-first search, tabling (memoization), backtracking, refinement, perturbation, constraint propogation, combinatorics, unification, and other heuristics.
+
+The `cp` module has been more the sufficient for all of the Advent of Code problems in this text and it's been the main one I use. It also has the most option to adjust the search strategy. 
+
+Here's the scoop copied right out of the manual:
+
+- `backward`: The list of variables is reversed first.
+- `constr`: Variables are first ordered by the number of attached constraints.
+- `degree`: Variables are first ordered by degree, i.e., the number of connected variables.
+- `down`: Values are assigned to variables from the largest to the smallest.
+- `ff`: The first-fail principle is used: the leftmost variable with the smallest domain is selected.
+- `ffc`: The same as with the two options: `ff` and `constr`.
+- `ffd`: The same as with the two options: `ff` and `degree`.
+- `forward`: Choose variables in the given order, from left to right.
+- `inout`: The variables are reordered in an inside-out fashion. For example, the variable list [X1,X2,X3,X4,X5] is rearranged into the list [X3,X2,X4,X1,X5].
+- `label`$(CallName)$: This option informs the `cp` solver that once a variable $V$ is selected, the user-defined call $CallName(V)$ is used to label $V$, where $CallName$ must be defined in the same module, an imported module, or the global module.
+- `leftmost`: The same as `forward`.
+- `max`: First, select a variable whose domain has the largest upper bound, breaking ties by selecting a variable with the smallest domain.
+- `min`: First, select a variable whose domain has the smallest lower bound, breaking ties by selecting a variable with the smallest domain.
+- `rand`: Both variables and values are randomly selected when labeling.
+- `rand_var`: Variables are randomly selected when labeling.
+- `rand_val`: Values are randomly selected when labeling.
+- `reverse_split`: Bisect the variable’s domain, excluding the lower half first.
+- `split`: Bisect the variable’s domain, excluding the upper half first.
+- `updown`: Values are assigned to variables from the values that are nearest to the middle of the domain.
+
+I say this later on, but it bears repeating: The search and labeling methods can greatly affect solution time. See pgs 59-61 in the [Picat constraint book](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf) for an example of trying all the combinations of solve options on a Magic Squares problem. Results there range from essentially instaneous to more than the author's set limit of 10 seconds.
+
+#### SAT, Boolean Satisfiability (Integer)
+
+TODO
+
+#### MIP, Mixed-Integer Programming (Integer and Real)
+Solves problems with real (continuous), integer, or binary decision variables or any mixture of these. This is as opposed to LP, linear programming, which only allows for continuous solutions. Both, howerver, are based on numerical linear algebra techniques. MIP algorithms for finding solutions in the search space include branch-and-bound, branch-and-cut, cutting plans, interior-point methods, Lagrangian relaxation, and Simplex. 
+
+To use the `mip` module in Picat, you need to install an external MIP solver and invoke `solve` with the name of the solver. Picat will export a file with the appropriate format and then call the external solver. Options include:
+
+| MIP solver  | Licencse    | `solve`               |  Picat System Call or Interface                                       |  Link |
+|-------------|-----------  |------------           |-                                                  |  -----|
+| cbc         | open source | `solve([cbc],Vars)`   | `cbc` *TempFile* `solve -solu` *SolFile*       |  [link](https://github.com/coin-or/Cbc)        |
+| glpk        | open source | `solve([glpk],Vars)`  | `glpsol -lp -o` *SolFile* *TempFile*                 |  [link](https://www.gnu.org/software/glpk/)    |    
+| scip        | open source | `solve([scip],Vars)`  | Internal C interface that requires you to build Picat from [source](https://picat-lang.org/download.html) with SCIP enabled
+| gurobi      | paid        | `solve([gurobi],Vars)`| `gurobi_cl ResultFile=`*SolFile* *TempFile*           |  [link](https://www.gurobi.com/)               |
+| CPLEX        | paid       | `solve([dump(`*File*`)],Vars)`  | You have load the *File* into CPLEX     |  [link](https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer)   |
+|||
+
+When using `mip`, if you want real valued solutions (non-integer), then you need to specify an interval for the domain variable in the form $L..U$ , where $L$ and $U$ are real values. That is, there must be something after the decmial. For example `1.34` or `2.0`.
+
+Also, nonlinear constraints are not allowed. For example, you can't do this:
+
+```
+import mip.
+
+main =>
+    X :: 0.0..100.0,
+    2**X #= 31,
+
+    solve([glpk],X),
+    println(x=X).
+
+```
+results in
+```
+*** error(dvar_expected(_a18),nonlinear_constraint)
+```
+
+*Fun fact: Simplex and interior-point were the two algorithms that IBM's [OSL software](https://support.sas.com/resources/papers/proceedings-archive/SUGI93/Sugi-93-57%20Kearney.pdf) implemented and I documented in [1989](#my-personal-vendetta-with-optimization). CPLEX is OSL's "descendant" sort of. OSL is more directly an ancestor of the open source COIN-OR tools and CPLEX was an IBM acquisition in 2009. I fear a rabbit hole coming on....*
+
+
+#### SMT, Satisfiability Modulo Theories (Integer)
+
+
+TODO
+
+
+# Constraint and Planner Example Programs
+
 ## Constraint Example: Advent of Code 2016 Day 15
 
 https://adventofcode.com/2016/day/15
@@ -729,7 +939,7 @@ https://www.janestreet.com/bug-byte/
 >
 >Once the graph is filled, find the shortest (weighted) path from to and convert it to letters (1=A, 2=B, etc.) to find a secret message.
 
-![Bug byte](janestreet_bug.png)
+![Bug byte](imgs\janestreet_bug.png)
 
 In Picat, here's a solution. The nodes and edges are defined and then the constraints about the known values of nodes and possibly values for the edge weights. Each constraint reduces the search space.
 
@@ -1077,9 +1287,9 @@ Here's an example from the documentation for the programming language Curry, whi
 
 >The “blocks world” consists of 3 possibly empty piles, labeled p, q and r, of unique blocks labeled A, B, C, etc. “Start” and “Final” below are two examples from [blocks world](https://www.d.umn.edu/~gshute/cs2511/projects/Java/assignment6/blocks/blocks.xhtml).
 
-![](blocksworld1.png)
+![](imgs\blocksworld1.png)
 
-![](blocksworld2.png)
+![](imgs\blocksworld2.png)
 
 >A blocks world “problem” consists of two worlds, like Start and Final above. Its solution consists in the moves that produce the second world from the first one. A “move” transfers the block on top of a pile to the top of another pile. No other blocks are affected by the move. 
 
@@ -1723,12 +1933,12 @@ Advent of Code 2016 day 13 has another good candidate for the planner.
 Here's the code. Items of note:
 
 - The biggest gain is from tabling the function `f` which indicates if a given coordinate is a wall or open space.
+- Tabling `action` also gives a small speedup.
 - The `planner` will use the function named `heuristic`, if provided, as an aid in finding the solution. Here this approach helped by providing the "Manhattan distance" to the solution for part 1.
 - For part 2 there are two algorithms, a standard breadth first search (BFS) which does not use the solver and a "brute force" approach of just calling the solver on every possible coordinate that's up to 50 steps away from the start.
 - I couldn't wrap my head around BFS and had to turn to ChatGPT, which, except for some syntax errors, provided the code. This runs super fast, 0.001 seconds.
 - For the brute force solution, Picat is fast enough to get it done in less than 0.4 seconds.
-hakank: You will get a small speedup (0.32s -> 0.2s) by using table on action/4.
-hakank: Also, the use of member/2 in bfs/4 is better written as membchk/2 since member/2 create choice points (i.e. trying alternative solutions), but membchk(E,L) just checks if E is in L. Though that doesn't speed things up in this case.
+
 ```
 import planner.
 
@@ -1784,7 +1994,7 @@ bfs(Steps, Frontier, Visited0, I) = VisitedFinal =>
         foreach ([DX,DY] in [[1,0],[0,1],[-1,0],[0,-1]])
             NX = X + DX,  NY = Y + DY,
             if NX >= 0, NY >= 0 then 
-                if f(NX,NY,I), not member([NX,NY], Vacc) then
+                if f(NX,NY,I), not membchk([NX,NY], Vacc) then
                     Vacc := Vacc ++ [[NX,NY]],
                     Next := Next ++ [[NX,NY]]
                 end
@@ -2187,7 +2397,7 @@ However, when it's first referenced the variable will be given a unique identifi
 println(A). % If A hasn't been defined/bound then _3d084e8 (or some other unique identifier) 
 ```
 
-### Unification: the `=` and `is` operators
+### Unification: the `=` operators
 
 It is always tricky to try to explain unification, which is expressed by the  `=` operator. It performs one thing that looks like two. [The Picat manual](https://picat-lang.org/download/picat_guide_html/picat_guide.html#x1-590003.5) says, "The unification T1 = T2 is true if term T1 and term T2 are already identical, or if they can be made identical by instantiating the variables in the terms." Which, in my opinion, feels a bit like "a monad is a monoid in the category of endofunctors". True, but useful only once you already know what the concept means.
 
@@ -2268,17 +2478,20 @@ A=B,B=5, println(A) % B unifies with A, B binds to 5, A is now 5. <- Important
 
 Above is a two variable example. Both left and right in `A=B` are unbound variables, which means the unification points them to same unique identifier. Therefore whenever A or B gets bound to a value A will be also.
 
-`is` comes from Prolog and is for unifying on numeric values only. It allows binding across integer and float numeric data types. I have never found a reason to use it instead of `=`.
+#### A Note About Prolog's `is`
 
-hakank: Actually, in Prolog it's a huge difference between is/2 and =/2: is/2 requires a numerical context "LHS is RHS", and requires that RHS is a numerical evaluation. In Prolog "X = 2+2" means that X is unified with 2+2, i.e. does not do any evaluation.
-hakank: Picat blurs this difference by evaluating 2+2. Both Prolog and Picat gives an error for this: "4 is A" ("Free variable in expression: is"). 
+Prolog's `is/2` is  availabe in Picat for unifying on numeric values. It allows binding across integer and float numeric data types. 
+
+In Prolog, there a big difference between `is/2` and `=/2`: `is/2` requires a numerical context "LHS is RHS", and requires that RHS is a numerical evaluation. In Prolog `X = 2+2` means that `X` is unified with `2+2`, i.e. does not do any evaluation. Picat blurs this difference by evaluating `2+2`. 
 
 ```
  A is 5. % A is bound to 5.
+
+ 4 is A. % Error, "Free variable in expression: is"
  
- 5.0 is 5 % Succeds/true/yes. Equivalent to =:= below.
+ 5.0 is 5 % Succeds/true/yes. Equivalent to Picat's =:=.
  ```
- 
+ I have never found a reason to use `is` instead of `=`.
 
 ### Equality: the `==` and `=:=` operators
 
@@ -3046,9 +3259,8 @@ grouph(L) = Group =>
 
 # TODO 
 
-
 - 2d array notation. link to rosetta code
-- Add solver arguments maybe?
+
 
 
 # Using Picat For Instruction

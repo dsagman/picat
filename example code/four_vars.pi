@@ -1,0 +1,43 @@
+
+% https://www.reddit.com/r/learnmath/comments/wdgk6x/ways_to_solve_system_of_equations_with_4_unkowns/
+% x + y = 2, y + z = 7, z + w = 13, w + x = 8, 
+
+
+% import cp. % solve with cp
+% import sat. % can also solve with sat
+% import mip. % or with mip, but you need to install cbc, glpk, gurobi or scip 
+import smt. % or with smt, but you need to install cvc or z3
+
+main =>
+    % for sat and smt, need to explictly make new dvars
+    % also works for cp and mip, 
+    % but if you want non-integer solutions for mip
+    % need to specify they can be real numbers
+    % for example, instead of new_dvar use W :: 0.0..100.0
+    W = new_dvar(), 
+    X = new_dvar(),
+    Y = new_dvar(),
+    Z = new_dvar(),
+    X + Y #= 2, 
+    Y + Z #= 7, 
+    Z + W #= 13, 
+    W + X #= 8, 
+    W #>= 0, X #>= 0,
+
+    Sols = solve_all([W,X,Y,Z]), % cp, sat or smt which defaults to calling z3
+    % Sols = solve_all($[cbc],[W,X,Y,Z]), % one option for mip
+    
+    foreach (S in Sols) 
+        [S1,S2,S3,S4] = S,
+        println([w=S1,x=S2,y=S3,z=S4])
+    end.
+
+% [w = 0,x = 8,y = -6,z = 13]
+% [w = 1,x = 7,y = -5,z = 12]
+% [w = 2,x = 6,y = -4,z = 11]
+% [w = 3,x = 5,y = -3,z = 10]
+% [w = 4,x = 4,y = -2,z = 9]
+% [w = 5,x = 3,y = -1,z = 8]
+% [w = 6,x = 2,y = 0,z = 7]
+% [w = 7,x = 1,y = 1,z = 6]
+% [w = 8,x = 0,y = 2,z = 5]
