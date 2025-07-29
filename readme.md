@@ -1,8 +1,7 @@
 - [What I Wish I Knew When Learning Picat: Introduction](#what-i-wish-i-knew-when-learning-picat-introduction)
   - [How This Document Is Organized](#how-this-document-is-organized)
   - [About Picat](#about-picat)
-  - [Picat vs. Other Languages](#picat-vs-other-languages)
-  - [| Logic: Prolog  | + Functions  = Unification, non-determinism, tabling](#-logic-prolog----functions---unification-non-determinism-tabling)
+    - [Picat vs. Other Languages](#picat-vs-other-languages)
     - [Picat Has Common Programming Concepts](#picat-has-common-programming-concepts)
     - [Things Picat Has In Common With Logic Programming (Prolog)](#things-picat-has-in-common-with-logic-programming-prolog)
     - [Things Picat Has Uniquely (I think)](#things-picat-has-uniquely-i-think)
@@ -21,6 +20,7 @@
 - [Number of solutions: 2](#number-of-solutions-2)
 - [Message is: RCQPD](#message-is-rcqpd)
 - [Appendix: Things I Still Don't Fully Understand](#appendix-things-i-still-dont-fully-understand)
+
 
 
 # What I Wish I Knew When Learning Picat: Introduction
@@ -76,16 +76,17 @@ Picat is:
 
 Answer: all of the above.
 
-## Picat vs. Other Languages
+### Picat vs. Other Languages
 
 
 | Other Language      | Picat                 
-| :----------   | :----                  
-| Imperative: Python, JavaScript   | = Straightforward syntax <br> = Print from any statement to debug  <br> - Libraries are limited <br> - Community is small
-| Functional: Haskell, OCaml | = Functional concepts  <br> - No lambdas
-| Solvers: Z3, MiniZinc  | + Full programming language vs. just a solver
-| Logic: Prolog  | + Functions <br> = Unification, non-determinism, tabling
----
+| ----------   | ----                  
+| Imperative: Python, JavaScript   | = Straightforward syntax <br> = Print from any statement to debug  <br> - Libraries are limited <br> - Community is small |
+| Functional: Haskell, OCaml | = Functional concepts  <br> - No lambdas |
+| Solvers: Z3, MiniZinc  | + Full programming language vs. just a solver |
+| Logic: Prolog  | + Functions <br> = Unification, non-determinism, tabling |
+| |
+
 \+ Advantage, = Similar, - Disadvantage
 
 ### Picat Has Common Programming Concepts
@@ -104,6 +105,7 @@ Answer: all of the above.
 | Output           |  `print()`, `println()`, `printf()`  |
 | Input             | `read_file_lines("datafile.txt").`|
 | Higher Order Functions| `map(reverse,MyStringList).` or `MyStringList.map(reverse).`|
+|
 
 Also: Hashmaps, Sets, Ordered Sets and Binary Heaps.
 
@@ -580,10 +582,11 @@ The problem from AOC:
 >
 >The button will only drop a capsule at an integer time - no fractional seconds allowed.
 >
->For example, at time=0, suppose you see the following arrangement:
+> For example, at time=0, suppose you see the following arrangement:
 >
->Disc #1 has 5 positions; at time=0, it is at position 4.
-Disc #2 has 2 positions; at time=0, it is at position 1.
+> Disc #1 has 5 positions; at time=0, it is at position 4.
+> 
+> Disc #2 has 2 positions; at time=0, it is at position 1.
 >
 >If you press the button exactly at time=0, the capsule would start to fall; it would reach the first disc at time=1. Since the first disc was at position 4 at time=0, by time=1 it has ticked one position forward. As a five-position disc, the next position is 0, and the capsule falls through the slot.
 >
@@ -815,6 +818,7 @@ save_solution(Solutions) =>
 ```
 
 The above outputs two potential solutions.
+
 ```
 Number of solutions: 2
 =====================
