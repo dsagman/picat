@@ -779,9 +779,15 @@ main =>
 
 ```
 
+`solve(Vars)` finds one solution and `solve_all = Sols` finds, well, all the solutions. 
+
+`solve` is a predicate and the domain variables in `Vars` will be replaced with a valid soution after the call to `solve`. 
+
+`solve_all = Sols` is a function and the list of valid solutions is bound to `Sols`. `Sols` will be a list even if there's only one solution.
+
 ### Common Options Across All Solvers
 
-When calling `solve` and `solve_all` there's some common options you can select. 
+When calling `solve` and `solve_all` there's some common options you can select, regardless of which solver you use.
 
 - `$limit`(*N*): Search up to *N* solutions.
 - `$max`(*Var*): Maximize the variable *Var*.
@@ -840,7 +846,36 @@ I say this later on, but it bears repeating: The search and labeling methods can
 
 #### SAT, Boolean Satisfiability (Integer)
 
-TODO
+Converts a constraint problem into propositional logic via a Boolean algebra expression composed of *ands* and *ors*. This representation of the problem with only ^ (and) and v (or) is known as Conjunctive Normal Form or Clause Normal Form (CNF). 
+
+SAT solvers rely on an extensive body of computer science research that shows the equivalence of many NP-Hard problems to both each other and to SAT. And that according to the [Cook-Levin](https://en.wikipedia.org/wiki/Cook%E2%80%93Levin_theorem) theorem, "Any problem in NP can be reduced in polynomial time by a deterministic Turing machine to the Boolean satisfiability problem."
+
+Here's an example of a Sudoku rule that each row has all numbers in CNF from an Aalto University [course](https://users.aalto.fi/~tjunttil/2021-DP-AUT/notes-sat/solving.html). $C_3$ is one rule and $x_{r,c,v}$ is a matrix of variables where $r$ is the row, $c$ is the column, and $v$ is the value at that row and column.
+
+$$
+C_3 = \bigwedge_{r,v \in [1..n]}(x_{r,1,v} \lor x_{r,2,v} \lor ... \lor x_{r,n,v})
+$$
+
+The full example at the link has 6 rules:
+
+$$
+\phi = C_1 \land C_2 \land C_3 \land C_4 \land C_5 \land C_6
+$$
+
+The CNF is run through the SAT solver to determine if the there's an assignment of the variables (in the above $x$) that satisfies the combination of the rules $\phi$. If so, we have a Sudoku solution.
+
+Picat manages the conversion of a constraint program and its domain variables into CNF and then runs its internal SAT solver. However, if you want to use your own, you can have Picat save the CNF file. Here's a  link to a bunch of [SAT solvers](https://github.com/urbanophile/awesome-sat-solvers) and more tutorials.
+
+Here's Picat's options when using `sat`:
+
+- `dump`: Dump the CNF code to stdout.
+- `dump`$(File)$: Dump the CNF code to $File$.
+- `seq`: Use sequential search to find an optimal answer.
+- `split`: Use binary search to find an optimal answer (default).
+- `$nvars`$(NVars)$: The number of variables in the CNF code is $NVars$.
+- `$ncls`$(NCls)$: The number of clauses in the CNF code is $NCls$.
+
+I believe `$nvars` and `$ncls` provides access to the number of variables and clauses should you need them. 
 
 #### MIP, Mixed-Integer Programming (Integer and Real)
 Solves problems with real (continuous), integer, or binary decision variables or any mixture of these. This is as opposed to LP, linear programming, which only allows for continuous solutions. Both, howerver, are based on numerical linear algebra techniques. MIP algorithms for finding solutions in the search space include branch-and-bound, branch-and-cut, cutting plans, interior-point methods, Lagrangian relaxation, and Simplex. 
@@ -3662,6 +3697,7 @@ hakank: But that depends on exactly you mean by "evaluating C".
 - OR-Tools (Google) https://developers.google.com/optimization
 - CPLEX (IBM) https://ibmdecisionoptimization.github.io/tutorials/html/Linear_Programming.html
 - Global Constraint Catalog https://sofdem.github.io/gccat/gccat/index.html
+- SAT Solvers https://github.com/urbanophile/awesome-sat-solvers
 
 
 
