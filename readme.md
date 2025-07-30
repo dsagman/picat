@@ -886,16 +886,16 @@ SMT are built on the ideas of SAT and include additional methods and data struct
 
 SMT solvers are also closely related to automated theorem provers, and one of the main SMT solver, [Z3 from Microsoft Research](https://www.microsoft.com/en-us/research/project/z3-3/), states on its web page, "A theme shared among many of the algorithms is how they exploit a duality between finding satisfying solutions and finding refutation proofs."
 
-Picat's SMT solver options are:
+To use the `smt` module in Picat, you need to install an external SMT solver and invoke solve with the name of the solver. Picat will export a file with the appropriate format and then call the external solver. SMT options are:
 
-- cvc4: Instruct Picat to use the CVC4 SMT solver. Picat uses the following command to
-call the CVC4 solver: cvc4 T mpF ile > SolF ile
-where T mpF ile is a file that stores the SMT-LIB2-format constraints, and SolF ile is a solution file. Picat throws existence_error if the command cvc4 is not available in
+- `cvc4`: Instruct Picat to use the CVC4 SMT solver. Picat uses the following command to call the CVC4 solver: cvc4 TempFile > SolFile
+where TempF ile is a file that stores the SMT-LIB2-format constraints, and SolF ile is a solution file. Picat throws existence_error if the command cvc4 is not available in
 the path.
+
 - dump: Dump the constraints in SMT-LIB2 format to stdout.
-- dump(F ile): Dump the SMT-LIB2 format to F ile.
+- dump(File): Dump the SMT-LIB2 format to File.
 - logic(Logic): Instruct the SMT solver to use Logic in the solving, where Logic must be an atom or a string, and the specified logic must be available in the SMT solver. The default logic for Z3 is “LIA”, and the default logic for CVC4 is “NIA”.
-- tmp(F ile): Dump the SMT-LIB2 format to F ile rather than the default file “__tmp.smt2”, before calling the smt solver. The name F ile must be a string or an atom that has the extension name “.smt2”. When this file name is specified, the smt solver will save the solution into a file name that has the same main name as F ile but the extension name “.sol”.
+- tmp(File): Dump the SMT-LIB2 format to File rather than the default file “__tmp.smt2”, before calling the smt solver. The name File must be a string or an atom that has the extension name “.smt2”. When this file name is specified, the smt solver will save the solution into a file name that has the same main name as F ile but the extension name “.sol”.
 - z3: Instruct Picat to use the z3 SMT solver. When no SMT solver is specified, Picat first searches for the command z3, and when z3 cannot be found it continues to search for the command cvc4.
 
 
@@ -916,7 +916,7 @@ example (x y : Int) :
 
 MIP solves problems with real (continuous), integer, or binary decision variables or any mixture of these. This is as opposed to LP, linear programming, which only allows for continuous solutions. Both, howerver, are based on numerical linear algebra techniques. MIP algorithms for finding solutions in the search space include branch-and-bound, branch-and-cut, cutting plans, interior-point methods, Lagrangian relaxation, and Simplex. 
 
-To use the `mip` module in Picat, you need to install an external MIP solver and invoke `solve` with the name of the solver. Picat will export a file with the appropriate format and then call the external solver. Options include:
+To use the `mip` module in Picat, you need to install an external MIP solver and invoke `solve` with the name of the solver. Picat will export a file with the appropriate format and then call the external solver. Options are:
 
 | MIP solver  | Licencse    | `solve`               |  Picat System Call or Interface                                       |  Link |
 |-------------|-----------  |------------           |-                                                  |  -----|
@@ -924,7 +924,7 @@ To use the `mip` module in Picat, you need to install an external MIP solver and
 | glpk        | open source | `solve([glpk],Vars)`  | `glpsol -lp -o` *SolFile* *TempFile*                 |  [link](https://www.gnu.org/software/glpk/)    |    
 | scip        | open source | `solve([scip],Vars)`  | Internal C interface that requires you to build Picat from [source](https://picat-lang.org/download.html) with SCIP enabled
 | gurobi      | paid        | `solve([gurobi],Vars)`| `gurobi_cl ResultFile=`*SolFile* *TempFile*           |  [link](https://www.gurobi.com/)               |
-| CPLEX        | paid       | `solve([dump(`*File*`)],Vars)`  | You have load the *File* into CPLEX     |  [link](https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer)   |
+| CPLEX        | paid       | `solve([dump`$(File)$`],Vars)`  | You have load the *File* into CPLEX     |  [link](https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer)   |
 |||
 
 When using `mip`, if you want real valued solutions (non-integer), then you need to specify an interval for the domain variable in the form $L..U$ , where $L$ and $U$ are real values. That is, there must be something after the decmial. For example `1.34` or `2.0`.
