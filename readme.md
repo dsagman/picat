@@ -864,7 +864,7 @@ $$
 
 The CNF is run through the SAT solver to determine if the there's an assignment of the variables (in the above $x$) that satisfies the combination of the rules $\phi$. If so, we have a Sudoku solution.
 
-Picat manages the conversion of a constraint program and its domain variables into CNF and then runs its internal SAT solver. However, if you want to use your own, you can have Picat save the CNF file. Here's a  link to a bunch of [SAT solvers](https://github.com/urbanophile/awesome-sat-solvers) and more tutorials.
+Picat manages the conversion of a constraint program and its domain variables into CNF and then runs its internal SAT solver. However, if you want to use your own, you can have Picat save (dump) the CNF file. Here's a  link to a bunch of [SAT solvers](https://github.com/urbanophile/awesome-sat-solvers) and more tutorials.
 
 Here's Picat's options when using `sat`:
 
@@ -886,18 +886,23 @@ SMT are built on the ideas of SAT and include additional methods and data struct
 
 SMT solvers are also closely related to automated theorem provers, and one of the main SMT solver, [Z3 from Microsoft Research](https://www.microsoft.com/en-us/research/project/z3-3/), states on its web page, "A theme shared among many of the algorithms is how they exploit a duality between finding satisfying solutions and finding refutation proofs."
 
-To use the `smt` module in Picat, you need to install an external SMT solver and invoke solve with the name of the solver. Picat will export a file with the appropriate format and then call the external solver. SMT options are:
+To use the `smt` module in Picat, you need to install an external SMT solver and invoke solve with the name of the solver. Picat will export a file with the appropriate format and then call the external solver. Picat uses the SMT-LIB2 format for output. SMT options are:
 
-- `cvc4`: Instruct Picat to use the CVC4 SMT solver. Picat uses the following command to call the CVC4 solver: cvc4 TempFile > SolFile
-where TempF ile is a file that stores the SMT-LIB2-format constraints, and SolF ile is a solution file. Picat throws existence_error if the command cvc4 is not available in
-the path.
 
-- dump: Dump the constraints in SMT-LIB2 format to stdout.
-- dump(File): Dump the SMT-LIB2 format to File.
-- logic(Logic): Instruct the SMT solver to use Logic in the solving, where Logic must be an atom or a string, and the specified logic must be available in the SMT solver. The default logic for Z3 is “LIA”, and the default logic for CVC4 is “NIA”.
-- tmp(File): Dump the SMT-LIB2 format to File rather than the default file “__tmp.smt2”, before calling the smt solver. The name File must be a string or an atom that has the extension name “.smt2”. When this file name is specified, the smt solver will save the solution into a file name that has the same main name as F ile but the extension name “.sol”.
-- z3: Instruct Picat to use the z3 SMT solver. When no SMT solver is specified, Picat first searches for the command z3, and when z3 cannot be found it continues to search for the command cvc4.
+| SMT solver  | Licencse    | `solve`               |  Picat System Call or Interface                                       |  Link |
+|-------------|-----------  |------------           |-                                                  |  -----|
+| cvc4        | open source | `solve([cvc4],Vars)`  | `cvc4` *TempFile* > *SolFile*           |  [link](https://cvc4.github.io/)        |
+| z3          | open source | `solve([z3],Vars)`    | Picat calls z3. This is the default.    |  [link](https://www.microsoft.com/en-us/research/project/z3-3/)    |    
+| other       | n/a | `solve([dump],Vars)` <br> `solve([dump`$(File)$`],Vars)` | Dump the constraints in SMT-LIB2 format to stdout or to $File$| n/a
 
+| gurobi      | paid        | `solve([gurobi],Vars)`| `gurobi_cl ResultFile=`*SolFile* *TempFile*           |  [link](https://www.gurobi.com/)               |
+| CPLEX        | paid       | `solve([dump`$(File)$`],Vars)`  | You have load the *File* into CPLEX     |  [link](https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer)   |
+|||
+
+Two other options are:
+
+- `logic`$(Logic)$: Instruct the SMT solver to use $Logic$ in the solving, where $Logic$ must be an atom or a string, and the specified logic must be available in the SMT solver. The default logic for Z3 is “LIA”, and the default logic for CVC4 is “NIA”.
+- `tmp`$(File)$: Dump the SMT-LIB2 format to $File$ rather than the default file “__tmp.smt2”, before calling the SMT solver. The name File must be a string or an atom that has the extension name “.smt2”. When this file name is specified, the SMT solver will save the solution into a file name that has the same main name as $File$ but the extension name “.sol”.
 
 *Rabbit hole (the biggest): The world of theorem provers associated research into the boundaries of NP and decidability is about as big a rabbit hole as possible and sweeps in all the big names of Turing, Curry, Howard, Gödel, Russell, Frege, and many more.*
 
@@ -2568,7 +2573,7 @@ A=5, println(A). % A is bound to the value 5, and the unification succeeds allow
 Read the above as 
  1. `A` is given a unique identifier as a default binding.
  
-    From the Picat manual "A variable gets a type once it is bound to a value. Variables in Picat, like variables in mathematics, are value holders. Unlike variables in imperative languages, Picat variables are not symbolic addresses of memory locations. A variable is said to be free if it does not hold any value. A variable is instantiated when it is bound to a value."
+    From the Picat manual "A variable gets a type once it is bound to a value. Variables in Picat, like variables in mathematics, are value holders. Unlike variables in imperative languages, Picat variables are not symbolic addresses of memory locations. A variable is said to be free if it does not hold any value. A variable is instantiated when it is bound to a value." 
 
  2. The default binding can be made/shown to be equivalent to `5` through unification.
    
