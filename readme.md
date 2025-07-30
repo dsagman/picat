@@ -25,8 +25,8 @@
     - [The Four Solver Modules](#the-four-solver-modules)
       - [CP, Constraint Programming or Constraint Logic Programming (Integer)](#cp-constraint-programming-or-constraint-logic-programming-integer)
       - [SAT, Boolean Satisfiability (Integer)](#sat-boolean-satisfiability-integer)
-      - [MIP, Mixed-Integer Programming (Integer and Real)](#mip-mixed-integer-programming-integer-and-real)
       - [SMT, Satisfiability Modulo Theories (Integer)](#smt-satisfiability-modulo-theories-integer)
+      - [MIP, Mixed-Integer Programming (Integer and Real)](#mip-mixed-integer-programming-integer-and-real)
 - [Constraint and Planner Example Programs](#constraint-and-planner-example-programs)
   - [Constraint Example: Advent of Code 2016 Day 15](#constraint-example-advent-of-code-2016-day-15)
   - [Constraint Example: Jane Street Bug](#constraint-example-jane-street-bug)
@@ -816,7 +816,7 @@ Let's look at the four solver modules and what makes them different from each ot
 
 #### CP, Constraint Programming or Constraint Logic Programming (Integer)
 
-Finds feasible values for decision variables by searching through and reducing the domains of those variables via algorithmic techniques such as: breadth and depth-first search, tabling (memoization), backtracking, refinement, perturbation, constraint propogation, combinatorics, unification, and other heuristics.
+CP finds feasible values for decision variables by searching through and reducing the domains of those variables via algorithmic techniques such as: breadth and depth-first search, tabling (memoization), backtracking, refinement, perturbation, constraint propogation, combinatorics, unification, and other heuristics.
 
 The `cp` module has been more the sufficient for all of the Advent of Code problems in this text and it's been the main one I use. It also has the most option to adjust the search strategy. 
 
@@ -846,7 +846,7 @@ I say this later on, but it bears repeating: The search and labeling methods can
 
 #### SAT, Boolean Satisfiability (Integer)
 
-Converts a constraint problem into propositional logic via a Boolean algebra expression composed of *ands* and *ors*. This representation of the problem with only ^ (and) and v (or) is known as Conjunctive Normal Form or Clause Normal Form (CNF). 
+SAT converts a constraint problem into propositional logic via a Boolean algebra expression composed of *ands* and *ors*. This representation of the problem with only ^ (and) and v (or) is known as Conjunctive Normal Form or Clause Normal Form (CNF). 
 
 SAT solvers rely on an extensive body of computer science research that shows the equivalence of many NP-Hard problems to both each other and to SAT. And that according to the [Cook-Levin](https://en.wikipedia.org/wiki/Cook%E2%80%93Levin_theorem) theorem, "Any problem in NP can be reduced in polynomial time by a deterministic Turing machine to the Boolean satisfiability problem."
 
@@ -877,8 +877,44 @@ Here's Picat's options when using `sat`:
 
 I believe `$nvars` and `$ncls` provides access to the number of variables and clauses should you need them. 
 
+#### SMT, Satisfiability Modulo Theories (Integer)
+
+SMT are built on the ideas of SAT and include additional methods and data structures such as bitvectors. Many SMT solvers make use of DPLL(T).
+
+>Davis–Putnam–Logemann–Loveland (DPLL) algorithm is a complete, backtracking-based search algorithm for deciding the satisfiability of propositional logic formulae in conjunctive normal form, i.e. for solving the CNF-SAT problem. https://en.wikipedia.org/wiki/DPLL_algorithm   
+
+
+SMT solvers are also closely related to automated theorem provers, and one of the main SMT solver, [Z3 from Microsoft Research](https://www.microsoft.com/en-us/research/project/z3-3/), states on its web page, "A theme shared among many of the algorithms is how they exploit a duality between finding satisfying solutions and finding refutation proofs."
+
+Picat's SMT solver options are:
+
+- cvc4: Instruct Picat to use the CVC4 SMT solver. Picat uses the following command to
+call the CVC4 solver: cvc4 T mpF ile > SolF ile
+where T mpF ile is a file that stores the SMT-LIB2-format constraints, and SolF ile is a solution file. Picat throws existence_error if the command cvc4 is not available in
+the path.
+- dump: Dump the constraints in SMT-LIB2 format to stdout.
+- dump(F ile): Dump the SMT-LIB2 format to F ile.
+- logic(Logic): Instruct the SMT solver to use Logic in the solving, where Logic must be an atom or a string, and the specified logic must be available in the SMT solver. The default logic for Z3 is “LIA”, and the default logic for CVC4 is “NIA”.
+- tmp(F ile): Dump the SMT-LIB2 format to F ile rather than the default file “__tmp.smt2”, before calling the smt solver. The name F ile must be a string or an atom that has the extension name “.smt2”. When this file name is specified, the smt solver will save the solution into a file name that has the same main name as F ile but the extension name “.sol”.
+- z3: Instruct Picat to use the z3 SMT solver. When no SMT solver is specified, Picat first searches for the command z3, and when z3 cannot be found it continues to search for the command cvc4.
+
+
+*Rabbit hole (the biggest): The world of theorem provers associated research into the boundaries of NP and decidability is about as big a rabbit hole as possible and sweeps in all the big names of Turing, Curry, Howard, Gödel, Russell, Frege, and many more.*
+
+*Here's a sample program in [Lean](https://lean-lang.org/), a theorem proving programming language, for solving some linear inequalty constraints. Gotta love the keyword `grind` for searching the solution space:*
+
+```
+example (x y : Int) :
+    27 ≤ 11*x + 13*y → 11*x + 13*y ≤ 45
+    → -10 ≤ 7*x - 9*y → 7*x - 9*y > 4 := by
+  grind
+```
+*Should you wish to see into the current state of the related P vs. NP problem, may I recommend this book by Avi Wigderson that I made it halfway through: https://www.math.ias.edu/avi/book.*
+
+
 #### MIP, Mixed-Integer Programming (Integer and Real)
-Solves problems with real (continuous), integer, or binary decision variables or any mixture of these. This is as opposed to LP, linear programming, which only allows for continuous solutions. Both, howerver, are based on numerical linear algebra techniques. MIP algorithms for finding solutions in the search space include branch-and-bound, branch-and-cut, cutting plans, interior-point methods, Lagrangian relaxation, and Simplex. 
+
+MIP solves problems with real (continuous), integer, or binary decision variables or any mixture of these. This is as opposed to LP, linear programming, which only allows for continuous solutions. Both, howerver, are based on numerical linear algebra techniques. MIP algorithms for finding solutions in the search space include branch-and-bound, branch-and-cut, cutting plans, interior-point methods, Lagrangian relaxation, and Simplex. 
 
 To use the `mip` module in Picat, you need to install an external MIP solver and invoke `solve` with the name of the solver. Picat will export a file with the appropriate format and then call the external solver. Options include:
 
@@ -913,11 +949,6 @@ results in
 
 *Fun fact: Simplex and interior-point were the two algorithms that IBM's [OSL software](https://support.sas.com/resources/papers/proceedings-archive/SUGI93/Sugi-93-57%20Kearney.pdf) implemented and I documented in [1989](#my-personal-vendetta-with-optimization). CPLEX is OSL's "descendant" sort of. OSL is more directly an ancestor of the open source COIN-OR tools and CPLEX was an IBM acquisition in 2009. I fear a rabbit hole coming on....*
 
-
-#### SMT, Satisfiability Modulo Theories (Integer)
-
-
-TODO
 
 
 # Constraint and Planner Example Programs
