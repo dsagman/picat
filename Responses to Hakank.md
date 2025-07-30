@@ -20,17 +20,21 @@ hakank: Why COIN-OR?
 
 hakank: Don't forget "global" variables using get_global_map() etc
 
-    Are the global variables only system defined or can the programmer make their own global variables? For example, in much of my code I pass around large arrays. Should I be making those global and not passing to save passing around pointers? How would that work?
+    **Are the global variables only system defined or can the programmer make their own global variables? For example, in much of my code I pass around large arrays. Should I be making those global and not passing to save passing around pointers? How would that work?**
 
-    Also, how does Picat pass variables? By reference or value? Or some mix?
+   ***Also, how does Picat pass variables? By reference or value? Or some mix?
 
 hakank: I'm not sure if you have tested DCGs, Definite Clause Grammar. Unfortunately only mentioned at page 44.
 
-    I noted later in the document that I don't understand how to use them in Picat. I would love an example or better yet two or three!
+    I understand what DCGs are now thanks to your examples and watching a couple of YouTube videos. I spent a lot of time learning parser combinators in Haskell and using the Parsec library. Parsing is a deep rabbit hole indeed. I was intrigued that you had trouble parsing newlines in Advent of Code 2020 day 4. I had similar problems in that handling one or two newlines the same way were a headache in Parsec also. 
+
+    I like my dynamic dispatch. ;-)
 
 hakank: Using the "case" analogy is interesting, but is misleading since in Picat - as in Prolog - all alternatives are tried, not just the first one that "match".
 
-    I did not know that. If stmtA, the first item in a list of statements: (stmtA);(stmtB);(stmtC), succeeds then the other two, stmtB and stmtC are still tried?
+    I have rewritten the case statement analogy to point out it's only surface level.
+
+    However, If stmtA, the first item in a list of statements: (stmtA);(stmtB);(stmtC), succeeds then the other two, stmtB and stmtC are still tried? It doesn't just go with the first option that is true?
 
 
 Another way to do an `if` is with `cond`. While it's not listed in the Picat manual index, it does define the function in this example:
@@ -44,7 +48,7 @@ hakank: You will get a small speedup (0.32s -> 0.2s) by using table on action/4.
 
 hakank: I'm not sure I understand "unified with itself" and "is both input and output". The point of S as a map is rather that it's mutable (as maps usually are). 
 
-    I thought you said that variables in Picat aren't mutable. :-)
+    I edited, but I thought you said that variables in Picat aren't mutable. This is more tongue in cheek than anything else. :-)
 
 `reduce` I think this is a functional `fold`, but have not been able to make it work.
 hakank: Yes, reduce/2 and reduce/3 are the fold variants. Note the order of the arguments, especially reduce/3.
@@ -61,3 +65,21 @@ hakank: What did you try that didn't work?
     This happens to me so often, but I still forget.
 
     Also, now I know how to use `reduce` and I added some examples and I also really like your Haskell Prelude in Picat.
+
+
+`list_to_and(List) = Conj` I understand that this turns a list into a conjunction of facts separated by and (`,`). For example: 
+
+    ```
+    M = [A=5,B=3,A!=B],
+    C = list_to_and(M).
+    -------
+    M = [_13558 = 5,_13570 = 3,_13558 != _13570]
+    C = (A = 5,B = 3,A != B)
+    yes
+    ```
+    Which is neat, and kind of like building up an expression that can then be dynamically evaluated, but how do I evaluate `C` to get the logical value of `true`? I have no idea. This is also the only use of the term `Conj` as an output value in the entire manual.
+
+hakank: I think that you are thinking in Haskell here. And I don't think that it's possible to do what you want.
+hakank: But that depends on exactly you mean by "evaluating C".
+
+    I added a bit to say that I want C = true because (A=5,B=3,A!=B) evaluates to true.
