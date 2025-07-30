@@ -16,9 +16,8 @@
     - [Constraint Operators](#constraint-operators)
     - [Arithmetic on Lists and Expressions](#arithmetic-on-lists-and-expressions)
     - [Global Constraints](#global-constraints)
+- [Constraint and Planner Example Code](#constraint-and-planner-example-code)
   - [Constraint Example: Advent of Code 2016 Day 15](#constraint-example-advent-of-code-2016-day-15)
-- [Number of solutions: 2](#number-of-solutions-2)
-- [Message is: RCQPD](#message-is-rcqpd)
 - [Appendix: Things I Still Don't Fully Understand](#appendix-things-i-still-dont-fully-understand)
 
 
@@ -569,6 +568,10 @@ to be *K*.
 
 - `tree`(*Vs*,*Es*,*K*): The same as `tree`(*Vs*,*Es*), except that it also constrains the number of vertices in the tree to be *K*.
 
+# Constraint and Planner Example Code
+
+Examples that use constraint programming and the planner. 
+
 ## Constraint Example: Advent of Code 2016 Day 15
 
 https://adventofcode.com/2016/day/15
@@ -596,7 +599,7 @@ The problem from AOC:
 >
 >However, your situation has more than two discs; you've noted their positions in your puzzle input. What is the first time you can press the button to get a capsule?
 >
->--- Part Two ---
+> --- Part Two ---
 >
 >After getting the first capsule (it contained a star! what great fortune!), the machine detects your success and begins to rearrange itself.
 >
@@ -608,7 +611,9 @@ This puzzle is perfect for Picat. Some things to notice:
 
 - Look how long the description is versus the code!
 - The use of parallel lists to encode the problem variables. This is a common approach.
-- As the capsule falls, to solve for $T_{start}$ for a given $Disc$ the equation is $(T_{start}+ Distance + Disc_{time-zero}) \mod Disc_{num-positions} = 0$.
+- As the capsule falls, to solve for $T_{start}$ for a given $Disc$ the equation is: 
+  
+  $(T_{start}+ Distance + Disc_{time-zero}) \mod Disc_{num-positions} = 0$
 - We could code this as a `foreach` loop.
     ```
     foreach (D in 1..DPos.len)
@@ -618,7 +623,7 @@ This puzzle is perfect for Picat. Some things to notice:
 - But because each is zero, the sum is zero, and one line of code looks cooler than three. So we used `sum(...) #= 0`.
 - Because we are looking to know the time to press the button, the variable `T` is set to a range of possible values. 
 - The notation `::` means that the variable is within the set of values of the list on the right side of the expression.
-- The notation `1..5` means "a list with items 1 to 5 i.e., [1,2,3,4,5]`
+- The notation `1..5` means "a list with items 1 to 5 i.e., [1,2,3,4,5]"
 - We aren't given a range of times, so the program sets the range of the solution T to between 0 and `maxint_small()`, which is not very small. It's 72,057,594,037,927,935.
 - `solve` is a predicate and unifies `T` with the solution.
 - If you wanted all the solutions, `solve_all` is a function and looks like `Sols = solve_all(T).`
@@ -629,6 +634,7 @@ This puzzle is perfect for Picat. Some things to notice:
     | cp     | 0.04  | 0.25  |
     | sat    | DNF   | DNF   |
     | mip    | 0.4   | 2.4   |
+    |
 
 ```
 import cp. 
@@ -665,7 +671,7 @@ https://www.janestreet.com/bug-byte/
 >
 >Once the graph is filled, find the shortest (weighted) path from to and convert it to letters (1=A, 2=B, etc.) to find a secret message.
 
-![Bug byte](janestreet_bug.png)
+![Bug byte](imgs/janestreet_bug.png)
 
 In Picat, here's a solution. The nodes and edges are defined and then the constraints about the known values of nodes and possibly values for the edge weights. Each constraint reduces the search space.
 
@@ -686,7 +692,7 @@ The line `EdgeVars = [(Edge, V) : Edge in Edges, V :: 1..24]` results initially 
 [((A,B),_09b8::[1 ..24]),((A,D),_0a80::[1 ..24]),((B,S),_0b48::[1 ..24]),((C,H),_0c10::[1 ..24]),((D,S),_0cd8::[1 ..24]),((D,H),_0da0::[1 ..24]),((S,I),_0e68::[1 ..24]),((F,I),_0f30::[1 ..24]),((G,J),_0ff8::[1 ..24]),((H,J),_010c0::[1 ..24]),((H,K),_01188::[1 ..24]),((I,J),_01250::[1 ..24]),((I,L),_01318::[1 ..24]),((J,K),_013e0::[1 ..24]),((J,L),_014a8::[1 ..24]),((K,M),_01570::[1 ..24]),((K,P),_01638::[1 ..24]),((K,N),_01700::[1 ..24]),((L,O),_017c8::[1 ..24]),((M,N),_01890::[1 ..24]),((M,O),_01958::[1 ..24]),((N,E),_01a20::[1 ..24]),((O,E),_01ae8::[1 ..24]),((Q,L),_01bb0::[1 ..24])]
 ```
 
-The `_xxxx` indicates the memory address of the individual `V` and the `::[1..24]` shows that the variable has a range of possible values that will have to be constrained.
+The `_xxxx` indicates the unique identifier of the individual `V` and the `::[1..24]` shows that the variable has a range of possible values that will have to be constrained.
 
 If we added a `sum` constraint:
 
@@ -787,7 +793,7 @@ main =>
         AllEdges = Solution ++ [((Y,X), Weight) : ((X,Y), Weight) in Solution],
         sp(AllEdges, 'S', 'E', Path, _),
         Message = [chr(W+64) : ((X,Y), W) in Path],
-        println('====================='),
+        println("====================="),
         println(Path),
         println("Message is: "++Message),
     end,
@@ -819,16 +825,18 @@ save_solution(Solutions) =>
 
 The above outputs two potential solutions.
 
+
 ```
 Number of solutions: 2
-=====================
+\=====================
 [((S,I),18),((I,J),3),((J,L),17),((L,O),16),((O,E),4)]
 Message is: RCQPD
-=====================
+\=====================
 [((S,D),12),((D,H),9),((H,K),14),((K,M),11),((M,O),5),((O,E),4)]
 Message is: LINKED
 Done!
 ```
+
 
 ## Constraint Example: Santa's Knapsack
 
@@ -882,14 +890,14 @@ Advent of Code 2015 day 24 is a knapsack problem. Typically AOC problems get har
 >
 >Given the example packages above, this would be some of the new unique first groups, their quantum entanglements, and one way to divide the remaining packages:
 
-| Group 1            | Group 2  | Group 3    | Group 4    |
-|--------------------|---------|------------|------------|
-| 11 4 (QE=44)       | 10 5    | 9 3 2 1    | 8 7        |
-| 10 5 (QE=50)       | 11 4    | 9 3 2 1    | 8 7        |
-| 9 5 1 (QE=45)      | 11 4    | 10 3 2     | 8 7        |
-| 9 4 2 (QE=72)      | 11 3 1  | 10 5       | 8 7        |
-| 9 3 2 1 (QE=54)    | 11 4    | 10 5       | 8 7        |
-| 8 7 (QE=56)        | 11 4    | 10 5       | 9 3 2 1    |
+    | Group 1            | Group 2  | Group 3    | Group 4    |
+    |--------------------|----------|------------|------------|
+    | 11 4 (QE=44)       | 10 5     | 9 3 2 1    | 8 7        |
+    | 10 5 (QE=50)       | 11 4     | 9 3 2 1    | 8 7        |
+    | 9 5 1 (QE=45)      | 11 4     | 10 3 2     | 8 7        |
+    | 9 4 2 (QE=72)      | 11 3 1   | 10 5       | 8 7        |
+    | 9 3 2 1 (QE=54)    | 11 4     | 10 5       | 8 7        |
+    | 8 7 (QE=56)        | 11 4     | 10 5       | 9 3 2 1    |
 
 >Of these, there are three arrangements that put the minimum (two) number of packages in the first group: 11 4, 10 5, and 8 7. Of these, 11 4 has the lowest quantum entanglement, and so it is selected.
 >
@@ -985,9 +993,9 @@ Here's an example from the documentation for the programming language Curry, whi
 
 >The “blocks world” consists of 3 possibly empty piles, labeled p, q and r, of unique blocks labeled A, B, C, etc. “Start” and “Final” below are two examples from [blocks world](https://www.d.umn.edu/~gshute/cs2511/projects/Java/assignment6/blocks/blocks.xhtml).
 
-![](blocksworld1.png)
+![](imgs/blocksworld1.png)
 
-![](blocksworld2.png)
+![](imgs/blocksworld2.png)
 
 >A blocks world “problem” consists of two worlds, like Start and Final above. Its solution consists in the moves that produce the second world from the first one. A “move” transfers the block on top of a pile to the top of another pile. No other blocks are affected by the move. 
 
@@ -1771,10 +1779,10 @@ When a variable is first parsed by Picat, it is in an uninstantiated state. Tryi
 A. %*** error(instantiation_error,call). 
 ```
 
-However, it can be accessed because Picat will instantiate an unbounded variable that points to an empty memory location. 
+However, it can be accessed because Picat will instantiate an unbounded variable that points to an empty unique identifier. 
 
 ```
-println(A). % If A hasn't been defined/bound then _3d084e8 (or some other memory address) 
+println(A). % If A hasn't been defined/bound then _3d084e8 (or some other unique identifier) 
 ```
 
 ### Unification: the `=` and `is` operators
@@ -1802,11 +1810,11 @@ A=5, println(A). % A is bound to the value 5, and the unification succeeds allow
 ```
 
 Read the above as 
- 1. `A` points to an empty memory location as a default binding.
+ 1. `A` points to an empty unique identifier as a default binding.
  2. The default binding can be made/shown to be equivalent to `5` through unification.
- 3. The unification binds `5` to `A` at the memory address.
+ 3. The unification binds `5` to `A` at the unique identifier.
  4. `,` means the logical and operation. 
- 5. Because the left side of the `,` is true we can output the value of memory address of `A` to the terminal.
+ 5. Because the left side of the `,` is true we can output the value of unique identifier of `A` to the terminal.
  6. As noted above `A=5` is identical to `5=A` because unification is bidirectional. <- Important
 
 Compare this with:
@@ -1832,14 +1840,14 @@ A!=3, A=5, println(A). % Fails/false/no.
 Now look at this. Did you expect it?
 
 ```
-A=B, println([A,B]). % A and B point to the same memory -> [_10a58,_10a58] 
+A=B, println([A,B]). % A and B point to the same unique identifier -> [_10a58,_10a58] 
 
 B=5,A=B, println(A). % B unifies/binds to 5, A binds to B, A is 5 -> 5.
 
 A=B,B=5, println(A) % B unifies with A, B binds to 5, A is now 5. <- Important
 ```
 
-Above is a two variable example. Both left and right in `A=B` are unbound variables, which means the unification points them to same memory location. Therefore whenever A or B gets bound to a value A will be also.
+Above is a two variable example. Both left and right in `A=B` are unbound variables, which means the unification points them to same unique identifier. Therefore whenever A or B gets bound to a value A will be also.
 
 `is` comes from Prolog and is for unifying on numeric values only. It allows binding across integer and float numeric data types. I have never found a reason to use it instead of `=`.
 
