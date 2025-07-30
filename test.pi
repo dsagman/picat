@@ -1,8 +1,0 @@
-import mip.
-
-main =>
-    X :: 0.0..100.0,
-    2**X #= 31,
-
-    solve([glpk],X),
-    println(x=X).

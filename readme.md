@@ -45,6 +45,7 @@
     - [Unification: the `=` operators](#unification-the--operators)
     - [Equality: the `==` and `=:=` operators](#equality-the--and--operators)
     - [Assignment and Re-assignment: `=`, `:=` and `bind_vars()`](#assignment-and-re-assignment---and-bind_vars)
+  - [Global Maps](#global-maps)
   - [Program Structure and Control Flow](#program-structure-and-control-flow)
     - [The `main` predicate and Picat file extension.](#the-main-predicate-and-picat-file-extension)
     - [Whitespace](#whitespace)
@@ -73,6 +74,7 @@
   - [Type Errors, Numbers and Characters, `println` vs `writeln`](#type-errors-numbers-and-characters-println-vs-writeln)
   - [More Type Errors: Lists and Arrays](#more-type-errors-lists-and-arrays)
   - [And More Type Errors: `""` vs `''` aka Atoms and Strings, Oh My](#and-more-type-errors--vs--aka-atoms-and-strings-oh-my)
+  - [Predicate vs Function (sort of a type error)](#predicate-vs-function-sort-of-a-type-error)
   - [Unification vs Assignment](#unification-vs-assignment)
   - [Forgetting a comma or a period (or having an extra one)](#forgetting-a-comma-or-a-period-or-having-an-extra-one)
   - [Trying to use list indexing with decision/domain variable](#trying-to-use-list-indexing-with-decisiondomain-variable)
@@ -2683,6 +2685,59 @@ A=new_list(5), bind_vars(A,"b"), A[1]:="c". % A = [[c],[b],[b],[b],[b]]
 A=new_array(2,3), bind_vars(A,0). % A = {{0,0,0},{0,0,0}}
 ```
 
+## Global Maps
+
+Picat has "prebuilt maps" which are accessible globally. This is something I've only just begun to learn about and haven't used them myself. Instead I was using `cl_facts` to create global information on a small scale [here](#example-global-fact--global-state) and [here](#globally-control-progressdebug-println).
+
+*Note: Some langauges call these data structures *dictionaries* (Python) or *hash maps* (Haskell) or *key-value pairs* (Java).*
+
+Global data makes function and predicate definitions shorter because you don't have to pass global state via arguments, and global state can be updated at anytime and anywhere in the code.
+
+However, global data is, by definition, not local and therefore makes programs absolutely not-pure because functions and predicates operations can be affected by the side effect of the global value. And by being impure it can make the code harder to reason about and debug. 
+
+On the other hand, do you enjoy the State Transformer Monad in Haskell to preserve purity? 
+
+Moving on, here's an example of a global map:
+
+```
+main =>
+ Map = get_global_map(),
+ Map.put(counter,0),
+ Map.put(a_list,[1,2,3,4,5,6,7]),
+ println([counter=Map.get(counter),a_list=Map.get(a_list)]),
+ my_func.
+
+my_func =>
+ Map2 = get_global_map(),
+ Map2.put(counter,Map2.get(counter)+1),
+ Map2.put(a_list,Map2.get(a_list)++[8]),
+ println([counter=Map2.get(counter),a_list=Map2.get(a_list)]).
+```
+
+Outputs:
+
+```
+[counter = 0,a_list = [1,2,3,4,5,6,7]]
+
+[counter = 1,a_list = [1,2,3,4,5,6,7,8]]
+```
+
+Picat has three kinds of prebuilt maps: heap maps, global maps, and table maps. These differ in the way they handle backtracking. Following is an excerpt from the manual:
+
+> *Heap maps*: Changes to a heap map up to a choice point are undone when execution backtracks to that choice point. There are an unlimited
+number of prebuilt heap maps.
+>
+> *Global maps*: A big difference between
+a global map and a heap map is that changes to the global map are not undone upon backtracking. The number of prebuilt global maps is 97, and the system halts if a program requests more than 97 global maps.
+>
+> *Table maps*: Like the global map, changes to a
+table map are not undone upon backtracking. Unlike the global map, however, keys and values are
+hash-consed so that common ground sub-terms are not replicated in the table area. The number of prebuilt table maps is 97, and the system halts if a program
+requests more than 97 table maps. In tabled programs, using prebuilt maps is discouraged because it may cause
+unanticipated effects.
+
+*Note: I have no idea what hash-consed means*.
+
 ## Program Structure and Control Flow
 
 Picat programs consist of statements which can be combined into longer clauses inside procedures or functions. Picat statements are either rules or facts. This is more correct than thinking of them as statements because all of the rules and facts are stored in a database of the program. This is also how Prolog works.
@@ -2857,7 +2912,7 @@ longer(L1,L2) = [R,Len(R)] => if len(L1) >= len(L2) then R = L1 else R = L2 end.
 
 ### Is it a Predicates or a Function?
 
-**Key point: The Picat manual identifies functions with the notation `= Val`, `= ResList` or similar. If you try to call a predicate like a function or visa-versa you will get an error an `undefined procedure` or a fail that you didn't expect.**
+**Key point: The Picat manual identifies functions with the notation `= Val`, `= ResList` or similar. If you try to call a predicate like a function or visa-versa you will get an error an `undefined procedure` or a fail that you didn't expect. Use picat -log to get more descriptive error messages.**
 
 This seems like a simple error to avoid, but the distinction between a function that returns a value versus a predicate that unifies one or more of its arguments can be subtle. It's important to read the manual. 
 
@@ -3107,6 +3162,8 @@ The below code recursively parses parenthesis but has different requirements for
 
 Probably unsafe, but quite neat!
 
+I could have used a [global map](#global-maps) instead to do this, but I didn't know about them at the time I wrote this code.
+
 https://adventofcode.com/2016/day/9
 
 
@@ -3160,32 +3217,33 @@ https://adventofcode.com/2016/day/12
 
 Here's a couple of possible programs:
 
-    | Program 1| Program 2|
-    |----------|----------|
-    | cpy 41 a | cpy 1 a  |
-    | cpy a b  | cpy 1 b  |
-    | inc a    | cpy 26 d |
-    | inc a    | jnz c 2  |
-    | dec a    | jnz 1 5  |
-    | jnz a 2  | cpy 7 c  |
-    | dec a    | inc d    |
-    |          | dec c    |
-    |          | jnz c -2 |
-    |          | cpy a c  |
-    |          | inc a    |
-    |          | dec b    |
-    |          | jnz b -2 |
-    |          | cpy c b  |
-    |          | dec d    |
-    |          | jnz d -6 |
-    |          | cpy 13 c |
-    |          | cpy 14 d |
-    |          | inc a    |
-    |          | dec d    |
-    |          | jnz d -2 |
-    |          | dec c    |
-    |          | jnz c -5 |
-    |----------|----------|
+        |----------|----------|
+        | Program 1| Program 2|
+        |----------|----------|
+        | cpy 41 a | cpy 1 a  |
+        | cpy a b  | cpy 1 b  |
+        | inc a    | cpy 26 d |
+        | inc a    | jnz c 2  |
+        | dec a    | jnz 1 5  |
+        | jnz a 2  | cpy 7 c  |
+        | dec a    | inc d    |
+        |          | dec c    |
+        |          | jnz c -2 |
+        |          | cpy a c  |
+        |          | inc a    |
+        |          | dec b    |
+        |          | jnz b -2 |
+        |          | cpy c b  |
+        |          | dec d    |
+        |          | jnz d -6 |
+        |          | cpy 13 c |
+        |          | cpy 14 d |
+        |          | inc a    |
+        |          | dec d    |
+        |          | jnz d -2 |
+        |          | dec c    |
+        |          | jnz c -5 |
+        |----------|----------|
 
 And here's the code. The list index of each program serves as the program counter reference for the jnz, jump not zero command.
 
@@ -3534,6 +3592,23 @@ B-Prolog Version 8.1, All rights reserved, (C) Afany Software 1994-2014.
 X = [80,105,99,97,116]
 ```
 
+## Predicate vs Function (sort of a type error)
+
+I still use predicates and expect a return value and functions and don't assign the return value to a variable. I mentioned this [here](#is-it-a-predicates-or-a-function). 
+
+If you (or I) use `picat -log` to call the program, there's more descriptive error messages. For example, the call:
+
+```
+reduce(1..4,4)
+```
+Gives the following _warnings_ (but not errors):
+
+```
+  undefined_assumed_global_predicate: reduce / 2
+  defined_as_function_in(basic): reduce / 2
+```
+
+
 ## Unification vs Assignment
 
 Invariably I make an error where I use `=` when I need to use `:=`. This happens when I am editing code and moving things around and lose track of the first time I bind a variable versus when I either test it or update it. 
@@ -3607,17 +3682,34 @@ solve($[min(L1), min(QE),
 
 Using my "trick" for setting global state variables, you can turn and and off progress/debug print statements.
 
+
+
+
 ```
+% use my_println instead of println
 main =>
-    cl_facts([$show(true)]), % use my_println instead of println
+    cl_facts([$show(true)]), 
     % or cl_facts([$show(false)]), 
 
-    [...your program...]
+    my_println("Hello World").
 
 my_println(X) =>
     show(Show), 
     if Show then println(X) end.
+```
+Or you can use a [global map](#global-maps) instead.
 
+```
+% use my_println instead of println
+main =>
+    Map = get_global_map(),
+    Map.put(show,true),
+    % or Map.put(show,false),
+    my_println("Hello World").
+
+my_println(X) =>
+    Map = get_global_map(), 
+    if Map.get(show)==true then println(X) end.
 ```
 
 ## `readchar` for single step execution
@@ -3681,6 +3773,8 @@ hakank: But that depends on exactly you mean by "evaluating C".
     - https://www.hakank.org/picat/circuit.pi, in this Hakan defines `circuit_path/2`, which also extracts the path taken.
 
 - `!` aka Prolog cut operator, is something I think I understand and then when I think more, I don't. Luckily Picat seems to obviate the need for `!` through the much more straight forward `?=>` for backtrackable rules.
+
+- The section on global maps in the manual is very short and the few examples don't show how to access the contents of a global map. I'd like more examples and to better understand the differences between global, heap and table maps and why to use one over another.
 
 
 # Resources
