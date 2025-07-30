@@ -1,0 +1,24 @@
+main =>
+    % use my_println instead of println
+
+    cl_facts([$show(true)]), 
+    % or cl_facts([$show(false)]), 
+
+    my_println("Hello World"),
+    
+    Map = get_global_map(),
+    Map.put(show,true),
+    % or Map.put(show,false),
+    my_println2("Hello World").
+
+
+my_println(X) =>
+    show(Show), 
+    if Show then println(X) end.
+    
+    my_println2(X) =>
+    Map = get_global_map(), 
+    if Map.get(show)==true then println(X) end.
+
+
+

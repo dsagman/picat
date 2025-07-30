@@ -1,0 +1,18 @@
+main =>
+ Map = get_global_map(),
+ Map.put(counter,0),
+ Map.put(a_list,[1,2,3,4,5,6,7]),
+ println([counter=Map.get(counter),a_list=Map.get(a_list)]),
+ my_func.
+
+my_func =>
+ Map2 = get_global_map(),
+ Map2.put(counter,Map2.get(counter)+1),
+ Map2.put(a_list,Map2.get(a_list)++[8]),
+ println([counter=Map2.get(counter),a_list=Map2.get(a_list)]).
+
+% [counter = 0,a_list = [1,2,3,4,5,6,7]]
+% [counter = 1,a_list = [1,2,3,4,5,6,7]]
+%
+% [counter = 0,a_list = [1,2,3,4,5,6,7]]
+% [counter = 1,a_list = [1,2,3,4,5,6,7,8]]

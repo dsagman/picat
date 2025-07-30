@@ -58,6 +58,7 @@ main =>
 
 final([Loc,End,_]), Loc = End => true.
 
+table % small speedup
 action(S@[[X,Y],End,I],NextS,Action,Cost) =>
     member([DX,DY],[[1,0],[0,1],[-1,0],[0,-1]]),
     NewX = X + DX, NewY = Y + DY,
@@ -90,7 +91,7 @@ bfs(Steps, Frontier, Visited0, I) = VisitedFinal =>
         foreach ([DX,DY] in [[1,0],[0,1],[-1,0],[0,-1]])
             NX = X + DX,  NY = Y + DY,
             if NX >= 0, NY >= 0 then 
-                if f(NX,NY,I), not member([NX,NY], Vacc) then
+                if f(NX,NY,I), not membchk([NX,NY], Vacc) then
                     Vacc := Vacc ++ [[NX,NY]],
                     Next := Next ++ [[NX,NY]]
                 end
