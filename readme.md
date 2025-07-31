@@ -3948,28 +3948,13 @@ The Picat manual can be succinct and doesn't provide examples for everything. He
 
 ### `acyclic_term`
 
-The manual says: "This predicate is true if Term is acyclic, meaning that Term does not contain itself." I don't know what this means in terms of a term (how is a term a graph?) or when I would use it. And I'm not alone. 
+The manual says: "This predicate is true if Term is acyclic, meaning that Term does not contain itself." I don't know what this means in terms of a term (how is a term a graph?) or when I would use it.
 
 Hakan notes: "Beside from porting some Prolog programs that use this, I've never used it."
 
 ### `list_to_and(List) = Conj` 
 
-I understand that this turns a list into a conjunction of facts separated by and (`,`). For example: 
-
-```
-    M = [A=5,B=3,A!=B],
-    C = list_to_and(M).
-    -------
-    M = [_13558 = 5,_13570 = 3,_13558 != _13570]
-    C = (A = 5,B = 3,A != B)
-    yes
-```
-Which is neat, and kind of like building up an expression that can then be dynamically evaluated, but how do I evaluate `C` to get the logical value of `true`? I have no idea. This is also the only use of the term `Conj` as an output value in the entire manual.
-
-hakank: I think that you are thinking in Haskell here. And I don't think that it's possible to do what you want.
-hakank: But that depends on exactly you mean by "evaluating C".
-
-david: I would like println(C) to output "true", because that's what would happen in the evaluation of those statements. In Python I would consider this an `eval`. If I had `C = (A=5,B=3,A==B),if C==false then println("No.") end.` Then I would expect `No.` to be printed.
+Working on [this](#list_to_andlist--conj). Hopefully will understand soon!
 
 ## Constraints I Don't Understand
 
@@ -3984,7 +3969,6 @@ These are covered in the [Picat Constraint book]h(ttps://picat-lang.org/picatboo
 The examples from the book are here: 
     - https://www.hakank.org/picat/knight_tour_circuit.pi
     - https://www.hakank.org/picat/circuit.pi, in this Hakan defines `circuit_path/2`, which also extracts the path taken.
-
 
 ## Conceptual Areas I'm Not Comfortable With
 
@@ -4020,7 +4004,7 @@ Graphics. When I did the [Jane Street Bug](#constraint-example-jane-street-bug) 
 
 ![alt text](imgs/jane_street_python.png)
 
-It would be great to be able to call these libraries from Picat.
+It would be great to be able to call graphics libraries from Picat.
 
 
 # Resources
