@@ -40,6 +40,8 @@
 - [Picat Isn't Python (or Exactly Prolog)](#picat-isnt-python-or-exactly-prolog)
   - [Maybe You Already Know Prolog?](#maybe-you-already-know-prolog)
   - [Variables](#variables)
+    - [Multidimensional Lists and Arrays](#multidimensional-lists-and-arrays)
+    - [Indexing a Range with Steps](#indexing-a-range-with-steps)
   - [Assignment (Binding) vs. Unification (Bind or Fail) vs. Equality (Only Numbers)](#assignment-binding-vs-unification-bind-or-fail-vs-equality-only-numbers)
     - [Default binding](#default-binding)
     - [Unification: the `=` operators](#unification-the--operators)
@@ -68,7 +70,6 @@
   - [`reduce` for functional folds](#reduce-for-functional-folds)
   - [Helper functions for accumulators](#helper-functions-for-accumulators)
   - [More Haskell Functions in Picat](#more-haskell-functions-in-picat)
-- [TODO](#todo)
 - [Using Picat For Instruction](#using-picat-for-instruction)
 - [Errors I Always Make and How I Compensate](#errors-i-always-make-and-how-i-compensate)
   - [Type Errors, Numbers and Characters, `println` vs `writeln`](#type-errors-numbers-and-characters-println-vs-writeln)
@@ -84,7 +85,20 @@
   - [Globally Control Progress/Debug Println](#globally-control-progressdebug-println)
   - [`readchar` for single step execution](#readchar-for-single-step-execution)
   - [`time` to calculate execution time](#time-to-calculate-execution-time)
-- [Things I Still Don't Fully Understand](#things-i-still-dont-fully-understand)
+- [Things I Still Don't Fully Understand or Wish Had More Example](#things-i-still-dont-fully-understand-or-wish-had-more-example)
+  - [Functions and Predicates I Don't Understand](#functions-and-predicates-i-dont-understand)
+    - [`acyclic_term`](#acyclic_term)
+    - [`list_to_and(List) = Conj`](#list_to_andlist--conj)
+  - [Constraints I Don't Understand](#constraints-i-dont-understand)
+    - [`neqs`](#neqs)
+    - [`regular`,`circuit` and `table_in` constraints](#regularcircuit-and-table_in-constraints)
+  - [Conceptual Areas I'm Not Comfortable With](#conceptual-areas-im-not-comfortable-with)
+    - [DCGs](#dcgs)
+    - [Global maps](#global-maps-1)
+    - [`!`](#)
+    - [Event Driven Actors](#event-driven-actors)
+  - [Things I Would Like Added to the Index](#things-i-would-like-added-to-the-index)
+- [Enhancements I'd Like](#enhancements-id-like)
 - [Resources](#resources)
   - [Code Examples](#code-examples)
   - [Modules](#modules)
@@ -248,7 +262,6 @@ Let's look at how Picat stacks up against some programming languages you may kno
 ||| 
 
 Also: Hashmaps, Sets, Ordered Sets and Binary Heaps.
-hakank: Don't forget "global" variables using get_global_map() etc
 
 ### Things Picat Has In Common With Logic Programming (Prolog)  
 
@@ -1245,6 +1258,10 @@ Message is: RCQPD
 Message is: LINKED
 Done!
 ```
+Here's a visual of the shortest path made with Python. The edges are labelled in order from node S to node E: LINKED.
+
+![alt text](imgs/jane_street_python.png)
+
 
 ## Constraint Example: Santa's Knapsack
 
@@ -2516,6 +2533,50 @@ b=4;A=5. % A is bound to 5. because b!=4 and ';' means 'or'.
 NoJavaVariableNamesHere=true. % OK, but this is not normal Picat style, but you do you however you want.
 ```
 
+### Multidimensional Lists and Arrays
+
+Do you wonder what the syntax is for referencing the elements of a multidimensional list or array? Wonder no more! Here's code from [Rosetta Code](https://rosettacode.org/wiki/Arrays#Picat).
+
+The structure is row major. Meaning `I` is each row and `J` is each column. While this is only 2D, it generalizes to more dimensions.
+
+```
+main =>
+    % 2D arrays
+    A2 = new_array(4,4),
+    foreach(I in 1..4, J in 1..4) 
+        A2[I,J] := (I-1)*4+J
+    end,
+    foreach(Row in A2) println(Row) end,
+
+    % These functions are defined in the util module.
+    % They returns lists so we have to convert them to arrays.
+    println('rows     '=to_array(A2.rows)), 
+    println('columns  '=A2.columns.to_array),
+    println(diagonal1=A2.diagonal1.to_array),
+    println(diagonal2=A2.diagonal2.to_array).
+```
+Output
+```
+{1,2,3,4}
+{5,6,7,8}
+{9,10,11,12}
+{13,14,15,16}
+rows      = {{1,2,3,4},{5,6,7,8},{9,10,11,12},{13,14,15,16}}
+columns   = {{1,5,9,13},{2,6,10,14},{3,7,11,15},{4,8,12,16}}
+diagonal1 = {1,6,11,16}
+diagonal2 = {4,7,10,13}
+```
+
+### Indexing a Range with Steps
+
+For a range with steps use *start..step..end*. For example:
+
+```
+A=1..9. % A = [1,2,3,4,5,6,7,8,9]
+A=1..2..9. % A = [1,3,5,7,9]
+```
+*Note: no brackets around the range. It's a list already. In Haskell this would need to be `[1..9]` and `[1,3..9]`.*
+
 ## Assignment (Binding) vs. Unification (Bind or Fail) vs. Equality (Only Numbers)
 
 Here be dragons. Or at least a sharp corner to hit your head on when you realize your program is failing because you used the wrong one.
@@ -3440,12 +3501,6 @@ grouph(L) = Group =>
     Group := Group ++ [Tmp].  
 ```
 
-# TODO 
-
-- 2d array notation. link to rosetta code
-
-
-
 # Using Picat For Instruction
 
 To use Picat with an autograder, the student code can be imported as a module into the grader. For example, students could be given the magic square problem from the Picat Constraint Solving book. 
@@ -3739,42 +3794,87 @@ println(DVars).)
 `time2` will also calculate backtracks, but it doesn't count backtracks from within the `planner` module.
 
 
-# Things I Still Don't Fully Understand
+# Things I Still Don't Fully Understand or Wish Had More Example 
 
 The Picat manual can be succinct and doesn't provide examples for everything. Here's some stuff I don't know how to use or where I still get confused.
 
-- `acyclic_term` "This predicate is true if Term is acyclic, meaning that Term does not contain itself." I don't know what this means in terms of a term (how is a term a graph?) or when I would use it. And I'm not alone. Hakan notes: "Beside from porting some Prolog programs that use this, I've never used it."
+## Functions and Predicates I Don't Understand
 
-- `list_to_and(List) = Conj` I understand that this turns a list into a conjunction of facts separated by and (`,`). For example: 
+### `acyclic_term`
 
-    ```
+The manual says: "This predicate is true if Term is acyclic, meaning that Term does not contain itself." I don't know what this means in terms of a term (how is a term a graph?) or when I would use it. And I'm not alone. 
+
+Hakan notes: "Beside from porting some Prolog programs that use this, I've never used it."
+
+### `list_to_and(List) = Conj` 
+
+I understand that this turns a list into a conjunction of facts separated by and (`,`). For example: 
+
+```
     M = [A=5,B=3,A!=B],
     C = list_to_and(M).
     -------
     M = [_13558 = 5,_13570 = 3,_13558 != _13570]
     C = (A = 5,B = 3,A != B)
     yes
-    ```
-    Which is neat, and kind of like building up an expression that can then be dynamically evaluated, but how do I evaluate `C` to get the logical value of `true`? I have no idea. This is also the only use of the term `Conj` as an output value in the entire manual.
+```
+Which is neat, and kind of like building up an expression that can then be dynamically evaluated, but how do I evaluate `C` to get the logical value of `true`? I have no idea. This is also the only use of the term `Conj` as an output value in the entire manual.
 
 hakank: I think that you are thinking in Haskell here. And I don't think that it's possible to do what you want.
 hakank: But that depends on exactly you mean by "evaluating C".
 
-- The option to use the notation (If -> Then; Else) is in a footnote and one example, but it's not in the index, which is my go to resource.
+david: I would like println(C) to output "true", because that's what would happen in the evaluation of those statements. In Python I would consider this an `eval`. If I had `C = (A=5,B=3,A==B),if C==false then println("No.") end.` Then I would expect `No.` to be printed.
 
-- Picat also has `cond`, but it's only mentioned in an example about Fibonacci and isn't in the index. ChatGPT pointed me to `cond`.
- 
-- The manual says Picat supports DCG (Definite Clause Grammar) rules with `-->`, but provides no examples. (Although there's copious resources referenced [here](#do-you-already-know-prolog))
+## Constraints I Don't Understand
 
-- In the `neqs` constraint the manual says, "This constraint is equivalent to the conjunction of the inequality constraints in *NeqList*, but it extracts `all_distinct` constraints from the inequality constraints." I find this explanation confusing. There's an example of it here: https://www.hakank.org/picat/color_neqs.pi. Perhaps it will make sense to you?
+### `neqs`
 
-- The `regular`,`circuit` and `table_in` constraints  are covered in the [Picat Constraint book]h(ttps://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf), but I haven't come up with a use case on my own yet, so I'm not feeling very confident in my understanding. The examples from the book are here: 
+The manual says, "This constraint is equivalent to the conjunction of the inequality constraints in *NeqList*, but it extracts `all_distinct` constraints from the inequality constraints." I find this explanation confusing. There's an example of it here: https://www.hakank.org/picat/color_neqs.pi. Perhaps it will make sense to you?
+
+### `regular`,`circuit` and `table_in` constraints  
+
+These are covered in the [Picat Constraint book]h(ttps://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf), but I haven't come up with a use case on my own yet, so I'm not feeling very confident in my understanding. 
+
+The examples from the book are here: 
     - https://www.hakank.org/picat/knight_tour_circuit.pi
     - https://www.hakank.org/picat/circuit.pi, in this Hakan defines `circuit_path/2`, which also extracts the path taken.
 
-- `!` aka Prolog cut operator, is something I think I understand and then when I think more, I don't. Luckily Picat seems to obviate the need for `!` through the much more straight forward `?=>` for backtrackable rules.
 
-- The section on global maps in the manual is very short and the few examples don't show how to access the contents of a global map. I'd like more examples and to better understand the differences between global, heap and table maps and why to use one over another.
+## Conceptual Areas I'm Not Comfortable With
+
+I haven't used these much, or at all, which makes me less confident about them.
+
+### DCGs
+
+The manual says Picat supports DCG (Definite Clause Grammar) rules with `-->`, but provides no examples. (Although there's copious resources referenced [here](#do-you-already-know-prolog))
+
+In general, I find parsing libraries, regardless of the language, both very useful and hard to learn. I feel like DCGs and parsing in Picat could be a chapter.
+
+### Global maps
+
+The section on global maps in the manual is very short and the few examples don't show how to access the contents of a global map. I'd like more examples and to better understand the differences between global, heap and table maps and why to use one over another.
+
+### `!` 
+
+Aka Prolog cut operator, is something I think I understand and then when I think more, I don't. Luckily Picat seems to obviate the need for `!` through the much more straight forward `?=>` for backtrackable rules.
+
+### Event Driven Actors
+
+Picat has the capability to be reactive and respond to trigger events. This is cool, and the reason I've listed it here is that I haven't even tried to use event driven actors.
+
+## Things I Would Like Added to the Index
+
+- The notation (If -> Then; Else) is in a footnote and one example, but it's not in the index, which is my go to resource.
+
+- `cond` when not used as a constraint.
+ 
+ # Enhancements I'd Like
+
+Graphics. When I did the [Jane Street Bug](#constraint-example-jane-street-bug) to help me visualize the problem I used Python and the `networkx` and `matplotlib` libraries.
+
+![alt text](imgs/jane_street_python.png)
+
+It would be great to be able to call these libraries from Picat.
 
 
 # Resources

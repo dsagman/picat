@@ -3,23 +3,26 @@ Responses to Hakank
 hakank2: My comments to your comments are tagged as "hakank2".
 david2: And my comments back.
 
-hakank: Don't forget "global" variables using get_global_map() etc
+david2: All updates made except for remaining questions or comments.
 
-    Are the global variables only system defined or can the programmer make their own global variables? For example, in much of my code I pass around large arrays. Should I be making those global and not passing to save passing around pointers? How would that work?
+david2: somehow I lost this one out of this file.
 
-hakank2: The "global variables" is probably confusing term, and sorry about that. In Picat (and Prolog) "plain" variables can not be made global. What I mean was the maps that live though different predicate calls (and perhaps also through backtracking) such as get_global_map(). Here's a simple example of such a global map.
-hakank2:   Map = get_global_map(),
-hakank2:   Map.put(counter,0)
-hakank2:   Map.put(a_huge_list,[1,2,3,4,5,6,7])
-hakank2: In another predicate/call, one can then add/delete/change this via the usual map operations.
-hakank2:   Map2 = get_global_map(),
-hakank2:   Map2.put(counter,Map2,get(counter)+1),
-hakank2:   Map2.put(a_huge_list,Map2,get(a_huge_list)++[8])
-hakank2:
-hakank2: You might want to benchmark between the performance between this approach and when you simply add the things via an extra parameter to the predicate/function.
-hakank2: There are other type of global maps, see get_heap_map(), get_table_map() which has some different behavior regarding backtracking etc.
+- `list_to_and(List) = Conj` I understand that this turns a list into a conjunction of facts separated by and (`,`). For example: 
 
-david2: updates made for global maps
+    ```
+    M = [A=5,B=3,A!=B],
+    C = list_to_and(M).
+    -------
+    M = [_13558 = 5,_13570 = 3,_13558 != _13570]
+    C = (A = 5,B = 3,A != B)
+    yes
+    ```
+    Which is neat, and kind of like building up an expression that can then be dynamically evaluated, but how do I evaluate `C` to get the logical value of `true`? I have no idea. This is also the only use of the term `Conj` as an output value in the entire manual.
+
+hakank: I think that you are thinking in Haskell here. And I don't think that it's possible to do what you want.
+hakank: But that depends on exactly you mean by "evaluating C".
+david: I would like println(C) to output "true", because that's what would happen in the evaluation of those statements. In Python I would consider this an `eval`. If I had `C = (A=5,B=3,A==B),if C==false then println("No.") end.` Then I would expect `No.` to be printed.
+
 
 hakank2: Also, in Prolog/Picat there are no pointers (at the Prolog/Picat level); "pointers" are the wrong abstraction.
 
@@ -27,19 +30,12 @@ hakank2: Also, in Prolog/Picat there are no pointers (at the Prolog/Picat level)
 
 hakank2: I'm not sure that they can be described as neither, or perhaps it's both. Variables in Picat are not like variables in (imperative) programming languages, they are more placeholders which are "filled" with values by unification (or reassigned with :=/2). A variable that have been unified with a value (say 3), might probably be described as passed by value, but a value that hasn't been unified at the call might be described as passed by reference. So perhaps "pass by reference|value" should not be mentioned at all.
 
-david2: at some point the compiled code results in variables being stored in memory and access when referenced in a function or predicate body. this must be to either a single memory location or a copy of a memory location. I understand that it's under the hood and that Picat doesn't expose this like C, but there's got to be a pointer or copy when a variable is passed to a function/predicate. 
+david2: at some point the compiled code results in variables being stored in memory and accessed when referenced in a function or predicate body. This access must be to either a single memory location or a copy of a memory location. I understand that it's under the hood and that Picat doesn't expose this like C, but there's got to be a pointer or copy when a variable is passed to a function/predicate. Correct? 
 
-
-hakank: I'm not sure if you have tested DCGs, Definite Clause Grammar. Unfortunately only mentioned at page 44.
-
-    I noted later in the document that I don't understand how to use them in Picat. I would love an example or better yet two or three!
 
 hakank2: I agree that The Picat Guide should give some example of DCGs. I gave you some links in my first comment round.
 
-david2: I added DCG information in. Somewhere I thought I noted that this reminds me of Parsec in Haskell and that I enjoyed your advent of code problem that uses DCGs and I also have trouble with \n and \n\n in Parsec.
-
-
-&&&& here&&&&&
+david2: I added DCG information in. I forgot to push the revision to this file where I noted that this reminds me of Parsec in Haskell and that I enjoyed your advent of code problem that uses DCGs and I also have trouble with \n and \n\n in Parsec.
 
 hakank: Using the "case" analogy is interesting, but is misleading since in Picat - as in Prolog - all alternatives are tried, not just the first one that "match".
 
@@ -47,12 +43,25 @@ hakank: Using the "case" analogy is interesting, but is misleading since in Pica
 
 hakank2: Well, it depends on the context. If stmtA is in a context of failure, the other will also be tried.
 hakank2: Here is a - contrieved - example showing this. All statements have a fail, and thus the statemaets following them  will be all tested.
-hakank2:   Picat> (3==4,println(first),fail) ; (1 == 1,println(second),fail) ; (3 == 4,println(third),fail) ; (9==9, println(fourth),fail)  
+hakank2:   Picat> 
+(3==4,println(first),fail) ; (1 == 1,println(second),fail) ; (3 == 4,println(third),fail) ; (9==9, println(fourth),fail)  
+
+(3==4,println(first)) ; (1 == 1,println(second)) ; (3 == 4,println(third)) ; (9==9, println(fourth))  
 hakank2:   second
 hakank2:   fourth
 
+david2: I think this is what I would expect. Without the fails, the evaluation stops at second.
+
+david2: Picat> (3==4,println(first)) ; (1 == 1,println(second)) ; (3 == 4,println(third)) ; (9==9, println(fourth))  
+david2: second
+david2: 
+david2: yes
+
+
 
 hakank2: I usually do simple text searches in the PDF. But a correct index is important.
+
+david2: When I wrote manuals for IBM we had the concept of a "Guide" and a "Reference". The Guide was for teaching and the Reference was for looking up things you know, but can't recall the syntax or details. The Picat manual is very good, but it combines teaching with reference and that's why I use the index. To find member/2, there's lots of uses of this in the manual, but I want the syntax, not example code.
 
 hakank: You will get a small speedup (0.32s -> 0.2s) by using table on action/4.
 
@@ -60,10 +69,6 @@ hakank: You will get a small speedup (0.32s -> 0.2s) by using table on action/4.
 
 hakank2: Tabling action/4 can give a huge boost, or slowing it down (e.g. caused by too many clauses), or making no discerible different. But I have to get back to you on this to give you a good answer.
 
-
-hakank: I'm not sure I understand "unified with itself" and "is both input and output". The point of S as a map is rather that it's mutable (as maps usually are). 
-
-    I thought you said that variables in Picat aren't mutable. :-)
 
 hakank2: A "normal" variable is not mutable (via unification). This will fail:
 hakank2:   X = 3, X = X + 1
@@ -99,6 +104,8 @@ hakank2: Note that the "type" (function or predicate) is shown in the index (and
 hakank2:   reduce(Func,List) = Res
 hakank2: which indicates that it returns something.
 
-david2: I think these log level errors should be shown by default with the option to turn them off. They are valuable for the learner and it's not obvious from the manual that this will help the way you show it will.
+david2: I think these log level errors should be shown by default with the option to turn them off. They are valuable for the learner and it's not obvious from the manual that -log will give this extra info.
 david2: Regardless, I made edits to the document to explain this.
+
+
 
