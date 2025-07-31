@@ -1,0 +1,12 @@
+main =>
+
+% this next line doesn't work
+% AndList = list_to_and(["A=5","B=3","A!=B"].map(parse_term)),
+% how do we turn the list of strings into a list of terms?
+% the above doesn't work because each term is created 
+% independently and A in index 1 isn't the same as
+% A at index 3.
+AndList = list_to_and([A=5,B=3,A=B]),
+println([a=A,b=B,andList=AndList]),
+Ans = AndList.cond(true,false),
+println(ans=Ans).

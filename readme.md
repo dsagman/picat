@@ -10,7 +10,7 @@
     - [Things Picat Doesn't Come With](#things-picat-doesnt-come-with)
   - [Using the Manual](#using-the-manual)
   - [Some Notes About Example Code](#some-notes-about-example-code)
-    - [Variable Scope](#variable-scope)
+    - [Clauses and Scope](#clauses-and-scope)
     - [Arity and `/x` notation in predicates and functions](#arity-and-x-notation-in-predicates-and-functions)
 - [Constraint Programming and the Planner](#constraint-programming-and-the-planner)
   - [Fibonacci and Tabling](#fibonacci-and-tabling)
@@ -47,6 +47,8 @@
     - [Unification: the `=` operators](#unification-the--operators)
     - [Equality: the `==` and `=:=` operators](#equality-the--and--operators)
     - [Assignment and Re-assignment: `=`, `:=` and `bind_vars()`](#assignment-and-re-assignment---and-bind_vars)
+    - [Reassignment via Predicate and Function Arguments](#reassignment-via-predicate-and-function-arguments)
+    - [Reassignment vs Unificiation and Backtracking](#reassignment-vs-unificiation-and-backtracking)
   - [Global Maps](#global-maps)
   - [Program Structure and Control Flow](#program-structure-and-control-flow)
     - [The `main` predicate and Picat file extension.](#the-main-predicate-and-picat-file-extension)
@@ -64,6 +66,8 @@
     - [Control flow: `if` and `foreach`](#control-flow-if-and-foreach)
     - [Control flow: the `;` aka "or" operator](#control-flow-the--aka-or-operator)
     - [Control flow: `cond` and `compare_terms`](#control-flow-cond-and-compare_terms)
+    - [Control flow: `call` and `apply`](#control-flow-call-and-apply)
+    - [Control flow: `list_to_and`](#control-flow-list_to_and)
   - [Example: Global fact = Global state](#example-global-fact--global-state)
   - [Example: Dynamic Dispatch with `apply` and `call`](#example-dynamic-dispatch-with-apply-and-call)
   - [Non-determinism: `?=>` and more `table`](#non-determinism--and-more-table)
@@ -304,7 +308,8 @@ https://picat-lang.org/download/picat_guide.pdf
 
 ## Some Notes About Example Code 
 
-### Variable Scope
+### Clauses and Scope
+
 Each clause in Picat ends with a `.`. In example code each line is fully distinct for variable scope. `%` begins a comment.
 
 For example:
@@ -2747,6 +2752,110 @@ A=new_list(5), bind_vars(A,"b"), A[1]:="c". % A = [[c],[b],[b],[b],[b]]
 A=new_array(2,3), bind_vars(A,0). % A = {{0,0,0},{0,0,0}}
 ```
 
+### Reassignment via Predicate and Function Arguments
+
+The statement above about Picat "just works the way I expect" remains true, but what you expect needs to be what's going to happen. Lists, arrays, and maps passed as arguments to predicates and functions can have their values modified through reassignment inside the predicate or function, but cannot change in size. 
+
+In other words, don't think of arguments being passed by value or by reference, but there being a context to what can be reassigned via a predicate or function argument and what cannot.
+
+Here's some example code:
+
+```
+main =>
+    A = 0,
+    println(a=A), % a = 0
+
+    p0(A),
+    println(a=A), % a = 0
+
+    L = [0,0,0],
+    println(l=L), % l = [0,0,0]
+
+    p1(L),
+    println([p1,l=L]), % [p1,l = [0,0,0]]
+
+    p2(L),
+    println([p2,l=L]), % [p2,l = [3,0,0]]
+
+    p3(L),
+    println([p3,l=L]), % [p3,l = [3,0,0]]
+
+    p4(L),
+    println([p4,l=L]), % [p4,l = [3,3,0]]
+
+    R = f1(L),
+    println([f1,l=L]). % [f1,l = [3,3,3]]
+
+p0(X) => X := 3.
+
+p1(X) => X := [].
+
+p2(X) => X[1] := 3.
+
+p3(X) => X := [4,4,4], X[2] := 3.
+
+p4(X) => X[2] := 3, X := [4,4,4].
+
+f1(X) = R => R = 1, X[3] := 3.
+
+```
+
+### Reassignment vs Unificiation and Backtracking
+
+Keep repeating: this works the way I expect it to. Anyway, here's what backtracking can do with reassignment versus unification.
+
+Take a look at this code below. `member/2` assigns a single value from the list `1..3` to `T` and `S`. `member` is non-deterministic and on a *fail* condition, it will backtrack and select a different value from the list. 
+
+The *fail* condition can be forced by the `fail/0` predicate or through another failure, such as failed unification.
+
+`go1` is using unification with `=/2` and `go2` is using reassignment with `:=/2`. 
+
+In `go1`, unification fails at `X = T*2` forcing backtracking at that line because `X` already is bound to `T*1`.
+
+In `go2`, `Y:=S*2` does not force backtracking because `:=` causes reassignment of `Y`.
+
+```
+
+main =>
+    (member(T,1..3), % pick one member of list for T
+    X = T*1,
+    println([go1,x=X,t=T]), 
+    X = T*2,  % fails, backtrack
+    println([go1,x=X,t=T]), 
+    X = T*3,  % we never make it here
+    println([go1,x=X,t=T])
+    );
+   (nl,
+    member(S,1..3), % pick one member of list for S
+    Y := S*1,
+    println([go2,y=Y,s=S]), 
+    Y := S*2,  % no backtracking 
+    println([go2,y=Y,s=S]), 
+    Y := S*3,  % no backtracking
+    println([go2,y=Y,s=S]), 
+    fail % fail forces backtracking
+).
+```
+Outputs
+```
+[go1,x = 1,t = 1]
+[go1,x = 2,t = 2]
+[go1,x = 3,t = 3]
+
+[go2,y = 1,s = 1]
+[go2,y = 2,s = 1]
+[go2,y = 3,s = 1]
+[go2,y = 2,s = 2]
+[go2,y = 4,s = 2]
+[go2,y = 6,s = 2]
+[go2,y = 3,s = 3]
+[go2,y = 6,s = 3]
+[go2,y = 9,s = 3]
+
+*** error(failed,main/0)
+```
+The final error is caused by `fail` running out of backtrack options with `member`.
+
 ## Global Maps
 
 Picat has "prebuilt maps" which are accessible globally. This is something I've only just begun to learn about and haven't used them myself. Instead I was using `cl_facts` to create global information on a small scale [here](#example-global-fact--global-state) and [here](#globally-control-progressdebug-println).
@@ -3219,6 +3328,37 @@ C = compare_terms(2,5). % C = -1
 ```
 *Note: For constraint programming `cond/3` is also available as a constraint, for example: `C #= cond(A#>3,A+B,A-B)`.*
 
+
+### Control flow: `call` and `apply`
+
+You can invoke any Picat predicate or function with predicate `call` or the function `apply`. For example, the below calls `println` with the single argument, `"hello"`.
+```
+call(println,"hello") % println("hello")
+A=apply(head,"hello").   $ A = h
+```
+This can be used to do what other programming languages call *eval*. It can also be used to dynamically choose which code to execute based on the values of variables. See [here](#example-dynamic-dispatch-with-apply-and-call).
+
+### Control flow: `list_to_and`
+
+Let's say you had a bunch of boolean statements in a list and you wanted to evaluate them. You could write a parser and run them through a list comprehension or, you could invoke the power of Picat!
+
+Here's a list of statements we may have in a file. (A new Advent of Code challenge perhaps?)
+
+```
+A=5
+B=3
+A=B
+```
+We read them into a variable Conds:
+
+```
+main=>
+    Conds = ["A=5","B=3","A=B"],
+
+```
+
+:TODO: list_to_and.pi not working
+
 ## Example: Global fact = Global state
 The below code recursively parses parenthesis but has different requirements for part 1 and part 2. To do this it uses a global fact: `part(n)` to change the behavior of `parse1` function. The fact is changed from `part(1).` to `part(2).` with the `cl_facts()` command that updates the global fact dictionary.
 
@@ -3354,7 +3494,9 @@ jnz([X,Y],S,PC) = NPC =>
 
 ## Non-determinism: `?=>` and more `table`
 
-A key feature of logic programming languages is explicit and implicit backtracking from failure to try and achieve success. Recall our friends [`append/3`](#predicates-vs-functions) and [`append/4`](#append4-for-parsing). 
+A key feature of logic programming languages is explicit and implicit backtracking from failure to try and achieve success. We talked a little about backtracking [here](#reassignment-vs-unificiation-and-backtracking).
+
+But let's now recall our friends [`append/3`](#predicates-vs-functions) and [`append/4`](#append4-for-parsing). 
 
 Picat predicates/rules, but not functions, can be defined as backtrackable with `?=>`. The manual provides an example for determining if a a node `Y` is reachable from a node `X` in a graph.
 
@@ -3370,7 +3512,6 @@ reach(X,Y) ?=> edge(X,Y).
 reach(X,Y) => reach(X,Z), edge(Z,Y).
 
 ```
-
 
 ## `reduce` for functional folds
 

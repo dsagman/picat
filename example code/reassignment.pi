@@ -1,0 +1,39 @@
+% Examples of how variable scope and reassignment works
+
+main =>
+    A = 0,
+    println(a=A), % a = 0
+
+    p0(A),
+    println(a=A), % a = 0
+
+    L = [0,0,0],
+    println(l=L), % l = [0,0,0]
+
+    p1(L),
+    println([p1,l=L]), % [p1,l = [0,0,0]]
+
+    p2(L),
+    println([p2,l=L]), % [p2,l = [3,0,0]]
+
+    p3(L),
+    println([p3,l=L]), % [p3,l = [3,0,0]]
+
+    p4(L),
+    println([p4,l=L]), % [p4,l = [3,3,0]]
+
+    R = f1(L),
+    println([f1,l=L]). % [f1,l = [3,3,3]]
+
+p0(X) => X := 3.
+
+p1(X) => X := [].
+
+p2(X) => X[1] := 3.
+
+p3(X) => X := [4,4,4], X[2] := 3.
+
+p4(X) => X[2] := 3, X := [4,4,4].
+
+f1(X) = R => R = 1, X[3] := 3.
+

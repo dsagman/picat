@@ -1,0 +1,35 @@
+main =>
+    (member(T,1..3),
+    X = T*1,
+    println([go1,x=X,t=T]), 
+    X = T*2, 
+    println([go1,x=X,t=T]), 
+    X = T*3, 
+    println([go1,x=X,t=T])
+    % fail 
+);
+
+   (nl,
+     member(S,1..3),
+    Y := S*1,
+    println([go2,y=Y,s=S]), 
+    Y := S*2, 
+    println([go2,y=Y,s=S]), 
+    Y := S*3, 
+    println([go2,y=Y,s=S]), 
+    fail % fail forces backtracking
+).
+
+% [go1,x = 1,t = 1]
+% [go1,x = 2,t = 2]
+% [go1,x = 3,t = 3]
+
+% [go2,y = 1,s = 1]
+% [go2,y = 2,s = 1]
+% [go2,y = 3,s = 1]
+% [go2,y = 2,s = 2]
+% [go2,y = 4,s = 2]
+% [go2,y = 6,s = 2]
+% [go2,y = 3,s = 3]
+% [go2,y = 6,s = 3]
+% [go2,y = 9,s = 3]
