@@ -74,6 +74,7 @@
 - [Errors I Always Make and How I Compensate](#errors-i-always-make-and-how-i-compensate)
   - [Type Errors, Numbers and Characters, `println` vs `writeln`](#type-errors-numbers-and-characters-println-vs-writeln)
   - [More Type Errors: Lists and Arrays](#more-type-errors-lists-and-arrays)
+  - [List Ranges With \[\]](#list-ranges-with-)
   - [And More Type Errors: `""` vs `''` aka Atoms and Strings, Oh My](#and-more-type-errors--vs--aka-atoms-and-strings-oh-my)
   - [Predicate vs Function (sort of a type error)](#predicate-vs-function-sort-of-a-type-error)
   - [Unification vs Assignment](#unification-vs-assignment)
@@ -2575,7 +2576,7 @@ For a range with steps use *start..step..end*. For example:
 A=1..9. % A = [1,2,3,4,5,6,7,8,9]
 A=1..2..9. % A = [1,3,5,7,9]
 ```
-*Note: no brackets around the range. It's a list already. In Haskell this would need to be `[1..9]` and `[1,3..9]`.*
+*Note: no brackets around the range. It's a list already. In Haskell this would need to be `[1..9]` and `[1,3..9]`. If you type `A=[1..9]` into Picat you get a nested list: `[[1,2,3,4,5,6,7,8,9]]`.*
 
 ## Assignment (Binding) vs. Unification (Bind or Fail) vs. Equality (Only Numbers)
 
@@ -3605,6 +3606,10 @@ A = {1,2,3,4}, AL = len(A), B=head(A).
 
 ```
 I sometimes switch my code between lists and arrays for the advantages one gives over the other, such as in access time. But refactoring isn't as simple as just making the variables into lists.
+
+## List Ranges With []
+
+List made with ranges don't use `[]` like Haskell does. I noted this [here](#indexing-a-range-with-steps). But I keep forgetting and using `A = [1..10]` when I should have written `A=1..10`. Unfortunately for me, the former is not a syntax error, but results in a nested list: `A=[[1,2,3,4,5,6,7,8,9,10]]`.
 
 ## And More Type Errors: `""` vs `''` aka Atoms and Strings, Oh My
 
