@@ -3952,6 +3952,14 @@ The manual says: "This predicate is true if Term is acyclic, meaning that Term d
 
 Hakan notes: "Beside from porting some Prolog programs that use this, I've never used it."
 
+[Hillel](#https://www.hillelwayne.com/) says: "As far as I can tell it probably matters for people using LP for theorem proving and mathematics? Example of a cyclic term:
+
+```
+ A = $struct(A), acyclic_term(A).
+
+no
+```
+
 ### `list_to_and(List) = Conj` 
 
 Working on [this](#list_to_andlist--conj). Hopefully will understand soon!
