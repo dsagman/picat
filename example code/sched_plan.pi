@@ -5,13 +5,15 @@
 % JobsPeople: which person can do a job
 % Works with: who wants to work with who
 % MaxJobs: maximum jobs a person can work overall
+% 
+% We use global_map to avoid passing all the globals as arguments
 
 import planner.
 import cp.
 % import util. 
 
 main => 
-
+    
     
     % constraints
     NWeeks      = 4,
@@ -20,6 +22,7 @@ main =>
     Jobs        = ["Piano","Prayer","Video","Clean"],
     JobsPeople  = [[1,2]  , [3]    , [5,6] , [1,2,3,4,5,6,7]],
     WorksWith   = [[1,3]], % can add more
+
     % put constrains into global map
     Globals = get_global_map(),
     Globals.put(people,People),
@@ -32,9 +35,8 @@ main =>
     % Initial =  [Week, [Job Assigns], [Total Assigned]]
     InitialAssignment = [0,new_list(NWeeks,0),new_list(People.len,0)], 
     best_plan(InitialAssignment,Plan,Cost),
-    % println(plan=Plan),
-    foreach (P in Plan),
-        println(p=P)
+    foreach (I in 1..Plan.len),
+        printf("Week %w: %w\n",I,Plan[I])
     end,
     print_sched(Plan,People,Jobs),
 
@@ -62,7 +64,7 @@ final(S@[Week,Assigns,TotalAssigned]) =>
 
 action(S@[Week,Assigns,TotalAssigned],NextS,Action,Cost) =>
     println(s=S),
-    println(cost=Cost),
+
     Globals     = get_global_map(),
     People      = Globals.get(people),
     Jobs        = Globals.get(jobs),
@@ -87,6 +89,7 @@ action(S@[Week,Assigns,TotalAssigned],NextS,Action,Cost) =>
         NextTotal[NextAssigns[I]] :=  1 + TotalAssigned[NextAssigns[I]]
     end,
 
+    % this could also be expressed as a penalty
     all_different(NextAssigns), % different people for each job, from cp
 
     % penalty for more than MaxJobs
@@ -95,7 +98,7 @@ action(S@[Week,Assigns,TotalAssigned],NextS,Action,Cost) =>
     end,
 
     % TODO add penalty for not working with desired person
-    
+
     Action = NextAssigns,
     NextS = [Week+1,NextAssigns,NextTotal],
     Cost = NewCost.
