@@ -1,0 +1,118 @@
+
+% constraints
+% 
+% NWeeks: number of weeks to schedule
+% JobsPeople: which person can do a job
+% Works with: who wants to work with who
+% MaxJobs: maximum jobs a person can work overall
+
+import planner.
+import cp.
+% import util. 
+
+main => 
+
+    
+    % constraints
+    NWeeks      = 4,
+    People      = ["Alice","Bob","Carol","David","Emily","Frank","George"],
+    MaxJobs     = [ 2     , 2   , 2     , 3     , 3     , 3     , 3      ],
+    Jobs        = ["Piano","Prayer","Video","Clean"],
+    JobsPeople  = [[1,2]  , [3]    , [5,6] , [1,2,3,4,5,6,7]],
+    WorksWith   = [[1,3]], % can add more
+    % put constrains into global map
+    Globals = get_global_map(),
+    Globals.put(people,People),
+    Globals.put(jobs,Jobs),
+    Globals.put(nweeks,NWeeks),
+    Globals.put(maxjobs,MaxJobs),
+    Globals.put(jobpeople,JobsPeople),
+    Globals.put(workswith,WorksWith),
+    
+    % Initial =  [Week, [Job Assigns], [Total Assigned]]
+    InitialAssignment = [0,new_list(NWeeks,0),new_list(People.len,0)], 
+    best_plan(InitialAssignment,Plan,Cost),
+    % println(plan=Plan),
+    foreach (P in Plan),
+        println(p=P)
+    end,
+    print_sched(Plan,People,Jobs),
+
+    println(cost=Cost).
+
+final(S@[Week,Assigns,TotalAssigned]) => 
+    Globals = get_global_map(),
+    Week == Globals.get(nweeks), % end when nweeks is reached
+    true.
+
+% final(S@[Week,Assigns,TotalAssigned],Plan,Cost) =>
+%     Plan = [],
+%     Cost = 0,
+ % we could add a constraint on the whole plan here via CurPlan
+%     current_plan() = CurPlan,
+%     println(fcurplan=CurPlan),
+%     println(fp=Plan),
+%     println(fcost=Cost),
+%     println(fs=S),
+%     Globals = get_global_map(),
+%     println(Globals.get(nweeks)),
+%     Week == Globals.get(nweeks),
+%     true.
+
+
+action(S@[Week,Assigns,TotalAssigned],NextS,Action,Cost) =>
+    println(s=S),
+    println(cost=Cost),
+    Globals     = get_global_map(),
+    People      = Globals.get(people),
+    Jobs        = Globals.get(jobs),
+    NWeeks      = Globals.get(nweeks),
+    MaxJobs     = Globals.get(maxjobs),
+    JobsPeople  = Globals.get(jobpeople),
+    WorksWith   = Globals.get(workswith),
+
+    NextAssigns = new_list(Jobs.len),
+    NextTotal = copy_term(TotalAssigned),
+
+    NewCost = 1,
+
+    % assign jobs
+    foreach (I in 1..Jobs.len)
+        % assign based on skills
+        member(NextAssigns[I],JobsPeople[I]),
+
+        % penalty for two weeks in a row
+        if NextAssigns[I] == Assigns[I] then NewCost := NewCost + 1 end,
+
+        NextTotal[NextAssigns[I]] :=  1 + TotalAssigned[NextAssigns[I]]
+    end,
+
+    all_different(NextAssigns), % different people for each job, from cp
+
+    % penalty for more than MaxJobs
+    foreach (I in 1..People.len)
+        if NextTotal[I] > MaxJobs[I] then NewCost := NewCost + 1 end
+    end,
+
+    % TODO add penalty for not working with desired person
+    
+    Action = NextAssigns,
+    NextS = [Week+1,NextAssigns,NextTotal],
+    Cost = NewCost.
+
+
+% print_sched(Schedule,People,Jobs).
+
+print_sched(S,People,Jobs) =>
+    printf("\t"),
+    foreach (I in 1..S[1].len)
+        printf("Week %w\t",I)
+    end,
+    printf("\n"),
+    foreach (I in 1..S.len)
+        printf("%w\t",Jobs[I]),
+        foreach (C in S[I])
+            printf("%w\t",People[C])
+        end,
+        printf("\n")
+    end.
