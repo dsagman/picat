@@ -4,9 +4,7 @@
 % Core algorithm is correct
 
 
-
 module md5.
-
 import util.
 
 md5(String) = HexDigest =>
@@ -14,20 +12,22 @@ md5(String) = HexDigest =>
     Blocks = map(block_to_words, Padded.chunks_of(64)),
     State0 = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476],
     FinalState = md5_compress_blocks(Blocks, State0),
-    HexDigest = state_to_hex(FinalState).
+    HexDigest = state_to_hex(FinalState).to_lowercase.
 
-private
 
 % Bitwise and modular helpers
-% bit_not(X, R)    => R = ~(X) /\ 0xFFFFFFFF. % seems unneeded
+% bit_not(X, R)    => R = ~(X) /\ 0xFFFFFFFF. % seems unneededmd5.
+private
 mod32(X) = X mod 4294967296.
 
+private
 left_rotate(X, N, R) =>
     L1 = (X << N) /\ 0xFFFFFFFF,
     L2 = X >> (32 - N),
     R = (L1 \/ L2) /\ 0xFFFFFFFF.
 
 % MD5 core functions
+private
 f(X,Y,Z) = R => A = X /\ Y , B = ~X /\ Z, R = A \/ B.
 g(X,Y,Z) = R => A = X /\ Z , B = ~Z /\ Y, R = A \/ B.
 h(X,Y,Z) = R => A = X ^ Y  , R = A ^ Z.
@@ -35,6 +35,7 @@ i(X,Y,Z) = R => A = ~Z \/ X, R = A ^ Y.
 
 
 % Shift amounts (S[i]) and index schedule (K[i])
+private
 md5_shifts([
     7,12,17,22, 7,12,17,22, 7,12,17,22, 7,12,17,22,
     5, 9,14,20, 5, 9,14,20, 5, 9,14,20, 5, 9,14,20,
@@ -42,6 +43,7 @@ md5_shifts([
     6,10,15,21, 6,10,15,21, 6,10,15,21, 6,10,15,21
 ]).
 
+private
 md5_indexes([
      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
      1, 6,11, 0, 5,10,15, 4, 9,14, 3, 8,13, 2, 7,12,
@@ -50,6 +52,7 @@ md5_indexes([
 ]).
 
 % Precomputed T[i] = floor(abs(sin(i + 1)) * 2^32)
+private
 md5_constants([
   0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
   0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
@@ -70,6 +73,7 @@ md5_constants([
 ]).
 
 % Pad message
+private
 md5_pad(Bytes) = Padded =>
     % Pad with 0x00 until length mod 64 = 56 
     pad_zeroes(Bytes ++ [0x80], 56, PaddedPre),
@@ -78,12 +82,14 @@ md5_pad(Bytes) = Padded =>
     Padded = PaddedPre ++ BitLenBytes.
 
 % Pad with zeroes until modulo condition met
+private
 pad_zeroes(List, TargetMod, Padded) =>
     R = List.len mod 64,
     PadLen = (TargetMod - R + 64) mod 64,
     Padded = List ++ new_list(PadLen,0).
 
 % Encode a 64-bit value as 8 bytes little endian
+private
 word64_le(N) = [B0,B1,B2,B3,B4,B5,B6,B7] =>
     B0 = (N >>  0) /\ 0xFF,
     B1 = (N >>  8) /\ 0xFF,
@@ -95,6 +101,7 @@ word64_le(N) = [B0,B1,B2,B3,B4,B5,B6,B7] =>
     B7 = (N >> 56) /\ 0xFF.
 
 % Convert 64-byte block to 16 32-bit words
+% private
 block_to_words([]) = [].
 block_to_words([B0,B1,B2,B3|Rest]) = [W|Ws] =>
     % Convert 4 bytes to a little-endian 32-bit word
@@ -102,6 +109,7 @@ block_to_words([B0,B1,B2,B3|Rest]) = [W|Ws] =>
     Ws = block_to_words(Rest).
 
 % One block transforms the current A,B,C,D
+private
 md5_process_block([A0,B0,C0,D0], BlockWords) = [Aout,Bout,Cout,Dout] =>
     md5_constants(Ts),
     md5_shifts(Shifts),
@@ -113,6 +121,7 @@ md5_process_block([A0,B0,C0,D0], BlockWords) = [Aout,Bout,Cout,Dout] =>
     Dout = mod32(D0 + D1).
 
 % Recursive 64-step loop
+private
 loop_steps(64, A,B,C,D, _,_,_,_) = [A,B,C,D].
 loop_steps(I,  A,B,C,D, BlockWords, [Ti|Tt], [Si|St], [Ki|Kt]) = State =>
     Mi = BlockWords[Ki+1],
@@ -125,6 +134,7 @@ loop_steps(I,  A,B,C,D, BlockWords, [Ti|Tt], [Si|St], [Ki|Kt]) = State =>
     State = loop_steps(I2, NewA,NewB,NewC,NewD, BlockWords, Tt, St, Kt).
 
 % Step function chooser by round
+private
 step_function(I,B,C,D) = R=>
     if     I < 16 then R = f(B,C,D)
     elseif I < 32 then R = g(B,C,D)
@@ -133,12 +143,14 @@ step_function(I,B,C,D) = R=>
     end.
 
 % Process all blocks, folding the state
+private
 md5_compress_blocks([], State) = State.
 md5_compress_blocks([Block|Rest], StateIn) = StateOut =>
     StateNext = md5_process_block(StateIn, Block),
     StateOut = md5_compress_blocks(Rest, StateNext).
 
 % Convert 32-bit word to 4 little-endian bytes
+private
 word_to_bytes_le(Word) = [B0,B1,B2,B3] =>
     B0 = (Word >>  0) /\ 0xFF,
     B1 = (Word >>  8) /\ 0xFF,
@@ -146,10 +158,12 @@ word_to_bytes_le(Word) = [B0,B1,B2,B3] =>
     B3 = (Word >> 24) /\ 0xFF.
 
 % Use to_hex_string with zero-pad, no byte_to_hex needed
+private
 hex2(B) = S =>
     T = B.to_hex_string,
     if T.len == 1 then S = "0" ++ T else S = T end.
 
+private
 state_to_hex([A,B,C,D]) = HexStr =>
     Ab = word_to_bytes_le(A), Bb = word_to_bytes_le(B),
     Cb = word_to_bytes_le(C), Db = word_to_bytes_le(D),
