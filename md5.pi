@@ -1,0 +1,159 @@
+% -------------------- MD5 in native Picat--------------------
+% Written by ChatGPT in Prolog
+% Some back and forth with ChatGPT to get it working in Picat
+% Core algorithm is correct
+
+
+
+module md5.
+
+import util.
+
+md5(String) = HexDigest =>
+    Padded = md5_pad(String.to_codes),
+    Blocks = map(block_to_words, Padded.chunks_of(64)),
+    State0 = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476],
+    FinalState = md5_compress_blocks(Blocks, State0),
+    HexDigest = state_to_hex(FinalState).
+
+private
+
+% Bitwise and modular helpers
+% bit_not(X, R)    => R = ~(X) /\ 0xFFFFFFFF. % seems unneeded
+mod32(X) = X mod 4294967296.
+
+left_rotate(X, N, R) =>
+    L1 = (X << N) /\ 0xFFFFFFFF,
+    L2 = X >> (32 - N),
+    R = (L1 \/ L2) /\ 0xFFFFFFFF.
+
+% MD5 core functions
+f(X,Y,Z) = R => A = X /\ Y , B = ~X /\ Z, R = A \/ B.
+g(X,Y,Z) = R => A = X /\ Z , B = ~Z /\ Y, R = A \/ B.
+h(X,Y,Z) = R => A = X ^ Y  , R = A ^ Z.
+i(X,Y,Z) = R => A = ~Z \/ X, R = A ^ Y.
+
+
+% Shift amounts (S[i]) and index schedule (K[i])
+md5_shifts([
+    7,12,17,22, 7,12,17,22, 7,12,17,22, 7,12,17,22,
+    5, 9,14,20, 5, 9,14,20, 5, 9,14,20, 5, 9,14,20,
+    4,11,16,23, 4,11,16,23, 4,11,16,23, 4,11,16,23,
+    6,10,15,21, 6,10,15,21, 6,10,15,21, 6,10,15,21
+]).
+
+md5_indexes([
+     0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
+     1, 6,11, 0, 5,10,15, 4, 9,14, 3, 8,13, 2, 7,12,
+     5, 8,11,14, 1, 4, 7,10,13, 0, 3, 6, 9,12,15, 2,
+     0, 7,14, 5,12, 3,10, 1, 8,15, 6,13, 4,11, 2, 9
+]).
+
+% Precomputed T[i] = floor(abs(sin(i + 1)) * 2^32)
+md5_constants([
+  0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
+  0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
+  0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
+  0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
+  0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa,
+  0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
+  0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed,
+  0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a,
+  0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c,
+  0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70,
+  0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05,
+  0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665,
+  0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039,
+  0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
+  0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
+  0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391
+]).
+
+% Pad message
+md5_pad(Bytes) = Padded =>
+    % Pad with 0x00 until length mod 64 = 56 
+    pad_zeroes(Bytes ++ [0x80], 56, PaddedPre),
+    % Append 64-bit length (little endian)
+    BitLenBytes = word64_le(Bytes.len * 8),
+    Padded = PaddedPre ++ BitLenBytes.
+
+% Pad with zeroes until modulo condition met
+pad_zeroes(List, TargetMod, Padded) =>
+    R = List.len mod 64,
+    PadLen = (TargetMod - R + 64) mod 64,
+    Padded = List ++ new_list(PadLen,0).
+
+% Encode a 64-bit value as 8 bytes little endian
+word64_le(N) = [B0,B1,B2,B3,B4,B5,B6,B7] =>
+    B0 = (N >>  0) /\ 0xFF,
+    B1 = (N >>  8) /\ 0xFF,
+    B2 = (N >> 16) /\ 0xFF,
+    B3 = (N >> 24) /\ 0xFF,
+    B4 = (N >> 32) /\ 0xFF,
+    B5 = (N >> 40) /\ 0xFF,
+    B6 = (N >> 48) /\ 0xFF,
+    B7 = (N >> 56) /\ 0xFF.
+
+% Convert 64-byte block to 16 32-bit words
+block_to_words([]) = [].
+block_to_words([B0,B1,B2,B3|Rest]) = [W|Ws] =>
+    % Convert 4 bytes to a little-endian 32-bit word
+    W = B0 + (B1 << 8) + (B2 << 16) + (B3 << 24),
+    Ws = block_to_words(Rest).
+
+% One block transforms the current A,B,C,D
+md5_process_block([A0,B0,C0,D0], BlockWords) = [Aout,Bout,Cout,Dout] =>
+    md5_constants(Ts),
+    md5_shifts(Shifts),
+    md5_indexes(Ks),
+    [A1,B1,C1,D1]= loop_steps(0, A0, B0, C0, D0, BlockWords, Ts, Shifts, Ks),
+    Aout = mod32(A0 + A1),
+    Bout = mod32(B0 + B1),
+    Cout = mod32(C0 + C1),
+    Dout = mod32(D0 + D1).
+
+% Recursive 64-step loop
+loop_steps(64, A,B,C,D, _,_,_,_) = [A,B,C,D].
+loop_steps(I,  A,B,C,D, BlockWords, [Ti|Tt], [Si|St], [Ki|Kt]) = State =>
+    Mi = BlockWords[Ki+1],
+    F = step_function(I,B,C,D),
+    Temp = mod32(A + F + Ti + Mi),
+    left_rotate(Temp, Si, Rot),
+    NewA = D, NewD = C,
+    NewC = B, NewB = mod32(B + Rot),
+    I2 = I + 1,
+    State = loop_steps(I2, NewA,NewB,NewC,NewD, BlockWords, Tt, St, Kt).
+
+% Step function chooser by round
+step_function(I,B,C,D) = R=>
+    if     I < 16 then R = f(B,C,D)
+    elseif I < 32 then R = g(B,C,D)
+    elseif I < 48 then R = h(B,C,D)
+    else               R = i(B,C,D)
+    end.
+
+% Process all blocks, folding the state
+md5_compress_blocks([], State) = State.
+md5_compress_blocks([Block|Rest], StateIn) = StateOut =>
+    StateNext = md5_process_block(StateIn, Block),
+    StateOut = md5_compress_blocks(Rest, StateNext).
+
+% Convert 32-bit word to 4 little-endian bytes
+word_to_bytes_le(Word) = [B0,B1,B2,B3] =>
+    B0 = (Word >>  0) /\ 0xFF,
+    B1 = (Word >>  8) /\ 0xFF,
+    B2 = (Word >> 16) /\ 0xFF,
+    B3 = (Word >> 24) /\ 0xFF.
+
+% Use to_hex_string with zero-pad, no byte_to_hex needed
+hex2(B) = S =>
+    T = B.to_hex_string,
+    if T.len == 1 then S = "0" ++ T else S = T end.
+
+state_to_hex([A,B,C,D]) = HexStr =>
+    Ab = word_to_bytes_le(A), Bb = word_to_bytes_le(B),
+    Cb = word_to_bytes_le(C), Db = word_to_bytes_le(D),
+    Bytes = Ab ++ Bb ++ Cb ++ Db,
+    Parts = [hex2(X) : X in Bytes],
+    HexStr = Parts.join('').
+
