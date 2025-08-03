@@ -3840,7 +3840,7 @@ Invariably, I add a new line of code and forget the comma or I accidentally add 
 
 I compensate by adding only a few lines at a time and always saving and rerunning so that I don't have far to hunt for the most recent edit that broke syntax rules.
 
-## Trying to use list indexing with decision/domain variable 
+## Don't use list indexing with decision/domain variables 
 
 When solving constraint problems use `element(I,List,V )` and not `V #= List[I]`. Also `matrix_element` for 2D arrays/lists. I noted this in this [example code](#planner-and-constraint-example-traveling-salesperson).
 
