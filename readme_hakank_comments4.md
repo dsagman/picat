@@ -1,7 +1,8 @@
+hakank4: My comments below is hakank4.
+
 - [What I Wish I Knew When Learning Picat: Introduction](#what-i-wish-i-knew-when-learning-picat-introduction)
   - [A Motivating Example](#a-motivating-example)
   - [My Personal Vendetta With Optimization](#my-personal-vendetta-with-optimization)
-  - [My Beef With Prolog](#my-beef-with-prolog)
   - [How This Document Is Organized](#how-this-document-is-organized)
   - [About Picat](#about-picat)
   - [Picat vs. Other Languages](#picat-vs-other-languages)
@@ -84,7 +85,7 @@
   - [Predicate vs Function (sort of a type error)](#predicate-vs-function-sort-of-a-type-error)
   - [Unification vs Assignment](#unification-vs-assignment)
   - [Forgetting a comma or a period (or having an extra one)](#forgetting-a-comma-or-a-period-or-having-an-extra-one)
-  - [Don't use list indexing with decision/domain variables](#dont-use-list-indexing-with-decisiondomain-variables)
+  - [Trying to use list indexing with decision/domain variable](#trying-to-use-list-indexing-with-decisiondomain-variable)
 - [Debugging](#debugging)
   - [Print and Printf are Your Friends](#print-and-printf-are-your-friends)
   - [Print within `solve`!](#print-within-solve)
@@ -208,19 +209,6 @@ However, at the time, and still today, the math at the center of this is over my
 https://www.informs.org/Recognizing-Excellence/Award-Recipients/John-Forrest 
 https://www.coin-or.org/coinCup/coinCup2007Winner.html*
 
-## My Beef With Prolog
-
-I learned programming on a Radio Shack Color Computer in 1972 and then the first IBM PC a few years later. BASIC and then Pascal were the only languages I had for many years. In those days, before the Internet, any other language, even assembly, were hundreds of dollars (thousands in today's money) and essentially unobtainium.
-
-Pascal was an option because of Borland's $49.99 Turbo Pascal. And so when Borland released a similarly priced Turbo Prolog, I was all in. I attempted to write an Othello program as my project for a CS class in college. And, apologies to Prof. Barry Burd, I got exactly nowhere. With no Stack Overflow or ChatGPT, I was unable to even figure out how to set up the data structure for the board.
-
-So logic programming is also an long time foe I have been wanting to win at least one or two rounds with.
-
-*Note: I have since managed to write a version of[Othello in Haskell](https://github.com/dsagman/codewars/blob/main/othello/othello.hs). But not yet Prolog or Picat.*
-
-*Note: APL is another monster from those days. For now though, it remains left to sleep.*
-
-
 ## How This Document Is Organized
 
 This document has the following primary sections:
@@ -273,8 +261,18 @@ Let's look at how Picat stacks up against some programming languages you may kno
 | List Comprehension.   |  `Xs = [X : X in 1..5, X != 2].`                      |
 | Pattern Matching      |  `head([H\|T])=H.`                                    |
 | Loops                 |  `foreach (X in MyList) Y=X*X,println(X) end.`        |
-| Recursion             | `fib(0)=1. fib(1)=1. fib(N)=fib(N-1)+fib(N-2).`. <br> member(X,[X|\_]). member(X,[\_|L]) :- member(X,L).    |  
-| Functions             | `myfunc(X) = R => if X>0 then R=X*X else R=X*X*X end.`                            |
+| Recursion             | `fib(0)=1. fib(1)=1. fib(N)=fib(N-1)+fib(N-2).`.      |
+hakank4x: Note that is recursion with functions. Perhaps you should also add a recursion with predicates, e.g. member/2:
+hakank4x: member(X,[X|_]).
+hakank4x: member(X,[_|L) :- member(X,L).
+DS: added
+
+| Functions             | `double(X) = R => R = X*2`                            |
+hakank4x: Why not simply:
+hakank4x:   double(X) = X*2.
+DS: trying to show use of return value. edited.
+
+
 | Output                |  `print()`, `println()`, `printf()`                   |
 | Input                 | `read_file_lines("datafile.txt").`                    |
 | Higher Order Functions| `map(reverse,MyStringList).` or `MyStringList.map(reverse).`|
@@ -297,12 +295,16 @@ Also: Hashmaps, Sets, Ordered Sets and Binary Heaps.
 
 - Planner
 
-    There is a planner definition language, [PDDL](https://planning.wiki/guide/whatis/pddl), but it is not a general programming language like Picat, and I did not find it very easy to learn.
+    There is a planner definition language, [PDDL](https://planning.wiki/guide/whatis/pddl), but it is not a general progamming language like Picat, and I did not find it very easy to learn.
 
 - Solver polymorphism + Turing Complete
 
-    There are DSL languages such as MiniZinc are designed to work with multiple backend solvers. Also languages such as Prolog, Python, Java, C++, etc. are Turing Complete with library bindings to solvers, from-the-bottom-up integrated nature of Picat's solvers, the planner module, while being a full programming language does stand out from the crowd.
-    
+    While DSL languages such as MiniZinc is designed to work with multiple backend solvers, and languages such as Prolog and Python are Turing Complete with bindings to solvers, the integrated nature of Picat's solvers along with being a full programming language does stand out as unique.
+
+hakank4x: There are quite a few constraint systems that are intergrated with full programming languages, e.g. OR-tools (for Python, C++, C#, and Java, Gecode for C++, Choco and JaCoP for Java, etc.
+DS: I had noted the integration, added more.
+hakank4x: What's perhaps unique that Picat has this included by default as well as it has this support together with a planner module.
+DS: done
 
 ### Things Picat Doesn't Come With
 
@@ -332,6 +334,8 @@ For example:
 A=5. % A=5. 
 ```
 But `A` is only `5` in this clause. After the `.`, `A` goes out of scope.
+
+hakan4: Proably too picky: This is perhaps a little strange example since a statement like this must be in a body of a predicate/function to make sense. Or in the REPL (and there the "." is not actually needed). 
 
 And if you prefer spaces around your operators, please go ahead.
 
@@ -366,13 +370,20 @@ Constraint programming let's you solve problems that require searching through p
 
 All of these, and many many more can be found via the links in the [resources](#resources) section. 
 
-The main concept here is the satisfaction and sometimes optimization of a function defined by a set of rules aka constraints. The function has variables whose values are not known, but can be defined to be within a given range. These are called "decision variables," and differ from normal variables.
+The main concept here is the minimization of a function defined by a set of rules aka constraints. The function has variables whose values are not known, but can be defined to be within a given range. These are called "decision variables," and differ from normal variables.
+
+hakank4x: Again picky: The N-queens problem and Knight's Tour are not really minimization problems.
+hakank4x: I would state it something like this:
+hakank4x: "The main concept here is the satisfaction (and sometimes optimization) ...".
+DS: done
 
 Decision variables can be real/floating point values or integers, and in most most cases, there's no closed form solution to obtain their values. Constraint programming is NP-Hard. https://en.wikipedia.org/wiki/Integer_programming#Heuristic_methods
 
 There are many applicable techniques you may have seen in a CS algorithms class: Dijkstra's algorithm, A*, recursion/induction, A/B pruning, branch-and-bound, fail first, breadth first search, depth first search, simplex, gradient descent, satisfiability solver, memoization/tabling or just brute force.
 
-A solution using these algorithms is found through iteration and any efficiency over brute force is through careful selection of which potential solution to try next, when to give up and try a different one, and identification of when a given search location is the same as a previous one. This last item is also known as symmetry breaking, that is, if a state is identical/symmetrical to a previous one, don't do the calculations all over again.
+A solution is found through iteration and any efficiency over brute force is through careful selection of which potential solution to try next, when to give up and try a different one, and identification of when a given search location is the same as a previous one. This last item is also known as symmetry breaking, that is, if a state is identical/symmetrical to a previous one, don't do the calculations all over again.
+hakank4s: "A solution _using these algorithms_ is found ...".
+DS: done
 
 These algorithms can reduce the time to find a solution from hours to fractions of a second, but learning all of them and implementing them for a specific problem can be challenging. Enter Picat!
 
@@ -436,9 +447,12 @@ Terminology Note: the Picat manual calls these *domain* variables and the common
 
 Here's an example. Note that the module `cp` must be imported to use domain variables.
 ```
-import cp. % needed for ::/2
 A :: 1..10 % A is a number between 1 and 10
 ```
+
+hakank4x: You might to add "import cp." in this first example so one can see the exact syntax.
+DS: done.
+
 If you type this into the interactive Picat REPL, you get: 
 ```
 A = DV_0104d8_1..10
@@ -450,7 +464,8 @@ A :: 1..10, A mod 2 #= 0.
 % REPL says: A = DV_010970_2_4_6_8_10
 ```
 
-This shows the power of a constraint solver: Sometimes the domain can be reduced directly, i.e. the domain if A is now only the even numbers. This is discussed more in the [Picat Constraint Programming book](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf), chapter 2-3.
+hakank4x: This shows the power of a constraint solver: Sometimes the domain can be reduced directly, i.e. the domain if A is now only the even numbers. (This is discussed more in the Picat book, chapter 2-3).
+DS: done.
 
 ## Constraint Example: Some Numbers that Multiply
 
@@ -494,13 +509,18 @@ There's lots of constraints that can be applied to via a constraint operator or 
 
 Picat has implemented quite a few constraints, but there are so, so, so many more. Hakan has implemented more of them here: https://www.hakank.org/picat/#global.
 
-*Rabbit Hole:  There's even a [Global Constraint Catalog!](https://sofdem.github.io/gccat/gccat/sec5.html) Take a look at your own peril to your free time. And should you want to go down this hole, perhaps try to implement one of these constraints in Picat!*
+*Rabbit Hole:  There's even a [Global Constraint Catalog!](https://sofdem.github.io/gccat/gccat/sec5.html) Take a look at your own peril to your free time.*
 
+hakank4x: A fun challenge to reader: Pick one or two global constraint that look fun and try to implement them in Picat.
+DS: Edit made. However, fun is in the eye of the beholder. :-)
 
 ### Constraint Operators
 
 Numeric: `::`, `notin`, `#=`, `#!=`, `#<`, `#=<`, `#<=`, `#>`, `#>=`
-Logical: `#~` (not),`#/\` (and),`#^` (XOR),`#\/` (or),`#=>` (implication, left side implies right),`#<=>` (equivalence, left and right are equivalent)
+Logical: `#~` (not),`#/\` (and),`#^` (XOR),`#\/` (or),`#=>` (left side implies right),`#<=>` (left and right are equivalent)
+
+hakank4x: Or: "... #=> (implication), #<=> (equivalence)"
+DS: done
 
 ### Arithmetic on Lists and Expressions
 
@@ -517,7 +537,7 @@ I often think I need to constrain on the length of a list, but that's because I'
 
 For example, in this Advent of Code [problem](#constraint-example-santas-knapsack), I want to minimize the number of items in the list `Bins` assigned to bin 1. Item`Bins[X] = 0` for an assignment of that element to bin 1 and `Bins[X] != 0` for any other bin. 
 
-My initial thought: `Bins` should be shortest. Therefore, filter `Bins` and then minimize `len(Bins)`. But this is me thinking like an imperative or functional programmer. What I really needed was to get the count of items in `Bins` equal to 0. I could do this a few ways:
+My initial thought: `Bins` should be shortest. Therefore, filter `Bins` and then minimize `len(Bins)`. But this is functional programming,. What I really need is just: The count of items in `Bins` equal to 0. I can do this a few ways:
 
 ```
 L1 #= sum([(Bins[I] #= 0) : I in 1..N]), % L1 = Bin 1 size
@@ -527,7 +547,8 @@ L1 #= count(0,Bins)
 solve($[min(L1)],Bins).
 ```
 
-
+hakank4x: That's a great example of the difference between imperative/functional vs constraint thinking!
+DS: Yep, learning to think in Prolog/Picat is a shift of perspective. Edit done.
 
 ###  Global Constraints
 
@@ -788,20 +809,22 @@ Here's the full version of that code where all the solvers are specified. You ca
 
 % import sat. % solve with sat
 
-% import mip. % solve with mip, you need to install cbc, glpk, gurobi or compile Picat from scratch for scip 
+% import mip. % solve with mip, uou need to install cbc, glpk, gurobi or compile Picat from scratch for scip 
+
+hakank4x: Typo "uou" -> "you"
+DS: done.
 
 import smt. % solve with smt, you need to install cvc or z3
 
 main =>
     % for sat and smt, need to explictly make new dvars
     % also works for cp and mip, 
-    % but cp can figure out the domain without new_dvar/0
     % but if you want non-integer solutions for mip
     % need to specify they can be real numbers with something after the decimal point
     % for example, instead of new_dvar use W :: 0.0..100.0
-    W = new_dvar(), % ideally set to a more limited doman
-    X = new_dvar(), % new_dvar allows for any +/- integer value 
-    Y = new_dvar(), % based on architecture: either 32-bit or 64-bit
+    W = new_dvar(), 
+    X = new_dvar(),
+    Y = new_dvar(),
     Z = new_dvar(),
     X + Y #= 2, 
     Y + Z #= 7, 
@@ -818,6 +841,12 @@ main =>
     end.
 
 ```
+
+hakank4x: Hmm, I'd rather use the domain as the initialization of the decision variable, if possible.
+hakank4x: Also, for the cp solve you don't have to initialize with new_dvar/0 at all since it figure out the domains.
+hakank4x: And this is one of the reasons that I also first try with the cp solver, then sat or mip solver.
+
+DS: done
 
 `solve(Vars)` finds one solution and `solve_all = Sols` finds, well, all the solutions. 
 
@@ -849,7 +878,10 @@ Note the use of `$`. This means that Picat should not attempt to evaluate the te
 
 Let's look at the four solver modules and what makes them different from each other, and the options you can provide to the solver for them. 
 
-*Note: Picat is primarily focused on problems with integer aka finite-domain solutions. (Yes, integers are infinite, but not in computer programs that are expected to halt.) While MIP provides the ability to have real-valued solutions, if you are really looking for non-linear optimization, Picat is not the right tool.* 
+*Note: Picat is primarily focused on problems with integer aka finite-domain solutions. (Yes, integers are infinite, but not in computer programs that are expected to halt.) While MIP provides the ability to have real-valued solutions, if you are really looking for non-linear optimization, Picat is not the right tool.*
+
+hakank4: "not the right tool": I assume that you mean non-linear optimization with MIP solvers and float-values here.
+hakank4: For finite-domain non-linear optimization, I would disagree.
 
 *On the other hand, Picat does have a neural network modules that interfaces to the [FAAN neural network library](https://leenissen.dk/). I'm sure someone could use it for non-linear optimzation, given that this is exactly what neural networks do. However, that person is not me. Hakan, of course, has some [example code](https://www.hakank.org/picat/nn_hakank/).*
 
@@ -859,6 +891,8 @@ Let's look at the four solver modules and what makes them different from each ot
 CP finds feasible values for decision variables by searching through and reducing the domains of those variables via algorithmic techniques such as: breadth and depth-first search, tabling (memoization), backtracking, refinement, perturbation, constraint propogation, combinatorics, unification, and other heuristics.
 
 The `cp` module has been more the sufficient for all of the Advent of Code problems in this text and it's been the main one I use. It also has the most option to adjust the search strategy. 
+
+hakank4: Have you compared with the SAT solver for these AoC problems? For harder problems, SAT might be quite faster.
 
 Here's the scoop copied right out of the manual:
 
@@ -939,9 +973,14 @@ To use the `smt` module in Picat, you need to install an external SMT solver and
 | CPLEX        | paid       | `solve([dump`$(File)$`],Vars)`  | You have load the *File* into CPLEX     |  [link](https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer)   |
 |||
 
+hakank4: Hmm, gurobi and CPLEX are MIP solvers, not SMT solvers. I see that they are included below in the MIP listing.
+
 Two other options are:
 
 - `logic`$(Logic)$: Instruct the SMT solver to use $Logic$ in the solving, where $Logic$ must be an atom or a string, and the specified logic must be available in the SMT solver. The default logic for Z3 is “LIA”, and the default logic for CVC4 is “NIA”.
+
+hakank4: My favorite SMT logic for z3 is QF_FD. It can be quite fast.
+
 - `tmp`$(File)$: Dump the SMT-LIB2 format to $File$ rather than the default file “__tmp.smt2”, before calling the SMT solver. The name File must be a string or an atom that has the extension name “.smt2”. When this file name is specified, the SMT solver will save the solution into a file name that has the same main name as $File$ but the extension name “.sol”.
 
 *Rabbit hole (the biggest): The world of theorem provers associated research into the boundaries of NP and decidability is about as big a rabbit hole as possible and sweeps in all the big names of Turing, Curry, Howard, Gödel, Russell, Frege, and many more.*
@@ -1064,7 +1103,9 @@ This puzzle is perfect for Picat. Some things to notice:
     | sat*   | 1.88  | 7.32  |
     | mip    | 0.40  | 2.40  |
 
-- The reason SAT is so much sloser is because the domain of T is so large. To get these results the domain was reduced to 10_000_000 to get it to work. 
+- The reason SAT is so much sloser is because the domain of T is so large. To get these results the domain was reduced to 10_000_000 to get it to work.
+hakank4: Typo "sloser" -> "slower".
+
 - **Important: In general usage, CP solver tends to be faster than SAT for easy problems, but for harder problem SAT tends to be faster. But whether a problem is "easy" or "hard" often can only be determined by testing it.**
 - In section "2.4 Minesweeper - Using SAT" in the [Picat constraint programming book](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf), CP beats SAT for $N \le 430$ and above that SAT wins.
 
@@ -1380,6 +1421,8 @@ And here's the code. Some things to note:
 - I used `println` via `report` inside of `solve` to track what's going on because I was having a hard time to get this code to work.
 - As I understand it, Picat does not really support multi-objective optimization with two min/1. So I'm not sure how I got this to work!
 
+
+hakank4: Here's a preprint of our ICLP conference paper that discusses some hard AoC 2024 problems: https://www.arxiv.org/abs/2507.11731 
 
 ```
 import cp.
@@ -1697,11 +1740,18 @@ The code is below. Some things to note:
 - There are two `action` predicates, which are pattern matched on whose turn it is. `0` for the player and `1` for the boss. (And why is Bruce Springsteen always the enemy?)
 - The notation `State@[0,[MaxHP, HP, Mana, BHP, BDamage], Shield, Poison, Recharge, Mode]` binds the variable State to all of the list after the `@` sign. This way it can be referenced in whole in the `Action` variable rather than having to retype all of that.
 - The notation `_` for variables in the `final` predicate mean that the variable isn't being used. The term of art here is *anonymous variable*. Which is weird to think about. It's still variable, but no one cares.
+
+hakank4: Another way of thinking of these anonymous variables is that they are simply placeholders for something we don't care about.
+hakank4: Though I kind of like your version of stating it.
+
 - Like Blocks World, this code uses a construct similar to a  case statement formed through clauses separated by `;` meaning "or". (It's not exactly a case statement because backtracking/failure will automatically evaluate the other alternatives. Logic programming! See this [section](#control-flow-the--operator).)
 
 - `sign` is used to avoid having an `if`. For example, `NBHP = BHP - (3 * sign(Poison))` means that if `Poison` is 0, then `sign(Poison)` is 0, but if `Poison` is greater than 0, `sign` returns 1. It didn't run any faster, but I felt like a boss for writing it this way.
 - The list of possible spells is built up by addition, `++`, rather than starting with all and removing. At first I tried removing, but the logic was complex to use `delete` and hard to implement. Accumulating allowed spells was much more straightforward to code.
 - Also, the ability to reassign, `:=`, or what the functional people call *mutability*, can be very handy. *Unsafe* as the functional crowd calls it, yes, but oh so nice. However, like any good weapon, one must be careful to not cut off your own foot, so be careful when reassigning variable values. Standard Prolog, fyi, has only immutable variables.
+
+hakank4: I'm not so sure about "unsafe" here, since I have to explicitly change unification to reassignment.  I would instead have called reassingment "unpure" in the context of functional programming, but then I'm not a "pure" functional programmer. :-)
+
 - **The key to this problem is trying all of the possible spells that are available. That's where `member` comes in.** This line
 
     `member([Spell,SpellMana],Spells`
@@ -2284,7 +2334,8 @@ Attempt 5 eliminated any checks in the `action` predicate. It just finds a path 
 ```
 - **Similarly, for a list you will want to use `element(I,List,V )` and not `V #= List[I]`.**
 
-
+hakank4: Note that V #= List[I] does not work when I is a decision variable. If I is a plain integer you don't need element/3.
+hakank4: Similarly for matrix_element/4: If Path was a list of plain integers you could write it as a list comprehension.
 
 - And one more note, look at the giant condition in the `parse` function `foreach`. I had originally constructed that with some nested `if` statements, but the conditions take care of that all and the body of the loop is just one statement. *No difference in performance, but it's so cool!*
 
@@ -2495,6 +2546,7 @@ My primary programming languages are Python and Haskell. I often make syntax err
 ## Maybe You Already Know Prolog?
 
 This whole section is *predicated* on the idea that you are largely unfamiliar with the concepts of Prolog and other logic programming languages. But maybe you already k1now Prolog? If that's the case, did you see what I did with predicated? Ha! Hahahahah. Ahem. Yes. Anyway...
+hakank4: Typo "k1now" -> "know". Or is that some leet speak that I don't k1now? :-)
 
 If you do know Prolog you should know that Picat supports:
 
@@ -2505,7 +2557,8 @@ If you do know Prolog you should know that Picat supports:
     *Note: For me, I find `!` confusing and have managed to completely avoid it with Picat. Should you wish, here's some slides about cut from a class I took: https://courses.grainger.illinois.edu/cs421/sp2020/slides/11.2.1-prolog-cut.pdf and the SWI-Prolog manual's explanation: https://www.swi-prolog.org/pldoc/doc_for?object=!/0. God speed.*
 
 - `cl_facts` for adding facts to the database, but it doesn't have Prolog's `clause/2` for metaprogramming.
-  
+hakank4: or support for the assert/retract family. These are found via bp module, but that is messy and undocumented.
+
 - Definite Clause Grammar (DCG) rules for parsing strings with `-->`, but does not have the `phrase` predicate for processing them. 
 
     Should you want to use DCGs in Picat: 
@@ -2526,13 +2579,23 @@ If you do know Prolog you should know that Picat supports:
     ```
     I have never found a reason to use `is` instead of `=`.
 
+hakank4: To get the Prolog version of `X = 2 + 2`, one use `X = $2 + 2`.
+
 *Note: For a more in-depth comparison of Picat and Prolog, look [here](https://picat-lang.org/download/picat_compared_to_prolog_haskell_python.html).*
 
 *Rabbit Hole: Picat is a descendent of the [B-Prolog language](https://en.wikipedia.org/wiki/B-Prolog), and therefore is part of the whole [Prolog family](https://en.wikipedia.org/wiki/Comparison_of_Prolog_implementations) and also [logic programming family](https://en.wikipedia.org/wiki/Logic_programming#Variants_and_extensions).*
 
 *Giant Rabbit Hole: Logic programming dates back to 1972, but its roots go deep into the math of predicate/symbolic logic and it was central to the first wave of Artificial Intelligence (AI). The idea was to encode knowledge into systems of rules sometimes known as "expert systems". And this is also why the Picat constraint programming book's cover says "Springer Briefs in Intelligent Systems: Artificial Intelligence, Multiagent Systems and Cognitive Robotics".*
 
-*This is in contrast to the "AI" of today, which is statistically based. Someday someone may find a way to unite these two branches of thought: encoded knowledge and statistically inferred likelihood, but until then, Prolog and its ilk have been [pushed somewhat aside](https://eugeneasahara.com/2024/08/04/does-prolog-have-a-place-in-the-llm-era/) by the neural networks and transformers...and now we might consider all of concepts of epistemology and what it is to "know" and if knowledge graphs and [ontologies](https://www.ontotext.com/knowledgehub/fundamentals/what-is-a-knowledge-graph/) hold the key. But was Plato right that all knowledge is subjective? Perhaps dependent type systems should be considered as solutions for encoding high order [kinds](https://app.scinito.ai/article/W4406222352), if these levels of logic really are necessary in the real world, and...um...where was I?*
+*This is in contrast to the "AI" of today, which is statistically based.
+hakank4: Picky: You mean 'to the "AI" that most people think is AI today', right?
+hakank4: Constraint programming is still an AI approach, as is logic programming (and genetic programming, inductive logic programming, etc), but we are less and less people that think in this way.
+hakank4: And Neural Networks, Machine Learning (at least some of the thinks that people call Machine Learning) is AI as well.
+hakank4: In short: AI is more than LLMs.
+
+Someday someone may find a way to unite these two branches of thought: encoded knowledge and statistically inferred likelihood, but until then, Prolog and its ilk have been [pushed somewhat aside](https://eugeneasahara.com/2024/08/04/does-prolog-have-a-place-in-the-llm-era/) by the neural networks and transformers...and now we might consider all of concepts of epistemology and what it is to "know" and if knowledge graphs and [ontologies](https://www.ontotext.com/knowledgehub/fundamentals/what-is-a-knowledge-graph/) hold the key. But was Plato right that all knowledge is subjective? Perhaps dependent type systems should be considered as solutions for encoding high order [kinds](https://app.scinito.ai/article/W4406222352), if these levels of logic really are necessary in the real world, and...um...where was I?*
+
+hakank4: Also see https://en.wikipedia.org/wiki/Neuro-symbolic_AI
 
 If none of this makes any sense, then the rest of this section is for you.
 
@@ -2557,6 +2620,11 @@ b=4;A=5. % A is bound to 5. because b!=4 and ';' means 'or'.
 
 NoJavaVariableNamesHere=true. % OK, but this is not normal Picat style, but you do you however you want.
 ```
+
+hakank4: You have a point, of course. I checked some of my Picat and/or Prolog programs and found a couple of longer names such as
+hakank4: Words, NumColors, AcceptingStates, NumPieces, PositionBike.
+hakank4: Though in small predicates, I would think that short variable names are preferred.
+
 
 ### Multidimensional Lists and Arrays
 
@@ -2613,7 +2681,18 @@ Logic programming uses the concepts of binding and unification. Binding is simil
 When a variable is first parsed by Picat, it is in an uninstantiated state. Trying to use it will result in an error.
 
 ```
-A. % in the REPL: *** error(instantiation_error,call). 
+A. % in the REPL: *** error(instantiation_error,call).
+
+hakank4: Yes, that's correct but a little misleading. Here's a valid use of the use of an unitialized variable:
+hakank4: A = B
+hakank4: Though by itself it's quite meaningless. Later in the program one can add this
+hakank4: B = 3
+hakank4: Which binds/unifies A as well.
+
+hakank4: A better error to show might be this (B is unitialized):
+hakank4: Picat> A = B + 3  
+hakank4: ** Error  : Free variable in expression: '+'
+
 A. % as a standalone predicate in a program *** SYNTAX ERROR *** (22-22) wrong head.
 ```
 "Wrong head" here means that Picat is expecting either a predicate or a function that have a `=`, `=>`, or `?=>`, not a standalone variable reference. 
@@ -2645,6 +2724,8 @@ Key point: a successful unification results in an unbound variable being bound. 
 **VERY IMPORTANT:** The explicit and central use of unification is the main difference between Prolog and almost all other programming languages. 
 
 Picat makes it easier for people coming from non-logic programming backgrounds by including functions (see below), `foreach` loops and list comprehensions. 
+
+hakak4: And reassignments.
 
 However, Picat is still a member of the Prolog family and as such, understanding how unification works is required for anything but the simplest program.
 
@@ -2827,6 +2908,8 @@ Take a look at this code below. `member/2` assigns a single value from the list 
 
 The *fail* condition can be forced by the `fail/0` predicate or through another failure, such as failed unification.
 
+hakank4: Or a failed equivalence test.
+
 `go1` is using unification with `=/2` and `go2` is using reassignment with `:=/2`. 
 
 In `go1`, unification fails at `X = T*2` forcing backtracking at that line because `X` already is bound to `T*1`.
@@ -2874,6 +2957,16 @@ Outputs
 *** error(failed,main/0)
 ```
 The final error is caused by `fail` running out of backtrack options with `member`.
+
+hakank4: The reason you got the last error(faild,main/0) is because main/0 ends without any "true thingy".
+hakank4: If you change to main ?=> to set in non-deterministic context:
+hakank4:    main ?=>
+hakank4:      % ....
+hakank4:    ).
+haknak4: and add this below:
+hakank4:    main => true.
+hakank4: then there's no error.
+
 
 ## Global Maps
 
@@ -2934,10 +3027,24 @@ Picat programs consist of statements which can be combined into longer clauses i
 
 *Fun fact: Because a program is a database, you can alter the rules and facts on the fly with `cl_facts`. See this [section](#example-global-fact--global-state) and also [this](#globally-control-progressdebug-println) for perfectly legitimate abuses of `cl_facts`.*
 
+hakank4: Note that cl_facts/N clears previous contents of the "database".
 
 ### The `main` predicate and Picat file extension.
 
 The default entry point for a Picat program is a `main` predicate. (Similar to C, Haskell, etc.). If you call a Picat program from the command line, `main` will be run unless you override it.
+
+hakank4: The main "entry point" can be changed via the "-g goal" parameter to the picat program
+hakank4: E.g. the following will call the test3/0 predicate (and thus skipping the main predicate):
+hakank4: $ picat -g test3 program.pi
+hakank4: One can even do very simple stuff with this:
+hakank4:    $ picat -g "println(2**10-1)"
+hakank4:    1023
+hakank4: It's limited with a lot of gotchas. But here's a more advanced example:
+hakank4: Given the following program: https://hakank.org/picat/queens.pi
+hakank4: the following works:
+hakank4: $ picat -g '(time2(queens3(1000,X)),println(X),fail)' queens.pi
+hakank4: But getting this correct is probably slower than writing it in a program...
+
 
 Also, the mandatory file extension for Picat programs and modules is `.pi`.
 ```
@@ -2979,7 +3086,11 @@ zip([X|Xs],[Y|Ys]) = [{X,Y}|zip(Xs,Ys)].
 
 ### Predicates and Logic Programming "Weirdness": `append/3`
 
-In Prolog, everything is a predicate and there's no direct concept of a "returned value". Let's look at the classic example of a predicate: Prolog's `append/3` predicate, which Picat also has and it let's you join two lists.
+In Prolog, everything is a predicate and there's no direct concept of a "returned value". 
+
+hakank4: Well, there are functions which do have a return value.
+
+Let's look at the classic example of a predicate: Prolog's `append/3` predicate, which Picat also has and it let's you join two lists.
 
 It takes the form `append(L1,L2,L3)`. Note the standard use of terse variable names. 
 
@@ -3104,7 +3215,14 @@ longer(L1,L2) = [R,Len(R)] => if len(L1) >= len(L2) then R = L1 else R = L2 end.
 
 **Key point: The Picat manual identifies functions with the notation `= Val`, `= ResList` or similar. If you try to call a predicate like a function or visa-versa you will get an error an `undefined procedure` or a fail that you didn't expect. Use picat -log to get more descriptive error messages.**
 
-This seems like a simple error to avoid, but the distinction between a function that returns a value versus a predicate that unifies one or more of its arguments can be subtle. It's important to read the manual. 
+This seems like a simple error to avoid, but the distinction between a function that returns a value versus a predicate that unifies one or more of its arguments can be subtle. It's important to read the manual.
+
+hakank4: I agree that it can be hard to remember if a certain thing is a predicate or a function. But the definition is quite easy:
+hakank4: If it has a return value it is a function, otherwise it is a predicate.
+hakank4: From Picat Guide, page i: "A function is a special kind of a predicate that always succeeds with one answer."
+
+hakank4: For Prologers one can note that quite a few of the traditional Prolog predicates are functions in Picat.
+hakank4: E.g. Prolog's length(L,Len) is Len = length(L) (or len(L)) in Picat.
 
 For example to get a single solution or all solutions to a constraint programming problem the manual says:
 
@@ -3115,12 +3233,32 @@ Calling `solver(MyVariable)` will unify `MyVariable` with the solution. In other
 
 But `solve_all(MyVariable)` gives a `** Error  : function_used_as_predicate:import(cp,solve_all / 2)`. You need to write something like `Sols = solve_all(MyVariable)`.
 
-Note the reason for the difference is that before calling `solve`, `Vars` is a domain variable. Solving binds `Vars` to the solution, so it is a predicate. `solve` is also non-deterministic and can generate additional solutions via the use of `fail`. (See `append/4` below for an example of using `fail`.)
+Note the reason for the difference is that before calling `solve`, `Vars` is a domain variable.
 
-`solve_all` is deterministic and can generate one or more solutions and collects these into a list, which cannot be unified with `Vars`, a single solution, and therefore needs to be assigned to a new variable. 
+hakank4: Vars is a decision (domain) variable or a list of decision variables. 
+
+Solving binds `Vars` to the solution, so it is a predicate. `solve` is also non-deterministic and can generate additional solutions via the use of `fail`. (See `append/4` below for an example of using `fail`.)
+
+`solve_all` is deterministic and can generate one or more solutions and collects these into a list, which cannot be unified with `Vars`, a single solution, and therefore needs to be assigned to a new variable.
+
+hakank4: I think I finally kind of understand what are trying to say with this. Is the issue that =/2 is used both for unification as well as handle the return value of a function?
+hakank4: Also, I don't think the "deterministic" vs non-deterministic is the best way of describing the difference between functions and predicates. It's correct that a function is deterministic, but a predicate can be deterministic as well, for example atom(Term).
+hakank4: Here is a variant that behave the same way as Solutions = solve_all(Vars):
+hakank4: my_solve_all(Vars,Solutions)  =>
+hakank4:    Solutions = findall(Vars, solve(Vars)).
+hakank4: But it is a predicate form, and it is as deterministic as solve_all/2. 
+hakank4: findall/2 is a function (and thus deterministic given the same state of the world), and is actually using non-determinism to generate all the solutions. In Prolog, findall/3 is a predicate (since Prolog does not support functions.)
 
 For me, I think about this from a Haskell/strongly-typed language perspective. `MyVariable` above is a single variable. `Sols` is a list of type `[MyVariable]`. Whether this helps you also, or adds to the confusion, I cannot say. Just remember to read the manual and see if it uses a `=` in the definition.
 
+hakank4: Well, I'm still confused by this description...
+hakank4: To muddles the matter even more: This is legal in Prolog (it unifies A with the term append(...):
+hakank4:    A = append(X,Y,[1,2,3,4]).
+hakank4: In Picat it gives an error in Picat "Undefined procedure: append/3", since this it is a function context.
+hakank4: But the following is perfectly correct in Picat 
+hakank4:    A = $append(X,Y,1..4)
+hakank4: and can actually be useful sometimes:
+hakank4:   A = $append(X,Y,1..4), A.call
 
 ### `=>` vs `=` and conditions
 
@@ -3299,7 +3437,11 @@ foreach(X in 1..10, Y in 1..10, X + Y mod 4 <= 2)
 end.
 ```
 
-Or a lot of conditions and thereby remove having any `if` statements in your loop body. Here's an example from one of my [programs](#planner-and-constraint-example-traveling-salesperson) to get the valid neighbors of a given 2 dimensional array item. 
+Or a lot of conditions and thereby remove having any `if` statements in your loop body. 
+
+hakank4: What is the "Or" refering to?
+
+Here's an example from one of my [programs](#planner-and-constraint-example-traveling-salesperson) to get the valid neighbors of a given 2 dimensional array item. 
 
 Neighbors are those coordinates that do not have a `#` or `$` in them and are within the bounds of the array. Look at all those conditions and only one line in the loop body!
 
@@ -3354,6 +3496,7 @@ You can invoke any Picat predicate or function with predicate `call` or the func
 ```
 call(println,"hello") % println("hello")
 A=apply(head,"hello").   $ A = h
+
 ```
 This can be used to do what other programming languages call *eval*. It can also be used to dynamically choose which code to execute based on the values of variables. See [here](#example-dynamic-dispatch-with-apply-and-call).
 
@@ -3377,6 +3520,9 @@ main=>
 ```
 
 :TODO: list_to_and.pi not working
+
+hakank4: Would you say that it works now?
+
 
 ## Example: Global fact = Global state
 The below code recursively parses parenthesis but has different requirements for part 1 and part 2. To do this it uses a global fact: `part(n)` to change the behavior of `parse1` function. The fact is changed from `part(1).` to `part(2).` with the `cl_facts()` command that updates the global fact dictionary.
@@ -3413,6 +3559,9 @@ parse1(L) = R =>
      Part = 2, R = [N*sum(parse(slice(L,Ip+1,Ip+M)))]++parse(TT)).')'
 ```
 
+hakank4: You can also use a member(Part,1..2) in main/0, and add Part to the parameter list of the functions. This is the way I tend to control different logic for the two AoC parts.
+
+
 ## Example: Dynamic Dispatch with `apply` and `call`
 
 While Picat doesn't have lambda expressions, it does allow for code execution based on the value of a variable.
@@ -3421,7 +3570,11 @@ Here's an example that simulates a simple assembly language. It invokes the corr
 
 `call` and `apply` perform the same action, but `apply` is a function and returns a value.
 
+hakank4: A more correct way is that both _calls_ the parameters given. call/N requires a predicate as the first term, whereas apply/N requires a function as the first term (and then returns the results of that call).
+
 The interesting thing here is that the name of the function is identical to the string in the input. The *cpy* command is performed by the `cpy` function.
+
+hakank4: "here" refers to the AoC example, right? As stated "here" can be interpreted as the terms "call"/"apply".
 
 The code also makes use of a hash map to store the value of registers and passes state back and forth via unification. Note how `S` isn't explicitly returned. It's a mutable map and it is both an input and output just like any predicate in Prolog. This is just like `append/3`, as discussed [here](#predicates-and-logic-programming-weirdness-append3). 
 
@@ -3511,6 +3664,13 @@ jnz([X,Y],S,PC) = NPC =>
 
 ```
 
+hakank4: Another way for manipulation stuff is to use univ (=../2) which converts a term to/from a list. It's mentioned in Picat Guide (page 35) but there's no example. Here's a simple one. 
+hakank4:   Picat> L = [1,2,3,4], Goal =.. [sum,L], Res = Goal.apply        
+hakank4:   L = [1,2,3,4]
+hakank4:   Goal = sum([1,2,3,4])
+hakank4:   Res = 10
+
+
 ## Non-determinism: `?=>` and more `table`
 
 A key feature of logic programming languages is explicit and implicit backtracking from failure to try and achieve success. We talked a little about backtracking [here](#reassignment-vs-unificiation-and-backtracking).
@@ -3531,6 +3691,9 @@ reach(X,Y) ?=> edge(X,Y).
 reach(X,Y) => reach(X,Z), edge(Z,Y).
 
 ```
+
+hakank4: If the data given by edge/2 represents a circular graph, e.g. edge(1,2) and edge(2,1), then without table/0 it will go into an infinite loop (if that is not handled in some way). With table/0 this is handled neatly since it caches the nodes that's are visited before.
+
 
 ## `reduce` for functional folds
 
@@ -3724,6 +3887,9 @@ main =>
     end.
 ```
 
+hakank4: Don't forget to close the file after written to it: close(Writer).
+
+
 # Errors I Always Make and How I Compensate
 
 ## Type Errors, Numbers and Characters, `println` vs `writeln`
@@ -3798,6 +3964,8 @@ swap10(['1'|T]) = "0" ++ swap10(T).
 
 *Rabbit Hole: In Prolog-land all is not so simple with strings and quote marks. Here's what SWI-Prolog says about [strings](https://www.swi-prolog.org/pldoc/man?section=string). It's 8 pages long!*
 
+hakank4: Yes, since SWI-Prolog has a little different representation of strings than from "standard" (or "common") Prolog, it is even a more deeper Rabbit Hole than most other Prologs.
+
 *And here's the SWI-Prolog definition of an atom:*
 
 > *Atoms are identifiers. They are typically used in cases where identity comparison is the main operation and that are typically not composed nor taken apart. Examples are RDF resources (URIs that identify something), system identifiers (e.g., 'Boeing 747'), but also individual words in a natural language processing system.*
@@ -3837,6 +4005,10 @@ And thus, when I think I'm assigning, Picat is actually unifying and therefore f
 
 You could try to only ever use `:=` to do reassignment (because it's frowned upon to sue `:=` for initial assignment) and `==` to test equality. But without unification Picat is hobbled and there's no non-deterministic binding.
 
+hakank4: Typo "sue" -> "use".
+
+hakank4: As we have discussed earlier (I think), "LHS = RHS" and "LHS == RHS" are quite different even if they both can be used to check if LHS and RHS are the same. ==/2 should be used if the intention is to do the comparison of LHS and RHS (think "if"), and =/2 should be used when your intention is to bind/unify (and perhaps also to check if they have been unified to the same term).
+
 
 ## Forgetting a comma or a period (or having an extra one)
 
@@ -3859,15 +4031,23 @@ Invariably, I add a new line of code and forget the comma or I accidentally add 
 
 I compensate by adding only a few lines at a time and always saving and rerunning so that I don't have far to hunt for the most recent edit that broke syntax rules.
 
-## Don't use list indexing with decision/domain variables 
+## Trying to use list indexing with decision/domain variable 
 
 When solving constraint problems use `element(I,List,V )` and not `V #= List[I]`. Also `matrix_element` for 2D arrays/lists. I noted this in this [example code](#planner-and-constraint-example-traveling-salesperson).
+
+hakank4: See the comment above on this.
 
 # Debugging
 
 Picat has a debugger, and it works as advertised and if you want to use it I will point you at the [Manual](https://picat-lang.org/download/picat_guide_html/picat_guide.html#x1-450002.2). But for me the key has been `println`, `printf`, and, in extreme cases, `readchar`. 
 
 *Note: For strange error messages Hakan says he uses the debugger with 'r' (run) to let it run until the program stops.*
+
+hakank4: What I tend to do is to run the program debugger with the -d flag, and the press "r":
+hakank4:   $ picat program.pi -d 
+hakank4:   Call: (1) main ? r
+hakank4: Sometimes this works, but sometimes this doesn't give a clue about the error (or why the program is not doing what I want). It might give a *huge* output.
+
 
 ## Print and Printf are Your Friends
 
@@ -3882,6 +4062,9 @@ println([[a=A,b=B,l=L,t=T,s=S]]). % multiple variables we are wondering about
 println([$parser,slice(A,1,5),A.len]). % where are we? and a piece of A and A's length
 my_func(A,B,C) = Result, println([$my_func_call,A]) => ...
 ```
+
+hakank4: My own lazy version is to use "=" between the variables: println(A=B=C=D), or even println(a=A=b=B=c=C)
+
 
 `printf` is also good, but it requires formatting codes and the newline `\n` has to be added. There's a full list of formatting codes in the manual, but I just use `%w` because I'm lazy.
 ```
@@ -3931,6 +4114,17 @@ my_println(X) =>
     Map = get_global_map(), 
     if Map.get(show)==true then println(X) end.
 ```
+
+hakank4: Or - as mentioned - earlier, with an added boolean parameter Print (true/false) to the predicate/function.
+hakank4: Here is how I tend to do when wanting to add debug stuff, say to the predicate p/1. 
+hakank4:   p(X) :- p(X,false). % default debug printing is off
+hakank4:   p(X,Print) :-
+hakank4:     if Print then println(x=X) end,
+hakank4:     % ...
+hakank4.     .
+hakank4: calling p(X) does not print anything, but p(X,true) does.
+hakank4: However, this usage is perhaps not easiest when doing ad hoc debugging.
+
 
 ## `readchar` for single step execution
 
@@ -3983,6 +4177,8 @@ no
 
 Working on [this](#list_to_andlist--conj). Hopefully will understand soon!
 
+hakank4: Has this been clearer?
+
 ## Constraints I Don't Understand
 
 ### `neqs`
@@ -4019,6 +4215,12 @@ Aka Prolog cut operator, is something I think I understand and then when I think
 
 Picat has the capability to be reactive and respond to trigger events. This is cool, and the reason I've listed it here is that I haven't even tried to use event driven actors.
 
+hakank4: I haven't use this very much, but it helped me writing a tracer for constraint models.
+hakank4: See https://hakank.org/picat/trace_domains_ar.pi
+hakank4: and and example on this: https://hakank.org/picat/trace_domains_ar_test.pi
+hakank4: And this program was used for the discussion on constraint propagation in the Picat book section  "2.3.3 Constraint Propagation - Example":
+hakank4: https://hakank.org/picat/sudoku_4x4_trace_domains_ar.pi
+
 ## Things I Would Like Added to the Index
 
 - The notation (If -> Then; Else) is in a footnote and one example, but it's not in the index, which is my go to resource.
@@ -4052,6 +4254,13 @@ It would be great to be able to call graphics libraries from Picat.
 - Advent of Code solutions
     + Neng-Fa Zhou https://github.com/nfzhou/aoc/tree/main
     + https://github.com/DestyNova/advent_of_code_2024
+hakank4: https://github.com/cgrozea/AdventOfCode2024 
+hakank4: https://hakank.org/advent-of-code-2024/ (missing some part 2 solutions)
+hakank4: Our ICLP paper on AoC 2024: "Picat Through the Lens of Advent of Code" (https://arxiv.org/abs/2507.11731)
+
+hakank4: Another resource is Claudio Cesar de Sá's Github Picat directory: https://github.com/claudiosa/CCS/tree/master/picat
+hakank4: (comments tend to be in Portoguese).
+
 - My Advent of Code
     + 2016 https://github.com/dsagman/advent-of-code/tree/main/2016
     + Planner https://github.com/dsagman/advent-of-code/blob/main/2015/day22/day22.pi
