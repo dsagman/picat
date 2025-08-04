@@ -2,8 +2,6 @@
 % Written by ChatGPT in Prolog
 % Some back and forth with ChatGPT to get it working in Picat
 % Core algorithm is correct
-
-
 module md5.
 import util.
 
@@ -14,9 +12,8 @@ md5(String) = HexDigest =>
     FinalState = md5_compress_blocks(Blocks, State0),
     HexDigest = state_to_hex(FinalState).to_lowercase.
 
-
 % Bitwise and modular helpers
-% bit_not(X, R)    => R = ~(X) /\ 0xFFFFFFFF. % seems unneededmd5.
+% bit_not(X, R)    => R = ~(X) /\ 0xFFFFFFFF. % seems unneeded.
 private
 mod32(X) = X mod 4294967296.
 
@@ -32,7 +29,6 @@ f(X,Y,Z) = R => A = X /\ Y , B = ~X /\ Z, R = A \/ B.
 g(X,Y,Z) = R => A = X /\ Z , B = ~Z /\ Y, R = A \/ B.
 h(X,Y,Z) = R => A = X ^ Y  , R = A ^ Z.
 i(X,Y,Z) = R => A = ~Z \/ X, R = A ^ Y.
-
 
 % Shift amounts (S[i]) and index schedule (K[i])
 private
@@ -101,7 +97,7 @@ word64_le(N) = [B0,B1,B2,B3,B4,B5,B6,B7] =>
     B7 = (N >> 56) /\ 0xFF.
 
 % Convert 64-byte block to 16 32-bit words
-% private
+% private % has to be public
 block_to_words([]) = [].
 block_to_words([B0,B1,B2,B3|Rest]) = [W|Ws] =>
     % Convert 4 bytes to a little-endian 32-bit word

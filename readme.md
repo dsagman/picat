@@ -37,6 +37,7 @@
   - [Planner Example: Wizards!](#planner-example-wizards)
   - [Planner Example: Moving Stuff](#planner-example-moving-stuff)
   - [Planner Example: Twisty Passages All The Same](#planner-example-twisty-passages-all-the-same)
+  - [Planner Example: Shortest and Longest Path](#planner-example-shortest-and-longest-path)
   - [Planner and Constraint Example: Traveling Salesperson](#planner-and-constraint-example-traveling-salesperson)
 - [Picat Isn't Python (or Exactly Prolog)](#picat-isnt-python-or-exactly-prolog)
   - [Maybe You Already Know Prolog?](#maybe-you-already-know-prolog)
@@ -95,7 +96,6 @@
 - [Things I Still Don't Fully Understand or Wish Had More Example](#things-i-still-dont-fully-understand-or-wish-had-more-example)
   - [Functions and Predicates I Don't Understand](#functions-and-predicates-i-dont-understand)
     - [`acyclic_term`](#acyclic_term)
-    - [`list_to_and(List) = Conj`](#list_to_andlist--conj)
   - [Constraints I Don't Understand](#constraints-i-dont-understand)
     - [`neqs`](#neqs)
     - [`regular`,`circuit` and `table_in` constraints](#regularcircuit-and-table_in-constraints)
@@ -111,6 +111,7 @@
   - [Modules](#modules)
   - [Editor Plugins](#editor-plugins)
   - [Optimization/Constraint Programming Resources](#optimizationconstraint-programming-resources)
+- [Appendix: MD5 in Pure Picat](#appendix-md5-in-pure-picat)
 - [Acknowledgements](#acknowledgements)
 
 
@@ -2215,8 +2216,147 @@ print_maze(MX,MY,I) =>
 
 stringify([]) = "".
 stringify([H|T]) = to_string(H)++stringify(T).
+```
+
+## Planner Example: Shortest and Longest Path
+
+https://adventofcode.com/2016/day/17
+
+
+> --- Day 17: Two Steps Forward ---
+> 
+> You're trying to access a secure vault protected by a > 4x4 grid of small rooms connected by doors. You start in the top-left room (marked S), and you can access the vault (marked V) once you reach the bottom-right room:
+> 
+        #########
+        #S| | | #
+        #-#-#-#-#
+        # | | | #
+        #-#-#-#-#
+        # | | | #
+        #-#-#-#-#
+        # | | |  
+        ####### V
+> 
+> Fixed walls are marked with #, and doors are marked with - or |.
+> 
+> The doors in your current room are either open or closed (and locked) based on the hexadecimal MD5 hash of a passcode (your puzzle input) followed by a sequence of uppercase characters representing the path you have taken so far (U for up, D for down, L for left, and R for right).
+> 
+> Only the first four characters of the hash are used; they represent, respectively, the doors up, down, left and right from your current position. Any b, c, d, e, or f means that the corresponding door is open; any other character (any number or a) means that the corresponding door is closed and locked.
+> 
+> To access the vault, all you need to do is reach the bottom-right room; reaching this room opens the vault and all doors in the maze.
+> 
+> For example, suppose the passcode is hijkl. Initially, > you have taken no steps, and so your path is empty: you simply find the MD5 hash of hijkl alone. The first four characters of this hash are ced9, which indicate that up is open (c), down is open (e), left is open (d), and right is closed and locked (9). Because you start in the top-left corner, there are no "up" or "left" doors to be open, so your only choice is down.
+> 
+> Next, having gone only one step (down, or D), you find the hash of hijklD. This produces f2bc, which indicates that you can go back up, left (but that's a wall), or right. Going right means hashing hijklDR to get 5745 - all doors closed and locked. However, going up instead is worthwhile: even though it returns you to the room you started in, your path would then be DU, opening a different set of doors.
+> 
+> After going DU (and then hashing hijklDU to get 528e), only the right door is open; after going DUR, all doors lock. (Fortunately, your actual passcode is not hijkl).
+> 
+> Passcodes actually used by Easter Bunny Vault Security do allow access to the vault if you know the right path. For example:
+> 
+>If your passcode were ihgpwlah, the shortest path would be DDRRRD.
+>
+>With kglvqrro, the shortest path would be DDUDRLRRUDRD.
+>
+>With ulqzkmiv, the shortest would be DRURDRUDDLLDLUURRDULRLDUUDDDRR.
+> 
+> Given your vault's passcode, what is the shortest path > (the actual path, not just the length) to reach the vault?
+> 
+> Your puzzle input is awrkjxxr.
+> 
+> --- Part Two ---
+> 
+> You're curious how robust this security solution really is, and so you decide to find longer and longer paths which still provide access to the vault. You remember that paths always end the first time they reach the bottom-right room (that is, they can never pass through it, only end in it). For example:
+> 
+>If your passcode were ihgpwlah, the longest path would take 370 steps.
+>
+>With kglvqrro, the longest path would be 492 steps long.
+>
+>With ulqzkmiv, the longest path would be 830 steps long.
+> 
+> What is the length of the longest path that reaches the vault?
+
+Notes on the solution code below:
+
+- This is much like the other `planner` examples and the only challenge is that determining if a path from one location to another exists is based on the MD5 hash of a string based on the current path.
+- `planner` is great in part 1 for shortest path and makes for very straightforward code. But it doesn't lend itself to solving for the worst case of the longest path.
+- To solve part 2, we need to explore all paths until every choice and its children are explored. We stop at any solution where we get to the vault at location (4,4).
+- A recursive, tabled, `path` predicate modeled on the shortest-path from the Picat manual solves part 2.
+- Picat doesn't have an inbuilt MD5 function or available module. My choices were calling the Linux `md5show` command line utility or creating a binding to an MD5 library and recompiling Picat. I chose the command line. 
+- I thought I would be able to set and read an environment variable, but this did not work. The context was lost after making the shell command and could not be read. So I wrote the MD5 to a file and read it. This was, of course, quite slow. Here's the code:
+  
+```
+table
+system_md5(String) = MD5 =>
+    Ret = command("echo -n "++String++ " | md5sum | awk '{print $1}' > temp_md5"),
+    MD5 = read_file_chars("temp_md5").
+```
+
+- For part 1, the limited number of calls to get MD5 didn't impact performance. Part 1 took less than 0.01 seconds. But part 2 took 300 seconds.
+- Thus I explored option 3, have ChatGPT write an MD5 in pure Picat. ChatGPT was reluctant and initial refused to do the hard work of writing the full algorithm, and then preferred to give me ISO Prolog. ChatGPT and I then pair programmed our way to a Picat version.
+- Part 2 time was reduced to 12 seconds.
+- I put the MD5 in this [appendix](#appendix-md5-in-pure-picat). There are a non-zero number of Advent of Code problems that require MD5, so it's available as a module for your use, should you need it.
 
 ```
+import util.
+import planner.
+import md5. % homemade MD5 with ChatGPT
+
+main =>
+    % Code = "hijkl",    % test case, fails as expected
+    % Code = "ihgpwlah", % test case
+    % Code = "kglvqrro", % test case
+    % Code = "ulqzkmiv", % test case 
+    Code ="awrkjxxr",  % RDURRDDLRD
+
+    % part 1: .005 sec
+    time(best_plan([Code,1,1],Plan,Cost)), 
+    printf("Answer Part 1: %w\n",Plan.join('')),
+
+    % part 2: with chatGPT MD5 in Picat, 12 seconds
+    path(Code,[1,1],[4,4],CostSP),
+    printf("Answer Part 2: %w\n",CostSP-1).
+
+% part 1 using planner
+table
+final(S@[Code,Row,Col]) => 
+    Row == 4, Col == 4, true.
+
+table
+action(S@[Code,Row,Col],NextS,Action,Cost) =>
+    Deltas = get_deltas(Code),
+    member([DCode,DRow,DCol],Deltas),
+    NRow = Row + DRow, between(1, 4, NRow),
+    NCol = Col + DCol, between(1, 4, NCol),
+    NextS = [Code++DCode,NRow,NCol],
+    Action = DCode,
+    Cost = 1.
+
+table
+get_deltas(Code) = Deltas =>
+    MD5 = md5(Code).take(4),
+    Opts = [X : I in 1..4, X = cond(membchk(MD5[I],"bcdef"),1,0)],
+    Deltas = [],
+    if Opts[1] == 1 then Deltas := Deltas ++ [["U",-1, 0]] end,
+    if Opts[2] == 1 then Deltas := Deltas ++ [["D", 1, 0]] end,
+    if Opts[3] == 1 then Deltas := Deltas ++ [["L", 0,-1]] end,
+    if Opts[4] == 1 then Deltas := Deltas ++ [["R", 0, 1]] end.
+
+% Part 2 using recursive search and table
+table(+,+,+,max)
+path(Code,S@[Row,Col],Goal@[GRow,GCol],Cost), 
+    S = Goal   => 
+    Cost = 1, 
+    printf("%w\r",Code.len-8). % get some output to see progress
+
+path(Code,S@[Row,Col],Goal@[GRow,GCol],Cost) =>
+    Deltas = get_deltas(Code),
+    member([DCode,DRow,DCol],Deltas),
+    NRow = Row + DRow, between(1, 4, NRow),
+    NCol = Col + DCol, between(1, 4, NCol),
+    path(Code++DCode,[NRow,NCol],Goal,Cost1),
+    Cost = 1+Cost1.
+```
+
 
 ## Planner and Constraint Example: Traveling Salesperson
 
@@ -3920,7 +4060,14 @@ When solving constraint problems, if the list contains decision variables use `e
 
 Picat has a debugger, and it works as advertised and if you want to use it I will point you at the [Manual](https://picat-lang.org/download/picat_guide_html/picat_guide.html#x1-450002.2). But for me the key has been `println`, `printf`, and, in extreme cases, `readchar`. 
 
-*Note: For strange error messages Hakan says he uses the debugger with 'r' (run) to let it run until the program stops.*
+*Note: For strange error messages Hakan says:
+
+> What I tend to do is to run the program debugger with the -d flag, and the press "r":
+> 
+    $ picat program.pi -d 
+    Call: (1) main ? r
+>
+>Sometimes this works, but sometimes this doesn't give a clue about the error (or why the program is not doing what I want). It might give a *huge* output.
 
 ## Print and Printf are Your Friends
 
@@ -3932,11 +4079,13 @@ Picat lets you put a `println` anywhere. You can even put a `println` in a condi
 println(A). % nice and simple
 A=5, println(a=A). % outputs "a=5"
 println([[a=A,b=B,l=L,t=T,s=S]]). % multiple variables we are wondering about
+println(a=A=b=B=c=C). % doesn't require []
 println([$parser,slice(A,1,5),A.len]). % where are we? and a piece of A and A's length
 my_func(A,B,C) = Result, println([$my_func_call,A]) => ...
 ```
 
 `printf` is also good, but it requires formatting codes and the newline `\n` has to be added. There's a full list of formatting codes in the manual, but I just use `%w` because I'm lazy.
+
 ```
 printf("Answer is: %w, %w, %w\n",A,B,C).
 ```
@@ -3982,6 +4131,14 @@ my_println(X) =>
     Map = get_global_map(), 
     if Map.get(show)==true then println(X) end.
 ```
+Hakan's version of this is below. "Calling p(X) does not print anything, but p(X,true) does."
+
+```
+p(X) :- p(X,false). % default debug printing is off
+p(X,Print) :- if Print then println(x=X) end,
+```
+> 
+
 
 ## `readchar` for single step execution
 
@@ -4030,10 +4187,6 @@ Hakan notes: "Beside from porting some Prolog programs that use this, I've never
 no
 ```
 
-### `list_to_and(List) = Conj` 
-
-Working on [this](#list_to_andlist--conj). Hopefully will understand soon!
-
 ## Constraints I Don't Understand
 
 ### `neqs`
@@ -4069,6 +4222,13 @@ Aka Prolog cut operator, is something I think I understand and then when I think
 ### Event Driven Actors
 
 Picat has the capability to be reactive and respond to trigger events. This is cool, and the reason I've listed it here is that I haven't even tried to use event driven actors.
+
+Hakan has the following note about Event Driven Actors:
+
+> I haven't use this very much, but it helped me writing a tracer for constraint models.
+> See this [code](https://hakank.org/picat/trace_domains_ar.pi) and [test example](https://hakank.org/picat/trace_domains_ar_test.pi).
+> 
+> Also this [program](https://hakank.org/picat/sudoku_4x4_trace_domains_ar.pi) was used for the discussion on constraint propagation in the Picat book section "2.3.3 Constraint Propagation - Example".
 
 ## Things I Would Like Added to the Index
 
@@ -4141,9 +4301,182 @@ Picat has the capability to be reactive and respond to trigger events. This is c
 - Global Constraint Catalog https://sofdem.github.io/gccat/gccat/index.html
 - SAT Solvers https://github.com/urbanophile/awesome-sat-solvers
 
+# Appendix: MD5 in Pure Picat
+
+```
+% -------------------- MD5 in native Picat--------------------
+% Written by ChatGPT in Prolog
+% Some back and forth with ChatGPT to get it working in Picat
+module md5.
+import util.
+
+md5(String) = HexDigest =>
+    Padded = md5_pad(String.to_codes),
+    Blocks = map(block_to_words, Padded.chunks_of(64)),
+    State0 = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476],
+    FinalState = md5_compress_blocks(Blocks, State0),
+    HexDigest = state_to_hex(FinalState).to_lowercase.
+
+% Bitwise and modular helpers
+% bit_not(X, R)    => R = ~(X) /\ 0xFFFFFFFF. % seems unneeded.
+private
+mod32(X) = X mod 4294967296.
+
+private
+left_rotate(X, N, R) =>
+    L1 = (X << N) /\ 0xFFFFFFFF,
+    L2 = X >> (32 - N),
+    R = (L1 \/ L2) /\ 0xFFFFFFFF.
+
+% MD5 core functions
+private
+f(X,Y,Z) = R => A = X /\ Y , B = ~X /\ Z, R = A \/ B.
+g(X,Y,Z) = R => A = X /\ Z , B = ~Z /\ Y, R = A \/ B.
+h(X,Y,Z) = R => A = X ^ Y  , R = A ^ Z.
+i(X,Y,Z) = R => A = ~Z \/ X, R = A ^ Y.
+
+% Shift amounts (S[i]) and index schedule (K[i])
+private
+md5_shifts([
+    7,12,17,22, 7,12,17,22, 7,12,17,22, 7,12,17,22,
+    5, 9,14,20, 5, 9,14,20, 5, 9,14,20, 5, 9,14,20,
+    4,11,16,23, 4,11,16,23, 4,11,16,23, 4,11,16,23,
+    6,10,15,21, 6,10,15,21, 6,10,15,21, 6,10,15,21
+]).
+
+private
+md5_indexes([
+     0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
+     1, 6,11, 0, 5,10,15, 4, 9,14, 3, 8,13, 2, 7,12,
+     5, 8,11,14, 1, 4, 7,10,13, 0, 3, 6, 9,12,15, 2,
+     0, 7,14, 5,12, 3,10, 1, 8,15, 6,13, 4,11, 2, 9
+]).
+
+% Precomputed T[i] = floor(abs(sin(i + 1)) * 2^32)
+private
+md5_constants([
+  0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
+  0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
+  0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
+  0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
+  0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa,
+  0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
+  0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed,
+  0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a,
+  0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c,
+  0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70,
+  0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05,
+  0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665,
+  0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039,
+  0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
+  0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
+  0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391
+]).
+
+% Pad message
+private
+md5_pad(Bytes) = Padded =>
+    % Pad with 0x00 until length mod 64 = 56 
+    pad_zeroes(Bytes ++ [0x80], 56, PaddedPre),
+    % Append 64-bit length (little endian)
+    BitLenBytes = word64_le(Bytes.len * 8),
+    Padded = PaddedPre ++ BitLenBytes.
+
+% Pad with zeroes until modulo condition met
+private
+pad_zeroes(List, TargetMod, Padded) =>
+    R = List.len mod 64,
+    PadLen = (TargetMod - R + 64) mod 64,
+    Padded = List ++ new_list(PadLen,0).
+
+% Encode a 64-bit value as 8 bytes little endian
+private
+word64_le(N) = [B0,B1,B2,B3,B4,B5,B6,B7] =>
+    B0 = (N >>  0) /\ 0xFF,
+    B1 = (N >>  8) /\ 0xFF,
+    B2 = (N >> 16) /\ 0xFF,
+    B3 = (N >> 24) /\ 0xFF,
+    B4 = (N >> 32) /\ 0xFF,
+    B5 = (N >> 40) /\ 0xFF,
+    B6 = (N >> 48) /\ 0xFF,
+    B7 = (N >> 56) /\ 0xFF.
+
+% Convert 64-byte block to 16 32-bit words
+% private % has to be public
+block_to_words([]) = [].
+block_to_words([B0,B1,B2,B3|Rest]) = [W|Ws] =>
+    % Convert 4 bytes to a little-endian 32-bit word
+    W = B0 + (B1 << 8) + (B2 << 16) + (B3 << 24),
+    Ws = block_to_words(Rest).
+
+% One block transforms the current A,B,C,D
+private
+md5_process_block([A0,B0,C0,D0], BlockWords) = [Aout,Bout,Cout,Dout] =>
+    md5_constants(Ts),
+    md5_shifts(Shifts),
+    md5_indexes(Ks),
+    [A1,B1,C1,D1]= loop_steps(0, A0, B0, C0, D0, BlockWords, Ts, Shifts, Ks),
+    Aout = mod32(A0 + A1),
+    Bout = mod32(B0 + B1),
+    Cout = mod32(C0 + C1),
+    Dout = mod32(D0 + D1).
+
+% Recursive 64-step loop
+private
+loop_steps(64, A,B,C,D, _,_,_,_) = [A,B,C,D].
+loop_steps(I,  A,B,C,D, BlockWords, [Ti|Tt], [Si|St], [Ki|Kt]) = State =>
+    Mi = BlockWords[Ki+1],
+    F = step_function(I,B,C,D),
+    Temp = mod32(A + F + Ti + Mi),
+    left_rotate(Temp, Si, Rot),
+    NewA = D, NewD = C,
+    NewC = B, NewB = mod32(B + Rot),
+    I2 = I + 1,
+    State = loop_steps(I2, NewA,NewB,NewC,NewD, BlockWords, Tt, St, Kt).
+
+% Step function chooser by round
+private
+step_function(I,B,C,D) = R=>
+    if     I < 16 then R = f(B,C,D)
+    elseif I < 32 then R = g(B,C,D)
+    elseif I < 48 then R = h(B,C,D)
+    else               R = i(B,C,D)
+    end.
+
+% Process all blocks, folding the state
+private
+md5_compress_blocks([], State) = State.
+md5_compress_blocks([Block|Rest], StateIn) = StateOut =>
+    StateNext = md5_process_block(StateIn, Block),
+    StateOut = md5_compress_blocks(Rest, StateNext).
+
+% Convert 32-bit word to 4 little-endian bytes
+private
+word_to_bytes_le(Word) = [B0,B1,B2,B3] =>
+    B0 = (Word >>  0) /\ 0xFF,
+    B1 = (Word >>  8) /\ 0xFF,
+    B2 = (Word >> 16) /\ 0xFF,
+    B3 = (Word >> 24) /\ 0xFF.
+
+% Use to_hex_string with zero-pad, no byte_to_hex needed
+private
+hex2(B) = S =>
+    T = B.to_hex_string,
+    if T.len == 1 then S = "0" ++ T else S = T end.
+
+private
+state_to_hex([A,B,C,D]) = HexStr =>
+    Ab = word_to_bytes_le(A), Bb = word_to_bytes_le(B),
+    Cb = word_to_bytes_le(C), Db = word_to_bytes_le(D),
+    Bytes = Ab ++ Bb ++ Cb ++ Db,
+    Parts = [hex2(X) : X in Bytes],
+    HexStr = Parts.join('').
+
+```
+
 # Acknowledgements
 
-Thank you to: Håkan Kjellerstrand for providing multiple rounds of edits to this document and getting me to be less incorrect. Professor Mattox Beckman of University Illinois Champaign-Urbana for his Programming Language class and the independent study that lead to this document. Professor Linda Lesniak for her Graph Theory class at Drew University many years ago and her encouragement to complete my MCS degree. Professor Barry Burd for introducing me to Prolog also those many years ago. And to my wife and son who supported and put up with my many hours working on the degree  that this project brings to close.
+Thank you to: *Håkan Kjellerstrand* for providing multiple rounds of edits to this document and getting me to be less incorrect. *Professor Mattox Beckman* of University Illinois Champaign-Urbana for his Programming Language class and the independent study that lead to this document. Professor *Linda Lesniak* for her Graph Theory class at Drew University many years ago and her encouragement to complete my MCS degree. Professor *Barry Burd* for introducing me to Prolog also those many years ago. And to my *wife and son* who supported and put up with my many hours working on the degree  that this project brings to close.
 
 
 

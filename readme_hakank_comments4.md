@@ -4079,10 +4079,11 @@ Picat has a debugger, and it works as advertised and if you want to use it I wil
 
 *Note: For strange error messages Hakan says he uses the debugger with 'r' (run) to let it run until the program stops.*
 
-hakank4: What I tend to do is to run the program debugger with the -d flag, and the press "r":
-hakank4:   $ picat program.pi -d 
-hakank4:   Call: (1) main ? r
-hakank4: Sometimes this works, but sometimes this doesn't give a clue about the error (or why the program is not doing what I want). It might give a *huge* output.
+hakank4x: What I tend to do is to run the program debugger with the -d flag, and the press "r":
+hakank4x:   $ picat program.pi -d 
+hakank4x:   Call: (1) main ? r
+hakank4x: Sometimes this works, but sometimes this doesn't give a clue about the error (or why the program is not doing what I want). It might give a *huge* output.
+DS: Added.
 
 
 ## Print and Printf are Your Friends
@@ -4099,8 +4100,8 @@ println([$parser,slice(A,1,5),A.len]). % where are we? and a piece of A and A's 
 my_func(A,B,C) = Result, println([$my_func_call,A]) => ...
 ```
 
-hakank4: My own lazy version is to use "=" between the variables: println(A=B=C=D), or even println(a=A=b=B=c=C)
-
+hakank4x: My own lazy version is to use "=" between the variables: println(A=B=C=D), or even println(a=A=b=B=c=C)
+DS: added
 
 `printf` is also good, but it requires formatting codes and the newline `\n` has to be added. There's a full list of formatting codes in the manual, but I just use `%w` because I'm lazy.
 ```
@@ -4151,15 +4152,16 @@ my_println(X) =>
     if Map.get(show)==true then println(X) end.
 ```
 
-hakank4: Or - as mentioned - earlier, with an added boolean parameter Print (true/false) to the predicate/function.
-hakank4: Here is how I tend to do when wanting to add debug stuff, say to the predicate p/1. 
-hakank4:   p(X) :- p(X,false). % default debug printing is off
-hakank4:   p(X,Print) :-
-hakank4:     if Print then println(x=X) end,
-hakank4:     % ...
-hakank4.     .
-hakank4: calling p(X) does not print anything, but p(X,true) does.
-hakank4: However, this usage is perhaps not easiest when doing ad hoc debugging.
+hakank4x: Or - as mentioned - earlier, with an added boolean parameter Print (true/false) to the predicate/function.
+hakank4x: Here is how I tend to do when wanting to add debug stuff, say to the predicate p/1. 
+hakank4x:   p(X) :- p(X,false). % default debug printing is off
+hakank4x:   p(X,Print) :-
+hakank4x:     if Print then println(x=X) end,
+hakank4x:     % ...
+hakank4x:     .
+hakank4x: calling p(X) does not print anything, but p(X,true) does.
+hakank4x: However, this usage is perhaps not easiest when doing ad hoc debugging.
+DS: Added.
 
 
 ## `readchar` for single step execution
@@ -4213,7 +4215,8 @@ no
 
 Working on [this](#list_to_andlist--conj). Hopefully will understand soon!
 
-hakank4: Has this been clearer?
+hakank4x: Has this been clearer?
+DS: Updated the section and removed this.
 
 ## Constraints I Don't Understand
 
@@ -4251,11 +4254,12 @@ Aka Prolog cut operator, is something I think I understand and then when I think
 
 Picat has the capability to be reactive and respond to trigger events. This is cool, and the reason I've listed it here is that I haven't even tried to use event driven actors.
 
-hakank4: I haven't use this very much, but it helped me writing a tracer for constraint models.
-hakank4: See https://hakank.org/picat/trace_domains_ar.pi
-hakank4: and and example on this: https://hakank.org/picat/trace_domains_ar_test.pi
-hakank4: And this program was used for the discussion on constraint propagation in the Picat book section  "2.3.3 Constraint Propagation - Example":
-hakank4: https://hakank.org/picat/sudoku_4x4_trace_domains_ar.pi
+hakank4x: I haven't use this very much, but it helped me writing a tracer for constraint models.
+hakank4x: See https://hakank.org/picat/trace_domains_ar.pi
+hakank4x: and and example on this: https://hakank.org/picat/trace_domains_ar_test.pi
+hakank4x: And this program was used for the discussion on constraint propagation in the Picat book section  "2.3.3 Constraint Propagation - Example":
+hakank4x: https://hakank.org/picat/sudoku_4x4_trace_domains_ar.pi
+DS: Added.
 
 ## Things I Would Like Added to the Index
 

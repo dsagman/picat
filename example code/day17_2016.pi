@@ -51,7 +51,7 @@ What is the length of the longest path that reaches the vault?
 
 */
 
-import sys.
+% import sys.
 import util.
 import planner.
 import md5. % homemade MD5 with ChatGPT
@@ -65,7 +65,7 @@ main =>
 
     % part 1: .005 sec
     time(best_plan([Code,1,1],Plan,Cost)), 
-    printf("Answer Part 1: %w\n",stringify(Plan)),
+    printf("Answer Part 1: %w\n",Plan.join('')),
 
     % part 2: 5 minutes
     % using system to get MD5 very slow
@@ -74,30 +74,7 @@ main =>
     path(Code,[1,1],[4,4],CostSP),
     printf("Answer Part 2: %w\n",CostSP-1).
 
-table(+,+,+,max)
-path(Code,S@[Row,Col],Goal@[GRow,GCol],Cost), 
-    S = Goal   => 
-    Cost = 1, 
-    printf("%w\r",Code.len-8). % get some output to see progress
-
-path(Code,S@[Row,Col],Goal@[GRow,GCol],Cost) =>
-    Deltas = get_deltas(Code),
-    member([DCode,DRow,DCol],Deltas),
-    NRow = Row + DRow, between(1, 4, NRow),
-    NCol = Col + DCol, between(1, 4, NCol),
-    path(Code++DCode,[NRow,NCol],Goal,Cost1),
-    Cost = 1+Cost1.
-
-table
-get_deltas(Code) = Deltas =>
-    MD5 = md5(Code).take(4),
-    Opts = [X : I in 1..4, X = cond(membchk(MD5[I],"bcdef"),1,0)],
-    Deltas = [],
-    if Opts[1] == 1 then Deltas := Deltas ++ [["U",-1, 0]] end,
-    if Opts[2] == 1 then Deltas := Deltas ++ [["D", 1, 0]] end,
-    if Opts[3] == 1 then Deltas := Deltas ++ [["L", 0,-1]] end,
-    if Opts[4] == 1 then Deltas := Deltas ++ [["R", 0, 1]] end.
-
+% part 1 using planner
 table
 final(S@[Code,Row,Col]) => 
     Row == 4, Col == 4, true.
@@ -112,6 +89,31 @@ action(S@[Code,Row,Col],NextS,Action,Cost) =>
     Action = DCode,
     Cost = 1.
 
+table
+get_deltas(Code) = Deltas =>
+    MD5 = md5(Code).take(4),
+    Opts = [X : I in 1..4, X = cond(membchk(MD5[I],"bcdef"),1,0)],
+    Deltas = [],
+    if Opts[1] == 1 then Deltas := Deltas ++ [["U",-1, 0]] end,
+    if Opts[2] == 1 then Deltas := Deltas ++ [["D", 1, 0]] end,
+    if Opts[3] == 1 then Deltas := Deltas ++ [["L", 0,-1]] end,
+    if Opts[4] == 1 then Deltas := Deltas ++ [["R", 0, 1]] end.
+
+% Part 2 using recursive search and table
+table(+,+,+,max)
+path(Code,S@[Row,Col],Goal@[GRow,GCol],Cost), 
+    S = Goal   => 
+    Cost = 1, 
+    printf("%w\r",Code.len-8). % get some output to see progress
+
+path(Code,S@[Row,Col],Goal@[GRow,GCol],Cost) =>
+    Deltas = get_deltas(Code),
+    member([DCode,DRow,DCol],Deltas),
+    NRow = Row + DRow, between(1, 4, NRow),
+    NCol = Col + DCol, between(1, 4, NCol),
+    path(Code++DCode,[NRow,NCol],Goal,Cost1),
+    Cost = 1+Cost1.
+
 % this is one way to get MD5, call the linux utility md5sum
 % and write the output to a file and then read it
 % soooooooooooo slow though
@@ -119,8 +121,3 @@ action(S@[Code,Row,Col],NextS,Action,Cost) =>
 % system_md5(String) = MD5 =>
     % Ret = command("echo -n "++String++ " | md5sum | awk '{print $1}' > temp_md5"),
     % MD5 = read_file_chars("temp_md5").
-
-
-stringify([]) = "".
-stringify([H|T]) = to_string(H)++stringify(T).
-
