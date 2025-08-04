@@ -139,9 +139,9 @@ Consider this a rough draft representing my personal learning curve. This docume
 
 *Notes:*
 
- *I am much indebted to Advent of Code for providing a wealth of puzzles that have helped me learn Picat (and other languages). https://adventofcode.com*
+ *I am much indebted to [Advent of Code](https://adventofcode.com) for providing a wealth of puzzles that have helped me learn Picat (and other languages).*
 
- *Title inspired by What I Wish I Knew When I was Learning Haskell, which helped me learn that language. https://github.com/sdiehl/wiwinwlh*
+ *Title inspired by [What I Wish I Knew When I was Learning Haskell](https://github.com/sdiehl/wiwinwlh), which helped me learn that language.*
 
  *Many extra thanks to Håkan Kjellerstrand for editing a draft of this document, and always being ready to answer any question on Picat.*
 
