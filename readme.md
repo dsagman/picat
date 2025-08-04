@@ -4476,13 +4476,4 @@ state_to_hex([A,B,C,D]) = HexStr =>
 
 # Acknowledgements
 
-Thank you to: *Håkan Kjellerstrand* for providing multiple rounds of edits to this document and getting me to be less incorrect. *Professor Mattox Beckman* of University Illinois Champaign-Urbana for his Programming Language class and the independent study that lead to this document. Professor *Linda Lesniak* for her Graph Theory class at Drew University many years ago and her encouragement to complete my MCS degree. Professor *Barry Burd* for introducing me to Prolog also those many years ago. And to my *wife and son* who supported and put up with my many hours working on the degree  that this project brings to close.
-
-
-
-
-
-
-
-
-
+Thank you to: *Håkan Kjellerstrand* for providing multiple rounds of edits to this document and getting me to be less incorrect. *Neng-Fa Zhou* for creating Picat. *Professor Mattox Beckman* of University Illinois Champaign-Urbana for his Programming Language class and the independent study that lead to this document. Professor *Linda Lesniak* for her Graph Theory class at Drew University many years ago and her encouragement to complete my MCS degree. Professor *Barry Burd* for introducing me to Prolog also those many years ago. *Eric Wastl* for Advent of Code, my favorite way to learn a new programming language. And to my *wife and son* who supported and put up with my many hours working on the degree  that this project brings to close.
