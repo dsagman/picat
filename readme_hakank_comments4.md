@@ -1,4 +1,5 @@
-hakank4: My comments below is hakank4.
+hakank4x: My comments below is hakank4.
+DS: I am going through them one by one and marking off as completed. I am changing hakank4 to hakank4x when each one is done.
 
 - [What I Wish I Knew When Learning Picat: Introduction](#what-i-wish-i-knew-when-learning-picat-introduction)
   - [A Motivating Example](#a-motivating-example)
@@ -880,8 +881,9 @@ Let's look at the four solver modules and what makes them different from each ot
 
 *Note: Picat is primarily focused on problems with integer aka finite-domain solutions. (Yes, integers are infinite, but not in computer programs that are expected to halt.) While MIP provides the ability to have real-valued solutions, if you are really looking for non-linear optimization, Picat is not the right tool.*
 
-hakank4: "not the right tool": I assume that you mean non-linear optimization with MIP solvers and float-values here.
-hakank4: For finite-domain non-linear optimization, I would disagree.
+hakank4x: "not the right tool": I assume that you mean non-linear optimization with MIP solvers and float-values here.
+hakank4x: For finite-domain non-linear optimization, I would disagree.
+DS: Edited. But a question, do you have an example of non-linear? (I am sure you do, you have done so many examples!)
 
 *On the other hand, Picat does have a neural network modules that interfaces to the [FAAN neural network library](https://leenissen.dk/). I'm sure someone could use it for non-linear optimzation, given that this is exactly what neural networks do. However, that person is not me. Hakan, of course, has some [example code](https://www.hakank.org/picat/nn_hakank/).*
 
@@ -892,7 +894,8 @@ CP finds feasible values for decision variables by searching through and reducin
 
 The `cp` module has been more the sufficient for all of the Advent of Code problems in this text and it's been the main one I use. It also has the most option to adjust the search strategy. 
 
-hakank4: Have you compared with the SAT solver for these AoC problems? For harder problems, SAT might be quite faster.
+hakank4x: Have you compared with the SAT solver for these AoC problems? For harder problems, SAT might be quite faster.
+DS: Edited. I haven't really tried the other solvers. And I have used planner so much that it's my go to almost always.
 
 Here's the scoop copied right out of the manual:
 
@@ -973,13 +976,15 @@ To use the `smt` module in Picat, you need to install an external SMT solver and
 | CPLEX        | paid       | `solve([dump`$(File)$`],Vars)`  | You have load the *File* into CPLEX     |  [link](https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer)   |
 |||
 
-hakank4: Hmm, gurobi and CPLEX are MIP solvers, not SMT solvers. I see that they are included below in the MIP listing.
+hakank4x: Hmm, gurobi and CPLEX are MIP solvers, not SMT solvers. I see that they are included below in the MIP listing.
+DS: Woops! I had copied the table for format and forgot to delete! Fixed now.
 
 Two other options are:
 
 - `logic`$(Logic)$: Instruct the SMT solver to use $Logic$ in the solving, where $Logic$ must be an atom or a string, and the specified logic must be available in the SMT solver. The default logic for Z3 is “LIA”, and the default logic for CVC4 is “NIA”.
 
-hakank4: My favorite SMT logic for z3 is QF_FD. It can be quite fast.
+hakank4x: My favorite SMT logic for z3 is QF_FD. It can be quite fast.
+DS: Edited.
 
 - `tmp`$(File)$: Dump the SMT-LIB2 format to $File$ rather than the default file “__tmp.smt2”, before calling the SMT solver. The name File must be a string or an atom that has the extension name “.smt2”. When this file name is specified, the SMT solver will save the solution into a file name that has the same main name as $File$ but the extension name “.sol”.
 
@@ -1104,7 +1109,8 @@ This puzzle is perfect for Picat. Some things to notice:
     | mip    | 0.40  | 2.40  |
 
 - The reason SAT is so much sloser is because the domain of T is so large. To get these results the domain was reduced to 10_000_000 to get it to work.
-hakank4: Typo "sloser" -> "slower".
+hakank4x: Typo "sloser" -> "slower".
+DS: done.
 
 - **Important: In general usage, CP solver tends to be faster than SAT for easy problems, but for harder problem SAT tends to be faster. But whether a problem is "easy" or "hard" often can only be determined by testing it.**
 - In section "2.4 Minesweeper - Using SAT" in the [Picat constraint programming book](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf), CP beats SAT for $N \le 430$ and above that SAT wins.
@@ -1423,6 +1429,7 @@ And here's the code. Some things to note:
 
 
 hakank4: Here's a preprint of our ICLP conference paper that discusses some hard AoC 2024 problems: https://www.arxiv.org/abs/2507.11731 
+DS: I happened upon it the other day. Some intense stuff in there. I used the shortest path code there for AOC 2016 day 17 where I needed to do longest path. I plan to add that after finishing your edits. (I did about half of 2024 and used Haskell.)
 
 ```
 import cp.
@@ -4005,9 +4012,10 @@ And thus, when I think I'm assigning, Picat is actually unifying and therefore f
 
 You could try to only ever use `:=` to do reassignment (because it's frowned upon to sue `:=` for initial assignment) and `==` to test equality. But without unification Picat is hobbled and there's no non-deterministic binding.
 
-hakank4: Typo "sue" -> "use".
+hakank4x: Typo "sue" -> "use".
 
-hakank4: As we have discussed earlier (I think), "LHS = RHS" and "LHS == RHS" are quite different even if they both can be used to check if LHS and RHS are the same. ==/2 should be used if the intention is to do the comparison of LHS and RHS (think "if"), and =/2 should be used when your intention is to bind/unify (and perhaps also to check if they have been unified to the same term).
+hakank4x: As we have discussed earlier (I think), "LHS = RHS" and "LHS == RHS" are quite different even if they both can be used to check if LHS and RHS are the same. ==/2 should be used if the intention is to do the comparison of LHS and RHS (think "if"), and =/2 should be used when your intention is to bind/unify (and perhaps also to check if they have been unified to the same term).
+DS: Text rewritten. I think this is may be partially a case of where once someone has used unification for a long time it's hard to remember how confusing it can be for the newbie. So I tried to capture some of that.
 
 
 ## Forgetting a comma or a period (or having an extra one)
@@ -4254,12 +4262,12 @@ It would be great to be able to call graphics libraries from Picat.
 - Advent of Code solutions
     + Neng-Fa Zhou https://github.com/nfzhou/aoc/tree/main
     + https://github.com/DestyNova/advent_of_code_2024
-hakank4: https://github.com/cgrozea/AdventOfCode2024 
-hakank4: https://hakank.org/advent-of-code-2024/ (missing some part 2 solutions)
-hakank4: Our ICLP paper on AoC 2024: "Picat Through the Lens of Advent of Code" (https://arxiv.org/abs/2507.11731)
+hakank4x: https://github.com/cgrozea/AdventOfCode2024 
+hakank4x: https://hakank.org/advent-of-code-2024/ (missing some part 2 solutions)
+hakank4x: Our ICLP paper on AoC 2024: "Picat Through the Lens of Advent of Code" (https://arxiv.org/abs/2507.11731)
 
-hakank4: Another resource is Claudio Cesar de Sá's Github Picat directory: https://github.com/claudiosa/CCS/tree/master/picat
-hakank4: (comments tend to be in Portoguese).
+hakank4x: Another resource is Claudio Cesar de Sá's Github Picat directory: https://github.com/claudiosa/CCS/tree/master/picat
+hakank4x: (comments tend to be in Portoguese).
 
 - My Advent of Code
     + 2016 https://github.com/dsagman/advent-of-code/tree/main/2016

@@ -849,16 +849,18 @@ Note the use of `$`. This means that Picat should not attempt to evaluate the te
 
 Let's look at the four solver modules and what makes them different from each other, and the options you can provide to the solver for them. 
 
-*Note: Picat is primarily focused on problems with integer aka finite-domain solutions. (Yes, integers are infinite, but not in computer programs that are expected to halt.) While MIP provides the ability to have real-valued solutions, if you are really looking for non-linear optimization, Picat is not the right tool.* 
+*Note: Picat is primarily focused on problems with integer aka finite-domain solutions. (Yes, integers are infinite, but not in computer programs that are expected to halt.) MIP provides the ability to have real-valued solutions.* 
 
 *On the other hand, Picat does have a neural network modules that interfaces to the [FAAN neural network library](https://leenissen.dk/). I'm sure someone could use it for non-linear optimzation, given that this is exactly what neural networks do. However, that person is not me. Hakan, of course, has some [example code](https://www.hakank.org/picat/nn_hakank/).*
 
 
 #### CP, Constraint Programming or Constraint Logic Programming (Integer)
 
-CP finds feasible values for decision variables by searching through and reducing the domains of those variables via algorithmic techniques such as: breadth and depth-first search, tabling (memoization), backtracking, refinement, perturbation, constraint propogation, combinatorics, unification, and other heuristics.
+CP finds feasible values for decision variables by searching through and reducing the domains of those variables via algorithmic techniques such as: breadth and depth-first search, tabling (memoization), backtracking, refinement, perturbation, constraint propagation, combinatorics, unification, and other heuristics.
 
-The `cp` module has been more the sufficient for all of the Advent of Code problems in this text and it's been the main one I use. It also has the most option to adjust the search strategy. 
+*Note: The `cp` module has been more the sufficient for all of the Advent of Code problems in this text and it's been the main one I use for constraints. It also has the most options to adjust the search strategy. However, because `cp` has been so quick, I have not tried the other solvers very much, but that doesn't mean you shouldn't try them. *
+
+*Also, I have also started to see many Advent of Code days as being alilgned to [`planner`](#constraint-and-planner-example-programs) because there's such a plethora of shortest path or action-next action problems.*
 
 Here's the scoop copied right out of the manual:
 
@@ -929,19 +931,17 @@ SMT solvers are also closely related to automated theorem provers, and one of th
 To use the `smt` module in Picat, you need to install an external SMT solver and invoke solve with the name of the solver. Picat will export a file with the appropriate format and then call the external solver. Picat uses the SMT-LIB2 format for output. SMT options are:
 
 
-| SMT solver  | Licencse    | `solve`               |  Picat System Call or Interface                                       |  Link |
+| SMT solver  | License    | `solve`               |  Picat System Call or Interface                                       |  Link |
 |-------------|-----------  |------------           |-                                                  |  -----|
 | cvc4        | open source | `solve([cvc4],Vars)`  | `cvc4` *TempFile* > *SolFile*           |  [link](https://cvc4.github.io/)        |
 | z3          | open source | `solve([z3],Vars)`    | Picat calls z3. This is the default.    |  [link](https://www.microsoft.com/en-us/research/project/z3-3/)    |    
 | other       | n/a | `solve([dump],Vars)` <br> `solve([dump`$(File)$`],Vars)` | Dump the constraints in SMT-LIB2 format to stdout or to $File$| n/a
-
-| gurobi      | paid        | `solve([gurobi],Vars)`| `gurobi_cl ResultFile=`*SolFile* *TempFile*           |  [link](https://www.gurobi.com/)               |
-| CPLEX        | paid       | `solve([dump`$(File)$`],Vars)`  | You have load the *File* into CPLEX     |  [link](https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer)   |
 |||
 
 Two other options are:
 
-- `logic`$(Logic)$: Instruct the SMT solver to use $Logic$ in the solving, where $Logic$ must be an atom or a string, and the specified logic must be available in the SMT solver. The default logic for Z3 is “LIA”, and the default logic for CVC4 is “NIA”.
+- `logic`$(Logic)$: Instruct the SMT solver to use $Logic$ in the solving, where $Logic$ must be an atom or a string, and the specified logic must be available in the SMT solver. The default logic for Z3 is “LIA”, and another suggestion is "QF_FD". The default logic for CVC4 is “NIA”.
+
 - `tmp`$(File)$: Dump the SMT-LIB2 format to $File$ rather than the default file “__tmp.smt2”, before calling the SMT solver. The name File must be a string or an atom that has the extension name “.smt2”. When this file name is specified, the SMT solver will save the solution into a file name that has the same main name as $File$ but the extension name “.sol”.
 
 *Rabbit hole (the biggest): The world of theorem provers associated research into the boundaries of NP and decidability is about as big a rabbit hole as possible and sweeps in all the big names of Turing, Curry, Howard, Gödel, Russell, Frege, and many more.*
@@ -1064,7 +1064,7 @@ This puzzle is perfect for Picat. Some things to notice:
     | sat*   | 1.88  | 7.32  |
     | mip    | 0.40  | 2.40  |
 
-- The reason SAT is so much sloser is because the domain of T is so large. To get these results the domain was reduced to 10_000_000 to get it to work. 
+- The reason SAT is so much slower is because the domain of T is so large. To get these results the domain was reduced to 10_000_000 to get it to work. 
 - **Important: In general usage, CP solver tends to be faster than SAT for easy problems, but for harder problem SAT tends to be faster. But whether a problem is "easy" or "hard" often can only be determined by testing it.**
 - In section "2.4 Minesweeper - Using SAT" in the [Picat constraint programming book](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf), CP beats SAT for $N \le 430$ and above that SAT wins.
 
@@ -3828,14 +3828,15 @@ Gives the following _warnings_ (but not errors):
   defined_as_function_in(basic): reduce / 2
 ```
 
-
 ## Unification vs Assignment
 
 Invariably I make an error where I use `=` when I need to use `:=`. This happens when I am editing code and moving things around and lose track of the first time I bind a variable versus when I either test it or update it. 
 
-And thus, when I think I'm assigning, Picat is actually unifying and therefore failing because the new value doesn't equal the old value.
+And thus, when I think I'm assigning/initial binding, Picat is actually unifying and therefore failing because the new value doesn't equal the old value.
 
-You could try to only ever use `:=` to do reassignment (because it's frowned upon to sue `:=` for initial assignment) and `==` to test equality. But without unification Picat is hobbled and there's no non-deterministic binding.
+It's "frowned upon" to use `:=` for initial assignment, and under the covers, Picat is doing unification anyway. Yes, unification is hard for imperative/functional programmers, but it is the engine powering non-determinism in logic programming.
+
+So it's really a matter of knowing when to use `=`: bind/unify, `:=`: reassign, and `==` to test equality. And thereby remembering that this error might be what's causing your bug.
 
 
 ## Forgetting a comma or a period (or having an extra one)
@@ -4027,11 +4028,11 @@ Picat has the capability to be reactive and respond to trigger events. This is c
  
  # Enhancements I'd Like
 
-Graphics. When I did the [Jane Street Bug](#constraint-example-jane-street-bug) to help me visualize the problem I used Python and the `networkx` and `matplotlib` libraries.
-
+- Graphics. When I did the [Jane Street Bug](#constraint-example-jane-street-bug) to help me visualize the problem I used Python and the `networkx` and `matplotlib` libraries. It would be great to be able to call graphics libraries from Picat.
 ![alt text](imgs/jane_street_python.png)
 
-It would be great to be able to call graphics libraries from Picat.
+- Planner with negative costs. Advent of Code 2016 day 17 requires the shortest and longest paths. `planner` makes the shortest path nearly trivial. But longest path required me to write a tabled search. Looking for the worst solution with `planner` would have been more fun.
+
 
 
 # Resources
@@ -4048,13 +4049,17 @@ It would be great to be able to call graphics libraries from Picat.
 - Rosetta Code. Useful to compare to a language you know https://rosettacode.org/wiki/Category:Picat 
 - The **best** resource https://hakank.org/picat/
 - Hakan's global constraint implementations:  https://www.hakank.org/picat/#global
-- Constraint Programming Problems (multiple languages) https://www.csplib.org
+- Constraint Programming Problems (multiple programming languages) https://www.csplib.org
+- Claudio Cesar de Sá's Github Picat directory: https://github.com/claudiosa/CCS/tree/master/picat (comments tend to be in Portuguese)
 - Advent of Code solutions
+    + Neng-Fa Zhou, Håkan Kjellerstrand, Cristian Grozea, Oisín Mac Fhearaí, *Picat Through the Lens of Advent of Code* https://arxiv.org/html/2507.11731
     + Neng-Fa Zhou https://github.com/nfzhou/aoc/tree/main
+    + https://github.com/cgrozea/AdventOfCode2024 
+    + https://hakank.org/advent-of-code-2024/ 
     + https://github.com/DestyNova/advent_of_code_2024
-- My Advent of Code
+- My Advent of Code (examples also in the example code in this repository: https://github.com/dsagman/picat/tree/main/example%20code)
     + 2016 https://github.com/dsagman/advent-of-code/tree/main/2016
-    + Planner https://github.com/dsagman/advent-of-code/blob/main/2015/day22/day22.pi
+    + Planner https://github.com/dsagman/advent-of-code/blob/main/2015/day22/day22.pi 
     + Knapsack https://github.com/dsagman/advent-of-code/blob/main/2015/day24/day24.pi
 
 

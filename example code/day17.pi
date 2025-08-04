@@ -1,0 +1,128 @@
+/*
+--- Day 17: Two Steps Forward ---
+
+You're trying to access a secure vault protected by a 4x4 grid of small rooms connected by doors. You start in the top-left room (marked S), and you can access the vault (marked V) once you reach the bottom-right room:
+
+#########
+#S| | | #
+#-#-#-#-#
+# | | | #
+#-#-#-#-#
+# | | | #
+#-#-#-#-#
+# | | |  
+####### V
+
+Fixed walls are marked with #, and doors are marked with - or |.
+
+The doors in your current room are either open or closed (and locked) based on the hexadecimal MD5 hash of a passcode (your puzzle input) followed by a sequence of uppercase characters representing the path you have taken so far (U for up, D for down, L for left, and R for right).
+
+Only the first four characters of the hash are used; they represent, respectively, the doors up, down, left, and right from your current position. Any b, c, d, e, or f means that the corresponding door is open; any other character (any number or a) means that the corresponding door is closed and locked.
+
+To access the vault, all you need to do is reach the bottom-right room; reaching this room opens the vault and all doors in the maze.
+
+For example, suppose the passcode is hijkl. Initially, you have taken no steps, and so your path is empty: you simply find the MD5 hash of hijkl alone. The first four characters of this hash are ced9, which indicate that up is open (c), down is open (e), left is open (d), and right is closed and locked (9). Because you start in the top-left corner, there are no "up" or "left" doors to be open, so your only choice is down.
+
+Next, having gone only one step (down, or D), you find the hash of hijklD. This produces f2bc, which indicates that you can go back up, left (but that's a wall), or right. Going right means hashing hijklDR to get 5745 - all doors closed and locked. However, going up instead is worthwhile: even though it returns you to the room you started in, your path would then be DU, opening a different set of doors.
+
+After going DU (and then hashing hijklDU to get 528e), only the right door is open; after going DUR, all doors lock. (Fortunately, your actual passcode is not hijkl).
+
+Passcodes actually used by Easter Bunny Vault Security do allow access to the vault if you know the right path. For example:
+
+    If your passcode were ihgpwlah, the shortest path would be DDRRRD.
+    With kglvqrro, the shortest path would be DDUDRLRRUDRD.
+    With ulqzkmiv, the shortest would be DRURDRUDDLLDLUURRDULRLDUUDDDRR.
+
+Given your vault's passcode, what is the shortest path (the actual path, not just the length) to reach the vault?
+
+Your puzzle input is awrkjxxr.
+
+--- Part Two ---
+
+You're curious how robust this security solution really is, and so you decide to find longer and longer paths which still provide access to the vault. You remember that paths always end the first time they reach the bottom-right room (that is, they can never pass through it, only end in it).
+
+For example:
+
+    If your passcode were ihgpwlah, the longest path would take 370 steps.
+    With kglvqrro, the longest path would be 492 steps long.
+    With ulqzkmiv, the longest path would be 830 steps long.
+
+What is the length of the longest path that reaches the vault?
+
+*/
+
+import sys.
+import util.
+import planner.
+import md5. % homemade MD5 with ChatGPT
+
+main =>
+    % Code = "hijkl",    % test case, fails
+    % Code = "ihgpwlah", % test case
+    % Code = "kglvqrro", % test case
+    % Code = "ulqzkmiv", % test case 
+    Code ="awrkjxxr",  % RDURRDDLRD
+
+    % part 1: .005 sec
+    time(best_plan([Code,1,1],Plan,Cost)), 
+    printf("Answer Part 1: %w\n",stringify(Plan)),
+
+    % part 2: 5 minutes
+    % using system to get MD5 very slow
+    % writing MD5s to file and reading, very slow
+    % with chatGPT MD5 in picat: 12 seconds
+    path(Code,[1,1],[4,4],CostSP),
+    printf("Answer Part 2: %w\n",CostSP-1).
+
+
+
+table(+,+,+,max)
+path(Code,S@[Row,Col],Goal@[GRow,GCol],Cost), 
+    GRow = Row, GCol = Col   => 
+    Cost = 1, 
+    printf("%w\r",Code.len-8). % get some output to see progress
+
+path(Code,S@[Row,Col],Goal@[GRow,GCol],Cost) =>
+    Deltas = get_deltas(Code),
+    member([DCode,DRow,DCol],Deltas),
+    NRow = Row + DRow, between(1, 4, NRow),
+    NCol = Col + DCol, between(1, 4, NCol),
+    path(Code++DCode,[NRow,NCol],Goal,Cost1),
+    Cost = 1+Cost1.
+
+table
+get_deltas(Code) = Deltas =>
+    MD5 = md5(Code).take(4),
+    Opts = [X : I in 1..4, X = cond(membchk(MD5[I],"bcdef"),1,0)],
+    Deltas = [],
+    if Opts[1] == 1 then Deltas := Deltas ++ [["U",-1, 0]] end,
+    if Opts[2] == 1 then Deltas := Deltas ++ [["D", 1, 0]] end,
+    if Opts[3] == 1 then Deltas := Deltas ++ [["L", 0,-1]] end,
+    if Opts[4] == 1 then Deltas := Deltas ++ [["R", 0, 1]] end.
+
+table
+final(S@[Code,Row,Col]) => 
+    Row == 4, Col == 4, true.
+
+table
+action(S@[Code,Row,Col],NextS,Action,Cost) =>
+    Deltas = get_deltas(Code),
+    member([DCode,DRow,DCol],Deltas),
+    NRow = Row + DRow, between(1, 4, NRow),
+    NCol = Col + DCol, between(1, 4, NCol),
+    NextS = [Code++DCode,NRow,NCol],
+    Action = DCode,
+    Cost = 1.
+
+% this is one way to get MD5, call the linux utility md5sum
+% and write the output to a file and then read it
+% soooooooooooo slow though
+% table
+% system_md5(String) = MD5 =>
+    % Ret = command("echo -n "++String++ " | md5sum | awk '{print $1}' > temp_md5"),
+    % MD5 = read_file_chars("temp_md5").
+
+
+stringify([]) = "".
+stringify([H|T]) = to_string(H)++stringify(T).
+
