@@ -1,6 +1,6 @@
 main =>
-
-    AndList = list_to_and(parse_term("[A=5,B=3,A!=B]")),
+    Conds = "[A=5,B=3,A=B]",
+    AndList = list_to_and(parse_term(Conds)),
     println([a=A,b=B,andList=AndList]),
     Ans = AndList.cond(true,false),
     println(ans=Ans).

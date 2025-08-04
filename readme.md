@@ -71,6 +71,7 @@
     - [Control flow: `list_to_and`](#control-flow-list_to_and)
   - [Example: Global fact = Global state](#example-global-fact--global-state)
   - [Example: Dynamic Dispatch with `apply` and `call`](#example-dynamic-dispatch-with-apply-and-call)
+  - [More `apply` and `call`](#more-apply-and-call)
   - [Non-determinism: `?=>` and more `table`](#non-determinism--and-more-table)
   - [`reduce` for functional folds](#reduce-for-functional-folds)
   - [Helper functions for accumulators](#helper-functions-for-accumulators)
@@ -110,8 +111,7 @@
   - [Modules](#modules)
   - [Editor Plugins](#editor-plugins)
   - [Optimization/Constraint Programming Resources](#optimizationconstraint-programming-resources)
-
-
+- [Acknowledgements](#acknowledgements)
 
 
 # What I Wish I Knew When Learning Picat: Introduction
@@ -1696,12 +1696,12 @@ The code is below. Some things to note:
 - This state is passed from each action to the next and modified as needed based on the chosen action.
 - There are two `action` predicates, which are pattern matched on whose turn it is. `0` for the player and `1` for the boss. (And why is Bruce Springsteen always the enemy?)
 - The notation `State@[0,[MaxHP, HP, Mana, BHP, BDamage], Shield, Poison, Recharge, Mode]` binds the variable State to all of the list after the `@` sign. This way it can be referenced in whole in the `Action` variable rather than having to retype all of that.
-- The notation `_` for variables in the `final` predicate mean that the variable isn't being used. The term of art here is *anonymous variable*. Which is weird to think about. It's still variable, but no one cares.
+- The notation `_` for variables in the `final` predicate mean that the variable isn't being used and this is simply a placeholder. The term of art here is *anonymous variable*. Which is weird to think about. It's still variable, but no one cares.
 - Like Blocks World, this code uses a construct similar to a  case statement formed through clauses separated by `;` meaning "or". (It's not exactly a case statement because backtracking/failure will automatically evaluate the other alternatives. Logic programming! See this [section](#control-flow-the--operator).)
 
 - `sign` is used to avoid having an `if`. For example, `NBHP = BHP - (3 * sign(Poison))` means that if `Poison` is 0, then `sign(Poison)` is 0, but if `Poison` is greater than 0, `sign` returns 1. It didn't run any faster, but I felt like a boss for writing it this way.
 - The list of possible spells is built up by addition, `++`, rather than starting with all and removing. At first I tried removing, but the logic was complex to use `delete` and hard to implement. Accumulating allowed spells was much more straightforward to code.
-- Also, the ability to reassign, `:=`, or what the functional people call *mutability*, can be very handy. *Unsafe* as the functional crowd calls it, yes, but oh so nice. However, like any good weapon, one must be careful to not cut off your own foot, so be careful when reassigning variable values. Standard Prolog, fyi, has only immutable variables.
+- Also, the ability to reassign, `:=`, or what the functional people call *mutability*, can be very handy. *Impure* as the functional crowd calls it, yes, but oh so nice. However, like any good weapon, one must be careful to not cut off your own foot, so be careful when reassigning variable values. Standard Prolog, fyi, has only immutable variables.
 - **The key to this problem is trying all of the possible spells that are available. That's where `member` comes in.** This line
 
     `member([Spell,SpellMana],Spells`
@@ -2277,13 +2277,12 @@ Attempts and speed:
 
 Attempt 5 eliminated any checks in the `action` predicate. It just finds a path from a given `Start` to `End`. Look how short it is!
 
-- **A note on the use of a list element or matrix element as a constraint. In order to constrain on the value of an element in `Dists` we have to use `matrix_element`. Not regular index notation. This had me stuck for a while.**
+- **A note on the use of a list element or matrix element as a constraint where the list or matrix is consists of decision variables. In order to constrain on the value of an element in `Dists` we have to use `matrix_element`. Not regular index notation. This had me stuck for a while.**
 ```
-    matrix_element(Dists,Path[I+1],Path[I],D)] % works
+    matrix_element(Dists,Path[I+1],Path[I],D) % works
     Dists[[Path[I+1],Path[I]] : I in 1..N-1] % does not work
 ```
-- **Similarly, for a list you will want to use `element(I,List,V )` and not `V #= List[I]`.**
-
+- **Similarly, for a list of decision variables you will want to use `element(I,List,V )` and not `V #= List[I]`. If `V` is a list of non-decision variables, say integers, then you can use a regular list comprehension.**
 
 
 - And one more note, look at the giant condition in the `parse` function `foreach`. I had originally constructed that with some nested `if` statements, but the conditions take care of that all and the body of the loop is just one statement. *No difference in performance, but it's so cool!*
@@ -2494,7 +2493,7 @@ My primary programming languages are Python and Haskell. I often make syntax err
 
 ## Maybe You Already Know Prolog?
 
-This whole section is *predicated* on the idea that you are largely unfamiliar with the concepts of Prolog and other logic programming languages. But maybe you already k1now Prolog? If that's the case, did you see what I did with predicated? Ha! Hahahahah. Ahem. Yes. Anyway...
+This whole section is *predicated* on the idea that you are largely unfamiliar with the concepts of Prolog and other logic programming languages. But maybe you already know Prolog? If that's the case, did you see what I did with predicated? Ha! Hahahahah. Ahem. Yes. Anyway...
 
 If you do know Prolog you should know that Picat supports:
 
@@ -2504,7 +2503,7 @@ If you do know Prolog you should know that Picat supports:
     
     *Note: For me, I find `!` confusing and have managed to completely avoid it with Picat. Should you wish, here's some slides about cut from a class I took: https://courses.grainger.illinois.edu/cs421/sp2020/slides/11.2.1-prolog-cut.pdf and the SWI-Prolog manual's explanation: https://www.swi-prolog.org/pldoc/doc_for?object=!/0. God speed.*
 
-- `cl_facts` for adding facts to the database, but it doesn't have Prolog's `clause/2` for metaprogramming.
+- `cl_facts` for adding facts to the database, but it doesn't have Prolog's `clause/2` or the `assert` and `retract` family of predicates for metaprogramming.
   
 - Definite Clause Grammar (DCG) rules for parsing strings with `-->`, but does not have the `phrase` predicate for processing them. 
 
@@ -2515,7 +2514,7 @@ If you do know Prolog you should know that Picat supports:
 
 - `is/2` for unifying on numeric values. It allows binding across integer and float numeric data types. 
 
-    In Prolog, there a big difference between `is/2` and `=/2`: `is/2` requires a numerical context "LHS is RHS", and requires that RHS is a numerical evaluation. In Prolog `X = 2+2` means that `X` is unified with `2+2`, i.e. does not do any evaluation. Picat blurs this difference by evaluating `2+2`. 
+    In Prolog, there a big difference between `is/2` and `=/2`: `is/2` requires a numerical context "LHS is RHS", and requires that RHS is a numerical evaluation. In Prolog `X = 2+2` means that `X` is unified with `2+2`, i.e. does not do any evaluation. Picat blurs this difference by evaluating `2+2`.  If you wanted to delay the evaluation to work like Prolog, it would be `X=$2+2` in Picat, where `$` indicates a literal.
 
     ```
     A is 5. % A is bound to 5.
@@ -2532,7 +2531,7 @@ If you do know Prolog you should know that Picat supports:
 
 *Giant Rabbit Hole: Logic programming dates back to 1972, but its roots go deep into the math of predicate/symbolic logic and it was central to the first wave of Artificial Intelligence (AI). The idea was to encode knowledge into systems of rules sometimes known as "expert systems". And this is also why the Picat constraint programming book's cover says "Springer Briefs in Intelligent Systems: Artificial Intelligence, Multiagent Systems and Cognitive Robotics".*
 
-*This is in contrast to the "AI" of today, which is statistically based. Someday someone may find a way to unite these two branches of thought: encoded knowledge and statistically inferred likelihood, but until then, Prolog and its ilk have been [pushed somewhat aside](https://eugeneasahara.com/2024/08/04/does-prolog-have-a-place-in-the-llm-era/) by the neural networks and transformers...and now we might consider all of concepts of epistemology and what it is to "know" and if knowledge graphs and [ontologies](https://www.ontotext.com/knowledgehub/fundamentals/what-is-a-knowledge-graph/) hold the key. But was Plato right that all knowledge is subjective? Perhaps dependent type systems should be considered as solutions for encoding high order [kinds](https://app.scinito.ai/article/W4406222352), if these levels of logic really are necessary in the real world, and...um...where was I?*
+*This is in contrast to the "AI" people talk about today, which is statistically based and in common parlance refers mainly to Large Language Models (LLMs). Someday someone may find a way to unite these two branches of thought: encoded knowledge and statistically inferred likelihood, but until then, Prolog and its ilk have been [pushed somewhat aside](https://eugeneasahara.com/2024/08/04/does-prolog-have-a-place-in-the-llm-era/) by the neural networks and transformers...and now we might consider all of concepts of epistemology and what it is to "know" and if knowledge graphs and [ontologies](https://www.ontotext.com/knowledgehub/fundamentals/what-is-a-knowledge-graph/) hold the key. But was Plato right that all knowledge is subjective? Perhaps dependent type systems should be considered as solutions for encoding high order [kinds](https://app.scinito.ai/article/W4406222352), if these levels of logic really are necessary in the real world, and...um...where was I?*
 
 If none of this makes any sense, then the rest of this section is for you.
 
@@ -2555,7 +2554,7 @@ A=5,b=4. % Parses, but fails because the atom b!=4, and therefore A does not get
 
 b=4;A=5. % A is bound to 5. because b!=4 and ';' means 'or'.
 
-NoJavaVariableNamesHere=true. % OK, but this is not normal Picat style, but you do you however you want.
+NoJavScriptVariableNamesHere=true. % OK, but this is not normal Picat style, but you do you however you want.
 ```
 
 ### Multidimensional Lists and Arrays
@@ -2615,8 +2614,11 @@ When a variable is first parsed by Picat, it is in an uninstantiated state. Tryi
 ```
 A. % in the REPL: *** error(instantiation_error,call). 
 A. % as a standalone predicate in a program *** SYNTAX ERROR *** (22-22) wrong head.
+A = B+3. % ** Error  : Free variable in expression: '+'
 ```
 "Wrong head" here means that Picat is expecting either a predicate or a function that have a `=`, `=>`, or `?=>`, not a standalone variable reference. 
+
+"Free variable" means that `B` has not been defined yet, so `A` cannot be bound to the value of `B+3` because the `+` cannot be evaluated.
 
 However, when it's first referenced the variable will be given a unique identifier, which can be seen if we try to print an unbound variable: 
 
@@ -2825,7 +2827,7 @@ Keep repeating: this works the way I expect it to. Anyway, here's what backtrack
 
 Take a look at this code below. `member/2` assigns a single value from the list `1..3` to `T` and `S`. `member` is non-deterministic and on a *fail* condition, it will backtrack and select a different value from the list. 
 
-The *fail* condition can be forced by the `fail/0` predicate or through another failure, such as failed unification.
+The *fail* condition can be forced by the `fail/0` predicate or through another failure, such as a failed unification or equivalence test.
 
 `go1` is using unification with `=/2` and `go2` is using reassignment with `:=/2`. 
 
@@ -2833,27 +2835,30 @@ In `go1`, unification fails at `X = T*2` forcing backtracking at that line becau
 
 In `go2`, `Y:=S*2` does not force backtracking because `:=` causes reassignment of `Y`.
 
+*Note: the use of `?=>` on `main` allows backtracking on the overall `main` predicate. And two top-level `main` functions where the second one succeeds after all options for backtracking on the first are used. This has nothing to do with the output of `go1` or `go2`, but does prevent the overall program from finishing with `*** error(failed,main/0)`. See more about `?=>` [here](#non-determinism--and-more-table).*
 ```
-
-main =>
-    (member(T,1..3), % pick one member of list for T
+main ?=> % allows backtracking of main
+    (member(T,1..3),
     X = T*1,
     println([go1,x=X,t=T]), 
-    X = T*2,  % fails, backtrack
+    X = T*2, 
     println([go1,x=X,t=T]), 
-    X = T*3,  % we never make it here
+    X = T*3, 
     println([go1,x=X,t=T])
-    );
+    % fail 
+);
+
    (nl,
-    member(S,1..3), % pick one member of list for S
+     member(S,1..3),
     Y := S*1,
     println([go2,y=Y,s=S]), 
-    Y := S*2,  % no backtracking 
+    Y := S*2, 
     println([go2,y=Y,s=S]), 
-    Y := S*3,  % no backtracking
+    Y := S*3, 
     println([go2,y=Y,s=S]), 
     fail % fail forces backtracking
 ).
+main => true. % when main ?=> fails, go here
 ```
 Outputs
 ```
@@ -2871,9 +2876,8 @@ Outputs
 [go2,y = 6,s = 3]
 [go2,y = 9,s = 3]
 
-*** error(failed,main/0)
 ```
-The final error is caused by `fail` running out of backtrack options with `member`.
+
 
 ## Global Maps
 
@@ -2937,7 +2941,7 @@ Picat programs consist of statements which can be combined into longer clauses i
 
 ### The `main` predicate and Picat file extension.
 
-The default entry point for a Picat program is a `main` predicate. (Similar to C, Haskell, etc.). If you call a Picat program from the command line, `main` will be run unless you override it.
+The default entry point for a Picat program is a `main` predicate. (Similar to C, Haskell, etc.). If you call a Picat program from the command line, `main` will be run unless you override it (with [`-g` on the command line](https://picat-lang.org/download/picat_guide_html/picat_guide.html#x1-390002.1.1)). I am happy to always use `main`.
 
 Also, the mandatory file extension for Picat programs and modules is `.pi`.
 ```
@@ -2979,7 +2983,9 @@ zip([X|Xs],[Y|Ys]) = [{X,Y}|zip(Xs,Ys)].
 
 ### Predicates and Logic Programming "Weirdness": `append/3`
 
-In Prolog, everything is a predicate and there's no direct concept of a "returned value". Let's look at the classic example of a predicate: Prolog's `append/3` predicate, which Picat also has and it let's you join two lists.
+In Prolog, everything is a predicate with arguments. Some arguments are considered "input" and others "output" or both, it's not like imperative or functional languages where we always think about a function that has a "returned value". 
+
+Let's look at the classic example of a predicate: Prolog's `append/3` predicate, which Picat also has and it let's you join two lists.
 
 It takes the form `append(L1,L2,L3)`. Note the standard use of terse variable names. 
 
@@ -3104,23 +3110,18 @@ longer(L1,L2) = [R,Len(R)] => if len(L1) >= len(L2) then R = L1 else R = L2 end.
 
 **Key point: The Picat manual identifies functions with the notation `= Val`, `= ResList` or similar. If you try to call a predicate like a function or visa-versa you will get an error an `undefined procedure` or a fail that you didn't expect. Use picat -log to get more descriptive error messages.**
 
-This seems like a simple error to avoid, but the distinction between a function that returns a value versus a predicate that unifies one or more of its arguments can be subtle. It's important to read the manual. 
+This seems like a simple error to avoid, but the distinction between a function that returns a value versus a predicate that unifies one or more of its arguments was, and is, something I stumble on.  
 
-For example to get a single solution or all solutions to a constraint programming problem the manual says:
+As one example `Len = length(L)` in Picat. That's a function. In standard Prolog it's a predicate, `Length(L,Len)`. 
+
+As another example to get a single solution or all solutions to a constraint programming problem the manual says:
 
 - solve(Vars): This predicate ... a single solution
 - solve_all(Vars) = Solutions ... all solutions
 
-Calling `solver(MyVariable)` will unify `MyVariable` with the solution. In other words, you can `println(MyVariable)` to see the result.
+`solve` is a predicate, and it's input and output/return value are both in the variable `Vars`. `solve_all` doesn't change `Vars`. The output/return of `solve_all` is put into the variable `Solutions`. 
 
-But `solve_all(MyVariable)` gives a `** Error  : function_used_as_predicate:import(cp,solve_all / 2)`. You need to write something like `Sols = solve_all(MyVariable)`.
-
-Note the reason for the difference is that before calling `solve`, `Vars` is a domain variable. Solving binds `Vars` to the solution, so it is a predicate. `solve` is also non-deterministic and can generate additional solutions via the use of `fail`. (See `append/4` below for an example of using `fail`.)
-
-`solve_all` is deterministic and can generate one or more solutions and collects these into a list, which cannot be unified with `Vars`, a single solution, and therefore needs to be assigned to a new variable. 
-
-For me, I think about this from a Haskell/strongly-typed language perspective. `MyVariable` above is a single variable. `Sols` is a list of type `[MyVariable]`. Whether this helps you also, or adds to the confusion, I cannot say. Just remember to read the manual and see if it uses a `=` in the definition.
-
+This mixing of Prolog-style predicates "the return value is in the argument list" and "normal" programming language style functions where "the return value is on the other side of an `=`" can be confusing when first encountered. I always check the manual to see if a predicate/function uses a `=` in the definition.
 
 ### `=>` vs `=` and conditions
 
@@ -3299,7 +3300,7 @@ foreach(X in 1..10, Y in 1..10, X + Y mod 4 <= 2)
 end.
 ```
 
-Or a lot of conditions and thereby remove having any `if` statements in your loop body. Here's an example from one of my [programs](#planner-and-constraint-example-traveling-salesperson) to get the valid neighbors of a given 2 dimensional array item. 
+You can have as many conditions as you like and thereby remove having any `if` statements in your loop body. Here's an example below from one of my [programs](#planner-and-constraint-example-traveling-salesperson) to get the valid neighbors of a given 2 dimensional array item. 
 
 Neighbors are those coordinates that do not have a `#` or `$` in them and are within the bounds of the array. Look at all those conditions and only one line in the loop body!
 
@@ -3364,22 +3365,28 @@ Let's say you had a bunch of boolean statements in a list and you wanted to eval
 Here's a list of statements we may have in a file. (A new Advent of Code challenge perhaps?)
 
 ```
-A=5
-B=3
-A=B
-```
-We read them into a variable Conds:
-
-```
-main=>
-    Conds = ["A=5","B=3","A=B"],
-
+main =>
+    Conds = "[A=5,B=3,A!=B]", % pretend we read this from a file
+    AndList = list_to_and(parse_term(Conds)),
+    println([a=A,b=B,andList=AndList]),
+    Ans = AndList.cond(true,false),
+    println(ans=Ans).
 ```
 
-:TODO: list_to_and.pi not working
+Outputs:
+
+```
+[a = _114b0,b = _114c8,andList = (_11260 = 5,_11328 = 3,_11260 != _11328)]
+ans = true
+```
+
+Note that the `A` and `B` in `Conds` don't escape the scope of `Conds`. That is, we can't access them in the `println`. 
+
+Nevertheless, the evaluation of `Conds` with `cond` works. Change `A!=B` to `A=B` and you will see that `Ans` now equals `false`.
+
 
 ## Example: Global fact = Global state
-The below code recursively parses parenthesis but has different requirements for part 1 and part 2. To do this it uses a global fact: `part(n)` to change the behavior of `parse1` function. The fact is changed from `part(1).` to `part(2).` with the `cl_facts()` command that updates the global fact dictionary.
+The below code recursively parses parenthesis but has different requirements for part 1 and part 2. To do this it uses a global fact: `part(n)` to change the behavior of `parse1` function. The fact is changed from `part(1).` to `part(2).` with the `cl_facts()` command that updates and overwrites the global fact dictionary.
 
 Probably unsafe, but quite neat!
 
@@ -3419,9 +3426,9 @@ While Picat doesn't have lambda expressions, it does allow for code execution ba
 
 Here's an example that simulates a simple assembly language. It invokes the correct operation based on the parsed input strings via the `apply` function. `apply` and `call` are able to transfer operation to another function or predicate that is passed as an argument. 
 
-`call` and `apply` perform the same action, but `apply` is a function and returns a value.
+`call` and `apply` both _call_ the parameters given. `call` requires a predicate as the first term, whereas `apply` requires a function as the first term (and then returns the results of that call).
 
-The interesting thing here is that the name of the function is identical to the string in the input. The *cpy* command is performed by the `cpy` function.
+The interesting thing in the example below is that the name of the function is identical to the string in the input. The *cpy* command is performed by the `cpy` function.
 
 The code also makes use of a hash map to store the value of registers and passes state back and forth via unification. Note how `S` isn't explicitly returned. It's a mutable map and it is both an input and output just like any predicate in Prolog. This is just like `append/3`, as discussed [here](#predicates-and-logic-programming-weirdness-append3). 
 
@@ -3511,6 +3518,48 @@ jnz([X,Y],S,PC) = NPC =>
 
 ```
 
+## More `apply` and `call`
+
+A couple more examples of `call` and `apply`.
+
+```
+A = $append(X,Y,1..4), A.call
+```
+When input in the Picat REPL outputs:
+```
+A = append('[]',[1,2,3,4],[1,2,3,4])
+X = '[]'
+Y = [1,2,3,4] ?;
+A = append([1],[2,3,4],[1,2,3,4])
+X = [1]
+Y = [2,3,4] ?;
+A = append([1,2],[3,4],[1,2,3,4])
+X = [1,2]
+Y = [3,4] ?;
+A = append([1,2,3],[4],[1,2,3,4])
+X = [1,2,3]
+Y = [4] ?;
+A = append([1,2,3,4],'[]',[1,2,3,4])
+X = [1,2,3,4]
+Y = '[]' ?;
+
+no
+```
+
+Another way of manipulation is *Univ* (`=../2`) which converts a term to/from a list. It's mentioned in the Picat Guide (page 35) but there's no example. Here's a simple one. Also, [here's](https://www.swi-prolog.org/pldoc/doc_for?object=(%3D..)/2) the Prolog documentation of `=..`.
+
+```
+L = [1,2,3,4], Goal =.. [sum,L], Res = Goal.apply.
+```    
+
+Outputs:
+
+```
+L = [1,2,3,4]
+Goal = sum([1,2,3,4])
+Res = 10
+```
+
 ## Non-determinism: `?=>` and more `table`
 
 A key feature of logic programming languages is explicit and implicit backtracking from failure to try and achieve success. We talked a little about backtracking [here](#reassignment-vs-unificiation-and-backtracking).
@@ -3529,8 +3578,8 @@ The manual notes that this takes exponential time to compute and by applying `ta
 table  % so much faster
 reach(X,Y) ?=> edge(X,Y). 
 reach(X,Y) => reach(X,Z), edge(Z,Y).
-
 ```
+*Note: If the data given by edge/2 represents a circular graph, e.g. edge(1,2) and edge(2,1), then without table/0 it will go into an infinite loop (if that is not handled in some way). With table/0 this is handled neatly since it caches the nodes that's are visited before.*
 
 ## `reduce` for functional folds
 
@@ -3721,7 +3770,8 @@ main =>
         Square == {{3,9,14,15,24},{10,20,22,2,11},{19,17,1,21,7},{8,13,16,23,5},{25,6,12,4,18}}
         then println(Writer,"Correct!") % or write to a file
         else println(Writer,"Wrong!")
-    end.
+    end,
+    close(Writer).
 ```
 
 # Errors I Always Make and How I Compensate
@@ -3812,6 +3862,8 @@ B-Prolog Version 8.1, All rights reserved, (C) Afany Software 1994-2014.
 X = [80,105,99,97,116]
 ```
 
+*More Rabbit Hole: There's also GNU Prolog, YAP Prolog, Strawberry Prolog,..."
+
 ## Predicate vs Function (sort of a type error)
 
 I still use predicates and expect a return value and functions and don't assign the return value to a variable. I mentioned this [here](#is-it-a-predicates-or-a-function). 
@@ -3862,7 +3914,7 @@ I compensate by adding only a few lines at a time and always saving and rerunnin
 
 ## Don't use list indexing with decision/domain variables 
 
-When solving constraint problems use `element(I,List,V )` and not `V #= List[I]`. Also `matrix_element` for 2D arrays/lists. I noted this in this [example code](#planner-and-constraint-example-traveling-salesperson).
+When solving constraint problems, if the list contains decision variables use `element(I,List,V )` and not `V #= List[I]`. Also `matrix_element` for 2D arrays/lists. I noted this in this [example code](#planner-and-constraint-example-traveling-salesperson).
 
 # Debugging
 
@@ -3902,8 +3954,6 @@ solve($[min(L1), min(QE),
 ## Globally Control Progress/Debug Println
 
 Using my "trick" for setting global state variables, you can turn and and off progress/debug print statements.
-
-
 
 
 ```
@@ -4091,7 +4141,9 @@ Picat has the capability to be reactive and respond to trigger events. This is c
 - Global Constraint Catalog https://sofdem.github.io/gccat/gccat/index.html
 - SAT Solvers https://github.com/urbanophile/awesome-sat-solvers
 
+# Acknowledgements
 
+Thank you to: Håkan Kjellerstrand for providing multiple rounds of edits to this document and getting me to be less incorrect. Professor Mattox Beckman of University Illinois Champaign-Urbana for his Programming Language class and the independent study that lead to this document. Professor Linda Lesniak for her Graph Theory class at Drew University many years ago and her encouragement to complete my MCS degree. Professor Barry Burd for introducing me to Prolog also those many years ago. And to my wife and son who supported and put up with my many hours working on the degree  that this project brings to close.
 
 
 

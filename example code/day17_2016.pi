@@ -74,11 +74,9 @@ main =>
     path(Code,[1,1],[4,4],CostSP),
     printf("Answer Part 2: %w\n",CostSP-1).
 
-
-
 table(+,+,+,max)
 path(Code,S@[Row,Col],Goal@[GRow,GCol],Cost), 
-    GRow = Row, GCol = Col   => 
+    S = Goal   => 
     Cost = 1, 
     printf("%w\r",Code.len-8). % get some output to see progress
 
