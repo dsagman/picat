@@ -16,12 +16,13 @@ main =>
     
     
     % constraints
-    NWeeks      = 4,
-    People      = ["Alice","Bob","Carol","David","Emily","Frank","George"],
-    MaxJobs     = [ 2     , 2   , 2     , 3     , 3     , 3     , 3      ],
+    NWeeks      = 7,
+    People      = ["Nobody", "Alice","Bob","Carol","David","Emily","Frank","George" ],
+    MaxJobs     = [ 2000   , 20     , 20  , 30    , 30    , 30    , 3     , 100      ],
     Jobs        = ["Piano","Prayer","Video","Clean"],
-    JobsPeople  = [[1,2]  , [3]    , [5,6] , [1,2,3,4,5,6,7]],
-    WorksWith   = [[1,3]], % can add more
+    JobsPeople  = [[2]  , [3,4,5,6]    , [5,6] , [2,3,4,5,6,7,8]],
+    WorksWith   = [[2,3,2],[3,2,100]], % person index 1 asks to work with person index 2, cost is index 3
+    CantWork    = [[2,1]], % person index 1 can't work week index 2
 
     % put constrains into global map
     Globals = get_global_map(),
@@ -31,10 +32,11 @@ main =>
     Globals.put(maxjobs,MaxJobs),
     Globals.put(jobpeople,JobsPeople),
     Globals.put(workswith,WorksWith),
+    Globals.put(cantwork,CantWork),
     
     % Initial =  [Week, [Job Assigns], [Total Assigned]]
     InitialAssignment = [0,new_list(NWeeks,0),new_list(People.len,0)], 
-    best_plan(InitialAssignment,Plan,Cost),
+    time(best_plan(InitialAssignment,Plan,Cost)),
     foreach (I in 1..Plan.len),
         printf("Week %w: %w\n",I,Plan[I])
     end,
@@ -63,7 +65,7 @@ final(S@[Week,Assigns,TotalAssigned]) =>
 
 
 action(S@[Week,Assigns,TotalAssigned],NextS,Action,Cost) =>
-    println(s=S),
+    % println(s=S),
 
     Globals     = get_global_map(),
     People      = Globals.get(people),
@@ -72,6 +74,7 @@ action(S@[Week,Assigns,TotalAssigned],NextS,Action,Cost) =>
     MaxJobs     = Globals.get(maxjobs),
     JobsPeople  = Globals.get(jobpeople),
     WorksWith   = Globals.get(workswith),
+    CantWork    = Globals.get(cantwork),
 
     NextAssigns = new_list(Jobs.len),
     NextTotal = copy_term(TotalAssigned),
@@ -81,12 +84,19 @@ action(S@[Week,Assigns,TotalAssigned],NextS,Action,Cost) =>
     % assign jobs
     foreach (I in 1..Jobs.len)
         % assign based on skills
-        member(NextAssigns[I],JobsPeople[I]),
+        (member(NextAssigns[I],JobsPeople[I]); NextAssigns[I]=1),
 
         % penalty for two weeks in a row
         if NextAssigns[I] == Assigns[I] then NewCost := NewCost + 1 end,
 
-        NextTotal[NextAssigns[I]] :=  1 + TotalAssigned[NextAssigns[I]]
+        % cant work penalty
+        foreach (CW in CantWork)
+            if (membchk(CW[1], NextAssigns), CW[2]==Week+1) then NewCost := NewCost + 10 end
+        end,
+
+        if NextAssigns[I] == 1 then NewCost := NewCost + 5 end,
+
+        NextTotal[NextAssigns[I]] :=  1 + TotalAssigned[NextAssigns[I]],
     end,
 
     % this could also be expressed as a penalty
@@ -94,10 +104,15 @@ action(S@[Week,Assigns,TotalAssigned],NextS,Action,Cost) =>
 
     % penalty for more than MaxJobs
     foreach (I in 1..People.len)
-        if NextTotal[I] > MaxJobs[I] then NewCost := NewCost + 1 end
+        if NextTotal[I] > MaxJobs[I] then NewCost := NewCost + 1 end,
+        
+        % works with penalty
+        foreach (W in WorksWith)
+        if (membchk(W[1], NextAssigns), not(membchk(W[2], NextAssigns)) )
+                then NewCost := NewCost + W[3] end
+        end
     end,
 
-    % TODO add penalty for not working with desired person
 
     Action = NextAssigns,
     NextS = [Week+1,NextAssigns,NextTotal],
@@ -108,14 +123,14 @@ action(S@[Week,Assigns,TotalAssigned],NextS,Action,Cost) =>
 
 print_sched(S,People,Jobs) =>
     printf("\t"),
-    foreach (I in 1..S[1].len)
+    foreach (I in 1..S.len)
         printf("Week %w\t",I)
     end,
     printf("\n"),
-    foreach (I in 1..S.len)
+    foreach (I in 1..S[1].len)
         printf("%w\t",Jobs[I]),
-        foreach (C in S[I])
-            printf("%w\t",People[C])
+        foreach (J in 1..S.len)
+            printf("%w\t",People[S[J,I]])
         end,
         printf("\n")
     end.
