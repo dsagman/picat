@@ -270,7 +270,7 @@ Let's look at how Picat stacks up against some programming languages you may kno
 | [Numeric Separator](https://rosettacode.org/wiki/Numeric_separator_syntax) | `A=1_000_000.` This is syntactic sugar. |
 | Strings               | `println("Hello World.")` |
 | Linked Lists          | `MyList =[3,4,6,1,56,123.65,"a string?",[a,sub,list]]`|
-| Arrays (O(n) access)  | `My2DArray = {{1,2},{3,4}}, println(My2dArray[1,2]).` |
+| Arrays (O(1) access)  | `My2DArray = {{1,2},{3,4}}, println(My2dArray[1,2]).` |
 | List Comprehension.   |  `Xs = [X : X in 1..5, X != 2].`                      |
 | Pattern Matching      |  `head([H\|T])=H.`                                    |
 | Loops                 |  `foreach (X in MyList) Y=X*X,println(X) end.`        |
@@ -1360,7 +1360,7 @@ And here's the code. Some things to note:
 - It doesn't matter which items are in bin 2 vs. bin 3, only that bin 1 represents $\frac{1}{3}$ of the total. 
 - In my initial attempts on the problem I solved for bin 2 and bin3 and it took an order of magnitude longer to solve. 
 - Faster solving depends very much on selecting the right problem to solve!
-- The first algorithm `go_kn` uses a modified version of the knapsack algorithm from the [Picat book about constraint solving](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf). It does not use the `cp` solver module. It a standard BFS (or is it DFS) with the amazing `table` to memoize and speed up. 
+- The first algorithm `go_kn` uses a modified version of the knapsack algorithm from the [Picat book about constraint solving](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf). It does not use the `cp` solver module. It a standard BFS with the amazing `table` to memoize and speed up. 
 - The second algorithm is uses `cp` and `#=` to constrain the solution to the problem statement.
 - Algorithm 1 (tabling) is much faster than algorithm 2 (CP), but both are pretty fast. Interestingly part 1 shows a bigger difference in times than part 2.
 
@@ -1379,7 +1379,8 @@ And here's the code. Some things to note:
 - It is not usually clear at the outset which will be the fastest method. See pgs 59-61 in the [Picat constraint book](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf) for an example of trying all the combinations of solve options on a Magic Squares problem.
 - **Regardless, I found the CP version of the problem easier to grok and less CS major than the recursive graph search of the standard knapsack. And that's why we're using Picat, right? For the magic of letting the computer search.**
 - I used `println` via `report` inside of `solve` to track what's going on because I was having a hard time to get this code to work.
-- As I understand it, Picat does not really support multi-objective optimization with two min/1. So I'm not sure how I got this to work!
+- Picat doesn't support multiple constraints for CP, so we can either solve for `L1` or `QE`. Solving for `L1` works for part 1, but gives the wrong answer for part 2. And solving for `QE` hangs.
+- The knapsack version works regardless.
 
 
 ```
@@ -1398,8 +1399,8 @@ main =>
     
 go(Weights,Target,Q) =>
     assign_bin1(Weights,Target,Bins,QE,L1),
-    % solve($[min(L1), min(QE), % using degree and updown is faster
-    solve($[degree,updown,min(L1), min(QE), 
+    % solve($[min(L1), % using degree and updown is faster
+    solve($[degree,updown,min(L1), 
               report(printf("Found %w, %w %w\n", L1, QE, Bins))],  % debug info from inside solve!
               Bins),
     Bin1Weights = [Weights[I]: I in 1..Weights.length, Bins[I]==0],
@@ -3975,7 +3976,7 @@ And `''` means "atom". Atom is a concept from Prolog, which is kind of like an e
 
 ```
 N=5, println(n=N). % output n=5
-N=3, println(my_n_is_set_to_N). % output my_n_is_set_to_3
+N=3, println(my_n_is_set_to_N). % output my_n_is_set_to_N
 ```
 Note that in the above, the `=` is binding/unification! 
 
