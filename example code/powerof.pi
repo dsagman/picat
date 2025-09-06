@@ -1,0 +1,40 @@
+% https://groups.google.com/g/picat-lang/c/SmvbKKF194M
+import cp. % Base 3..7: 1min33.5s DS: 60 sec
+% import sat. % Base 3..7: 9min47.9s
+
+main => go.
+
+go ?=>
+  nolog,
+  member(Base,3..7),
+  println(base=Base),
+  member(Len,2..10), % number of digits
+  member(K,2..5),  
+
+  power_k(Base,K,Len, A,X) ,
+  println([base=Base,len=Len,k=K,a=A,x_in_dec=X,x_in_base=X.to_radix_string(Base)]),
+  fail, 
+  nl.
+go => true.
+
+power_k(Base,K,Len, A,X) =>
+  A = new_list(Len), % The list of digits
+  A :: 0..Base-1,
+
+  % No leading 0
+  A[1] #!= 0,
+
+  % convert to a number X (in base Base)
+  to_num(A,Base,X),
+
+  % Each digit ** K
+  % Here is the product except 0 logic
+%   X #= prod([cond(T #= 0, 1,T)  : I in 1..Len, T #= A[I]**K]),
+  X #= prod([max(1,T)  : I in 1..Len, T #= A[I]**K]),
+
+  solve($[ff,split],A ++ [X]).
+
+% converts a number Num to/from a list of integer List given a base Base
+to_num(List, Base, Num) =>
+        Len = length(List),
+        Num #= sum([List[I]*Base**(Len-I) : I in 1..Len]).
