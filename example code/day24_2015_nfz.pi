@@ -1,0 +1,58 @@
+% https://groups.google.com/g/picat-lang/c/NBR294O9tik/m/nmvMFG_HAgAJ
+% https://github.com/nfzhou/aoc/blob/main/aoc_15_24.pi
+% https://adventofcode.com/2015/day/24
+
+% K = 3: 400 ms
+% K = 4: 140 ms
+
+% import sat.
+import cp.
+
+% main([File]) =>
+main =>
+    % Ws = [to_int(Token) : Token in read_file_lines(File)].sort().to_array(),
+    Ws = {1,2,3,7,11,13,17,19,23,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113},
+    N = len(Ws),
+    K = 3,   % number of groups, for part-2, K = 4
+    opt(Ws,N,K).
+
+opt(Ws,N,K) ?=>
+    gen(Ws,N,K,Vs),
+    % Card #= sum([Vs[J] #= 0 : J in 1..N]),
+    Card #= sum(Vs), % added
+    solve($[ffd,min(Card)],Vs),   % minimize the size of group 1 first
+    println(card=Card),
+    M = get_global_map(),
+    M.put(optimum_card,Card),
+    fail.
+opt(Ws,N,K) =>
+    M = get_global_map(),
+    gen(Ws,N,K,Vs),
+    Card = M.get(optimum_card),
+    % Card #= sum([Vs[J] #= 0 : J in 1..N]),
+    Card #= sum(Vs), % added
+    LB = prod([Ws[J] : J in 1..Card]),
+    UB = prod([Ws[J] : J in N-Card+1..N]),
+    QE :: LB..UB, % doesn't reduce solve time
+    writeln((LB,UB)),
+    % QE #= prod([cond(Vs[J] #= 0, Ws[J], 1) : J in 1..N]),
+    % QE #= prod([max((Vs[J] #= 0)* Ws[J], 1) : J in 1..N]), % changed
+    % max is faster than cond
+    QE #= prod([max(1,Vs[J]*Ws[J]) : J in 1..N]), % added
+    solve($[ffd,min(QE)],Vs),     % minimize the quantum entanglement
+    % ffd speeds up by order of magnitude
+    println(QE).
+
+gen(Ws,N,K,Vs) =>
+    Vs = new_array(N),
+    % Vs :: 0..K-1,
+    Vs :: 0..1, % added only matters if weight is in group 1 or not
+    % 1 = group 1
+    % 0 = any other group
+    % allows for sum without cond
+    C = sum(Ws) div K,   % capacity
+    println(capacity=C),
+    sum([Vs[J]*Ws[J] : J in 1..N]) #= C. % added only constrain group 1 weight
+    % foreach (I in 0..K-1)
+    %     sum([(Vs[J] #= I)*Ws[J] : J in 1..N]) #= C
+    % end.
