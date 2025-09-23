@@ -50,7 +50,7 @@
     - [Equality: the `==` and `=:=` operators](#equality-the--and--operators)
     - [Assignment and Re-assignment: `=`, `:=` and `bind_vars()`](#assignment-and-re-assignment---and-bind_vars)
     - [Reassignment via Predicate and Function Arguments](#reassignment-via-predicate-and-function-arguments)
-    - [Reassignment vs Unificiation and Backtracking](#reassignment-vs-unificiation-and-backtracking)
+    - [Reassignment vs Unification and Backtracking](#reassignment-vs-unification-and-backtracking)
   - [Global Maps](#global-maps)
   - [Program Structure and Control Flow](#program-structure-and-control-flow)
     - [The `main` predicate and Picat file extension.](#the-main-predicate-and-picat-file-extension)
@@ -270,7 +270,7 @@ Let's look at how Picat stacks up against some programming languages you may kno
 | [Numeric Separator](https://rosettacode.org/wiki/Numeric_separator_syntax) | `A=1_000_000.` This is syntactic sugar. |
 | Strings               | `println("Hello World.")` |
 | Linked Lists          | `MyList =[3,4,6,1,56,123.65,"a string?",[a,sub,list]]`|
-| Arrays (O(n) access)  | `My2DArray = {{1,2},{3,4}}, println(My2dArray[1,2]).` |
+| Arrays (O(1) access)  | `My2DArray = {{1,2},{3,4}}, println(My2dArray[1,2]).` |
 | List Comprehension.   |  `Xs = [X : X in 1..5, X != 2].`                      |
 | Pattern Matching      |  `head([H\|T])=H.`                                    |
 | Loops                 |  `foreach (X in MyList) Y=X*X,println(X) end.`        |
@@ -964,7 +964,7 @@ MIP solves problems with real (continuous), integer, or binary decision variable
 
 To use the `mip` module in Picat, you need to install an external MIP solver and invoke `solve` with the name of the solver. Picat will export a file with the appropriate format and then call the external solver. Options are:
 
-| MIP solver  | Licencse    | `solve`               |  Picat System Call or Interface                                       |  Link |
+| MIP solver  | License    | `solve`               |  Picat System Call or Interface                                       |  Link |
 |-------------|-----------  |------------           |-                                                  |  -----|
 | cbc         | open source | `solve([cbc],Vars)`   | `cbc` *TempFile* `solve -solu` *SolFile*       |  [link](https://github.com/coin-or/Cbc)        |
 | glpk        | open source | `solve([glpk],Vars)`  | `glpsol -lp -o` *SolFile* *TempFile*                 |  [link](https://www.gnu.org/software/glpk/)    |    
@@ -1333,7 +1333,6 @@ Advent of Code 2015 day 24 is a knapsack problem. Typically, AOC problems get ha
 >
 > Part 2
 >
->
 >That's weird... the sleigh still isn't balancing.
 >
 >"Ho ho ho", Santa muses to himself. "I forgot the trunk".
@@ -1361,62 +1360,74 @@ And here's the code. Some things to note:
 - It doesn't matter which items are in bin 2 vs. bin 3, only that bin 1 represents $\frac{1}{3}$ of the total. 
 - In my initial attempts on the problem I solved for bin 2 and bin3 and it took an order of magnitude longer to solve. 
 - Faster solving depends very much on selecting the right problem to solve!
-- The first algorithm `go_kn` uses a modified version of the knapsack algorithm from the [Picat book about constraint solving](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf). It does not use the `cp` solver module. It is a standard BFS (or is it DFS) with the amazing `table` to memoize and speed up. 
-- The second algorithm is uses `cp` and `#=` to constrain the solution to the problem statement.
-- Algorithm 1 (tabling) is much faster than algorithm 2 (CP), but both are pretty fast. Interestingly part 1 shows a bigger difference in times than part 2.
 
-    |         | Knapsack | CP default | CP degree/updown |
+- The first algorithm `go_kn` uses a modified version of the knapsack algorithm from the [Picat book about constraint solving](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf). It does not use the `cp` solver module. It a standard BFS with the amazing `table` to memoize and speed up. 
+- The second algorithm uses `cp` `scalar_product` and `#=` to constrain the solution to the problem statement.
+- Algorithm 1 (tabling) is much faster than algorithm 2 (CP), but both are pretty fast. Interestingly part 1 is slower than part 2, which is not usually the case for Advent of Code.
+
+
+    |         | Knapsack | CP default | CP ffd |
     |---------|----------|-------     | ---------------- |
-    | Part 1  | 0.010s   | 1.6s       | 0.263s           |
-    | Part 2  | 0.001s   | 0.5s       | 0.019s           |
+    | Part 1  | 0.010s   | 53.7s      | 0.43s           |
+    | Part 2  | 0.001s   | 5.4s       | 0.32s           |
 
-- The table has two columns for CP. One is the default search strategy `solve()`, the second specifies `degree` and `updown`, which mean, according to the Manual.
+- The selection solve strategy can drastically affect solve times.The table has two columns for CP. One is the default search strategy `solve()`, the second specifies `ffd`, which mean, according to the Manual.
 
     - `degree`: Variables are first ordered by degree, i.e., the number of connected variables.
-    - `updown`: Values are assigned to variables from the values that are nearest to the middle of the domain.
+    - `down`: Values are assigned to variables from the largest to the smallest.
+    - `ff`: The first-fail principle is used: the leftmost variable with the smallest domain is selected.
+    - `ffd`: The same as with the two options: ff and degree.
 
 - A full list of the possible search strategies is on page 100 of the [Manual](https://picat-lang.org/download/picat_guide_html/picat_guide.html#x1-15000012.6).
 - This is where a *little bit of the magic wears off*. Having some sense of your problem and how to search it best does help. On the other hand, you can just try all the methods and see which works best. 
 - It is not usually clear at the outset which will be the fastest method. See pgs 59-61 in the [Picat constraint book](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf) for an example of trying all the combinations of solve options on a Magic Squares problem.
 - **Regardless, I found the CP version of the problem easier to grok and less CS major than the recursive graph search of the standard knapsack. And that's why we're using Picat, right? For the magic of letting the computer search.**
-- I used `println` via `report` inside `solve` to track what's going on because I was having a hard time to get this code to work.
-- As I understand it, Picat does not really support multi-objective optimization with two min/1. So I'm not sure how I got this to work!
+
+- I used `println` via `report` inside of `solve` to track what's going on because I was having a hard time to get this code to work.
+- Picat doesn't support multiple constraints for CP, so we can either solve for `L1` or `QE`. Solving for `L1` works for part 1, but gives the wrong answer for part 2. And solving for `QE` hangs.
+- The knapsack version works regardless.
+
 
 
 ```
+
 import cp.
 
 main => 
-    % Weights = {1, 2, 3, 4, 5, 7, 8, 9, 10, 11}, % example
-    Weights = {1,2,3,7,11,13,17,19,23,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113}, % problem
+    % Weights = {1, 2, 3, 4, 5, 7, 8, 9, 10, 11}, 
+    Weights = {1,2,3,7,11,13,17,19,23,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113},
+    print("===========\n"),
     time(go_kn(Weights,sum(Weights)//3, 1)),
-    printf("\n"),
+    printf("===========\n"),
     time(go(Weights, sum(Weights)//3, 1)),
-    printf("\n"),
+    printf("===========\n"),
     time(go_kn(Weights, sum(Weights)//4, 2)),
-    printf("\n"),
-    time(go(Weights, sum(Weights)//4, 2)).
-    
+    printf("===========\n"),
+    time(go(Weights, sum(Weights)//4, 2)),
+    printf("===========\n").
+
 go(Weights,Target,Q) =>
-    assign_bin1(Weights,Target,Bins,QE,L1),
-    % solve($[min(L1), min(QE), % using degree and updown is faster
-    solve($[degree,updown,min(L1), min(QE), 
-              report(printf("Found %w, %w %w\n", L1, QE, Bins))],  % debug info from inside solve!
+    printf("Constraint Solution Part %w\n",Q),
+    assign_bin1(Weights,Target,Bins,QE,L1),    
+    solve($[degree,updown,min(QE),
+              report(printf("Found %w, %w %w\n", L1, QE, Bins))],
               Bins),
-    Bin1Weights = [Weights[I]: I in 1..Weights.length, Bins[I]==0],
-    printf("Bin 1: %w\n",Bin1Weights),
+    Bin1Weights = [BW: I in 1..Weights.length, BW=Bins[I]*Weights[I],BW>0],
+    printf("Bin 1: %w  ",Bin1Weights),
     printf("CP Answer Part %d: %w\n",Q,prod(Bin1Weights)).
+
 
 assign_bin1(Weights,Target,Bins,QE,L1) =>
     N = length(Weights),
     Bins = new_array(N),
     Bins :: 0..1,
-    Bin1Sum #= sum([Weights[I]*(Bins[I] #= 0) : I in 1..N]),
-    Bin1Sum #= Target,
-    L1 #= sum([(Bins[I] #= 0) : I in 1..N]), % Minimize L1 = Bin 1 length
-    QE #= prod([max(1,W*(Bins[I]#=0)) : I in 1..N, W = Weights[I]]). % Minimize QE = product of weights in bin 1
+    scalar_product(Weights, Bins, Target),
+    L1 #= sum(Bins), % for reporting bin1 size
+    QE #= prod([max(1,(Bins[I]*Weights[I])) : I in 1..N]). % Minimize QE = product of weights 
+
 
 go_kn(Weights,Target,Q) =>
+    printf("Knapsack Solution Part %w\n",Q),
     knapsack(to_list(Weights),Target,Sack,Val),
     printf("Bin 1: %w\n",Sack),
     printf("Table Answer Part %d: %w\n",Q,second(Val)).
@@ -1425,7 +1436,6 @@ go_kn(Weights,Target,Q) =>
 % Val = (Length of Sack, QE)
 % Item is a list of weights
 
-% for the table + is input, - is output, and min is the objective
 table(+,+,-,min)
 knapsack(_,C,Sack,Val), C<=0 =>
     Sack = [], Val = (1,1).
@@ -1435,17 +1445,27 @@ knapsack([IWeight|L],C,Sack,Val), C >= IWeight =>
     Sack = [IWeight|Sack1],
     knapsack(L,C-IWeight,Sack1,Val1),
     Val = (first(Val1)+1,second(Val1)*IWeight).
+
 ```
 Here's some of the output:
 
 ```
-Found 13, 5612243503168302 {0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,0}
-Found 11, 42371251364442 {0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,0,0,0}
-Found 9, 438478398078 {0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,0,0,0,1,0}
-Found 7, 23538056666 {0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1}
-Found 6, 11846773891 {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1,0,0,0}
+===========
+Knapsack Solution Part 1
 Bin 1: [1,89,101,107,109,113]
-CP Answer Part 1: 11846773891
+Table Answer Part 1: 11846773891
+
+CPU time 0.007 seconds.
+
+===========
+Constraint Solution Part 1
+Found 9, 47812606799854 {0,1,0,0,0,1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1}
+Found 8, 30655058205881 {0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,1}
+Found 7, 23538056666 {1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0}
+Found 6, 11846773891 {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1,1}
+Bin 1: [1,89,101,107,109,113]  CP Answer Part 1: 11846773891
+
+CPU time 0.432 seconds.
 ```
 ## The Planner
 
@@ -2428,7 +2448,8 @@ Attempt 5 eliminated any checks in the `action` predicate. It just finds a path 
 
 - And one more note, look at the giant condition in the `parse` function `foreach`. I had originally constructed that with some nested `if` statements, but the conditions take care of that all and the body of the loop is just one statement. *No difference in performance, but it's so cool!*
 
-*Note: I had problems with the repeated use/abuse of `planner`. Hakan did some research and suggested adding `table` in front of the `action`, which confused me because I thought `action` was already tabled. But without this extra `table` the code would get stuck somewhere in the loop. Another option is `initialize_table`, which is commented out, but can also "unstick" the completion of the code. I am using version 3.8#7. By the time you read this, a future version may have fixed it. The beta version notes, "+ Avoid segfault caused by c_INITIALIZE_TABLE." which may or may not be related to what's happening here.*
+*Note: Picat 3.9 fixes a bug that prevented multiple calls to `planner`.*
+
 
 ```
 import planner.
@@ -3019,7 +3040,6 @@ Outputs
 
 ```
 
-
 ## Global Maps
 
 Picat has "prebuilt maps" which are accessible globally. This is something I've only just begun to learn about and haven't used them myself. Instead, I was using `cl_facts` to create global information on a small scale [here](#example-global-fact--global-state) and [here](#globally-control-progressdebug-println).
@@ -3204,7 +3224,7 @@ main =>
 ;
     true.
 ```
-Note the use of `fail`, `;` and `true` to extract all possible unifications/solutions. We will also cover this [here](#control-flow-the--operator). This code outputs:
+Note the use of `fail`, `;` and `true` to extract all possible unification/solutions. We will also cover this [here](#control-flow-the--operator). This code outputs:
 
 ```
 [a,dbc]
@@ -3703,7 +3723,7 @@ Res = 10
 
 ## Non-determinism: `?=>` and more `table`
 
-A key feature of logic programming languages is explicit and implicit backtracking from failure to try and achieve success. We talked a little about backtracking [here](#reassignment-vs-unificiation-and-backtracking).
+A key feature of logic programming languages is explicit and implicit backtracking from failure to try and achieve success. We talked a little about backtracking [here](#reassignment-vs-unification-and-backtracking).
 
 But let's now recall our friends [`append/3`](#predicates-vs-functions) and [`append/4`](#append4-for-parsing). 
 
@@ -3976,7 +3996,7 @@ And `''` means "atom". Atom is a concept from Prolog, which is kind of like an e
 
 ```
 N=5, println(n=N). % output n=5
-N=3, println(my_n_is_set_to_N). % output my_n_is_set_to_3
+N=3, println(my_n_is_set_to_N). % output my_n_is_set_to_N
 ```
 Note that in the above, the `=` is binding/unification! 
 
@@ -4196,7 +4216,7 @@ The manual says, "This constraint is equivalent to the conjunction of the inequa
 
 ### `regular`,`circuit` and `table_in` constraints  
 
-These are covered in the [Picat Constraint book]h(ttps://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf), but I haven't come up with a use case on my own yet, so I'm not feeling very confident in my understanding. 
+These are covered in the [Picat Constraint book](https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf), but I haven't come up with a use case on my own yet, so I'm not feeling very confident in my understanding. 
 
 The examples from the book are here: 
     - https://www.hakank.org/picat/knight_tour_circuit.pi

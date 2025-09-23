@@ -1,0 +1,201 @@
+% https://buttondown.com/hillelwayne/archive/many-hard-leetcode-problems-are-easy-constraint/
+% In my first interview out of college I was asked the change counter problem:
+
+%     Given a set of coin denominations, find the minimum number of coins required to make change for a given number. IE for USA coinage and 37 cents, the minimum number is four (quarter, dime, 2 pennies).
+
+% I implemented the simple greedy algorithm and immediately fell into the trap of the question: the greedy algorithm only works for "well-behaved" denominations. If the coin values were [10, 9, 1], then making 37 cents would take 10 coins in the greedy algorithm but only 4 coins optimally (10+9+9+9). The "smart" answer is to use a dynamic programming algorithm, which I didn't know how to do. So I failed the interview.
+
+% But you only need dynamic programming if you're writing your own algorithm. It's really easy if you throw it into a constraint solver like MiniZinc and call it a day.
+
+% int: total;
+% array[int] of int: values = [10, 9, 1];
+% array[index_set(values)] of var 0..: coins;
+
+% constraint sum (c in index_set(coins)) (coins[c] * values[c]) == total;
+% solve minimize sum(coins);
+
+% You can try this online here. It'll give you a prompt to put in total and then give you successively-better solutions:
+
+% coins = [0, 0, 37];
+% ----------
+% coins = [0, 1, 28];
+% ----------
+% coins = [0, 2, 19];
+% ----------
+% coins = [0, 3, 10];
+% ----------
+% coins = [0, 4, 1];
+% ----------
+% coins = [1, 3, 0];
+% ----------
+
+import cp.
+
+main =>
+    Total = 37,
+    Values = [10, 9, 1],
+    MaxCoins = 1 + (Total // min(Values)),
+
+    Coins = new_array(Values.len),
+    Coins :: 0..MaxCoins,
+
+    scalar_product(Coins, Values, Total), % cool constraint, right?
+    solve($[min(sum(Coins))],Coins),
+
+    println(coins=Coins),
+
+
+% Lots of similar interview questions are this kind of mathematical optimization problem, where we have to find the maximum or minimum of a function corresponding to constraints. They're hard in programming languages because programming languages are too low-level. They are also exactly the problems that constraint solvers were designed to solve. Hard leetcode problems are easy constraint problems.1 Here I'm using MiniZinc, but you could just as easily use Z3 or OR-Tools or whatever your favorite generalized solver is.
+% More examples
+
+% This was a question in a different interview (which I thankfully passed):
+
+%     Given a list of stock prices through the day, find maximum profit you can get by buying one stock and selling one stock later.
+
+% It's easy to do in O(n^2) time, or if you are clever, you can do it in O(n). Or you could be not clever at all and just write it as a constraint problem:
+
+% array[int] of int: prices = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8];
+% var int: buy;
+% var int: sell;
+% var int: profit = prices[sell] - prices[buy];
+
+% constraint sell > buy;
+% constraint profit > 0;
+% solve maximize profit;
+
+    Prices = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8],
+    element(BIdx, Prices, Buy),
+    element(SIdx, Prices, Sell),
+    BIdx #< SIdx, % buy before sell
+    Profit #= Sell - Buy,
+    solve($[max(Profit)],[BIdx,SIdx]),
+    println([buy=[BIdx,Buy],sell=[SIdx,Sell],profit=Profit]),
+
+% Reminder, link to trying it online here. While working at that job, one interview question we tested out was:
+
+%     Given a list, determine if three numbers in that list can be added or subtracted to give 0?
+
+% This is a satisfaction problem, not a constraint problem: we don't need the "best answer", any answer will do. We eventually decided against it for being too tricky for the engineers we were targeting. But it's not tricky in a solver;
+
+% include "globals.mzn";
+% array[int] of int: numbers = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8];
+% array[index_set(numbers)] of var {0, -1, 1}: choices;
+
+% constraint sum(n in index_set(numbers)) (numbers[n] * choices[n]) = 0;
+% constraint count(choices, -1) + count(choices, 1) = 3;
+% solve satisfy;
+
+    Numbers = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8],
+    N = Numbers.len,
+    Choices = new_array(N),
+    Choices :: (-1)..1,
+
+    count(0, Choices, N-3), % or equivalently the line below
+    % count(1, Choices, Ones), count(-1, Choices, NegOnes), Ones + NegOnes #= 3,
+    sum([Numbers[I]*Choices[I] : I in 1..N]) #= 0,
+
+    solve(Choices),
+    println(choices=Choices),
+    println(n=N),
+
+    ThreeNums = [T : I in 1..N, T=Numbers[I]*Choices[I], T != 0],
+    println(three_nums=ThreeNums),
+
+
+% Okay, one last one, a problem I saw last year at Chipy AlgoSIG. Basically they pick some leetcode problems and we all do them. I failed to solve this one:
+
+%     Given an array of integers heights representing the histogram's bar height where the width of each bar is 1, return the area of the largest rectangle in the histogram.
+
+%     example from leetcode link
+
+% The "proper" solution is a tricky thing involving tracking lots of bookkeeping states, which you can completely bypass by expressing it as constraints:
+
+% array[int] of int: numbers = [2,1,5,6,2,3];
+
+% var 1..length(numbers): x; 
+% var 1..length(numbers): dx;
+% var 1..: y;
+
+% constraint x + dx <= length(numbers);
+% constraint forall (i in x..(x+dx)) (y <= numbers[i]);
+
+% var int: area = (dx+1)*y;
+% solve maximize area;
+
+% output ["(\(x)->\(x+dx))*\(y) = \(area)"]
+
+% I can't seem to make this work in Picat.
+% foreach (I in X..X+DX) with X and DX as decision variables doesn't work.
+% foreach (I in 1..Graph.len, I #>= X, I #<= X2) also doesn't work
+
+
+
+    Graph = [2,1,5,6,2,3],
+    Ng = Graph.len,
+    Xs = new_array(Ng),
+    Xs :: 0..1,
+    global_contiguity(Xs),
+    
+    Area #= sum(Xs) * min([cond(Xs[I]#=1,Graph[I],max(Graph)) : I in 1..Ng]),
+    solve($[max(Area)],Xs),
+    Selected = [Xs[I]*Graph[I] : I in 1..Ng],
+    println([sel=Selected,area=Area]).
+
+% https://picat-lang.org/picatbook2015/constraint_solving_and_planning_with_picat.pdf
+global_contiguity(X) =>
+    N = X.length,
+    % This uses the regular expression "0*1*0*" to
+    % require that all 1’s (if any) in an array
+    % appear contiguously.
+    Transition = [
+                    [1,2], % state 1: 0*
+                    [3,2], % state 2: 1*
+                    [3,0] % state 3: 0*
+                    ],
+    NStates = 3,
+    InputMax = 2,
+    InitialState = 1,
+    FinalStates = [1,2,3],
+    RegInput = new_list(N),
+    RegInput :: 1..InputMax, % 1..2
+    % Translate X’s 0..1 to RegInput’s 1..2
+    foreach (I in 1..N)
+    RegInput[I] #= X[I]+1
+    end,
+    regular(RegInput,NStates,InputMax,Transition,InitialState,FinalStates).
+
+    
+
+% There's even a way to automatically visualize the solution (using vis_geost_2d), but I didn't feel like figuring it out in time for the newsletter.
+% Is this better?
+
+% Now if I actually brought these questions to an interview the interviewee could ruin my day by asking "what's the runtime complexity?" Constraint solvers runtimes are unpredictable and almost always than an ideal bespoke algorithm because they are more expressive, in what I refer to as the capability/tractability tradeoff. But even so, they'll do way better than a bad bespoke algorithm, and I'm not experienced enough in handwriting algorithms to consistently beat a solver.
+
+% The real advantage of solvers, though, is how well they handle new constraints. Take the stock picking problem above. I can write an O(n²) algorithm in a few minutes and the O(n) algorithm if you give me some time to think. Now change the problem to
+
+%     Maximize the profit by buying and selling up to max_sales stocks, but you can only buy or sell one stock at a given time and you can only hold up to max_hold stocks at a time?
+
+% That's a way harder problem to write even an inefficient algorithm for! While the constraint problem is only a tiny bit more complicated:
+
+% include "globals.mzn";
+% int: max_sales = 3;
+% int: max_hold = 2;
+% array[int] of int: prices = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8];
+% array [1..max_sales] of var int: buy;
+% array [1..max_sales] of var int: sell;
+% array [index_set(prices)] of var 0..max_hold: stocks_held;
+% var int: profit = sum(s in 1..max_sales) (prices[sell[s]] - prices[buy[s]]);
+
+% constraint forall (s in 1..max_sales) (sell[s] > buy[s]);
+% constraint profit > 0;
+
+% constraint forall(i in index_set(prices)) (stocks_held[i] = (count(s in 1..max_sales) (buy[s] <= i) - count(s in 1..max_sales) (sell[s] <= i)));
+% constraint alldifferent(buy ++ sell);
+% solve maximize profit;
+
+% output ["buy at \(buy)\n", "sell at \(sell)\n", "for \(profit)"];
+
+% Most constraint solving examples online are puzzles, like Sudoku or "SEND + MORE = MONEY". Solving leetcode problems would be a more interesting demonstration. And you get more interesting opportunities to teach optimizations, like symmetry breaking.
+
+%     Because my dad will email me if I don't explain this: "leetcode" is slang for "tricky algorithmic interview questions that have little-to-no relevance in the actual job you're interviewing for." It's from leetcode.com. ↩
+
