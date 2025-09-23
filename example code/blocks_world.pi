@@ -1,3 +1,4 @@
+% The module planner is imported
 import planner.
 
 main =>
@@ -11,6 +12,7 @@ main =>
  
 
 problem(S) => 
+    % Initial State: S
     % S = [[[a,b],[],[]], [[],[a,b],[]]]. % simple
     % S = [[[a,b],[],[]], [[],[b,a],[]]].  % simple
     S = [[[a,b,c,d,e],[],[]], [[],[c,b,a,d,e],[]]]. % difficult
