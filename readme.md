@@ -4015,7 +4015,7 @@ swap10(['1'|T]) = "0" ++ swap10(T).
 >    
 > *They are also used where other languages would use enumerated types, such as the names of days in the week. Unlike enumerated types, Prolog atoms do not form a fixed set and the same atom can represent different things in different contexts.*
 
-*Another Rabbit Hole: Despite the fact that one of Prolog's origins is in translation of English weather forecasts to French (look for [METEO](https://www.softwarepreservation.org/projects/prolog)), it originally represented strings as lists of ASCII values. [SICStus Prolog](https://sicstus.sics.se/sicstus/docs/latest4/html/sicstus.html/ref_002dsyn_002dcpt_002dsli.html#ref_002dsyn_002dcpt_002dsli) and B-Prolog both do this:*
+*Another Rabbit Hole: One of Prolog's origins was translation of English weather forecasts to French, (look for [METEO](https://www.softwarepreservation.org/projects/prolog)), so we would expect that it would use strings as a list of characters. This was apparently the case for Prolog 0, the first version in 1972. But , some versions represented strings as lists of ASCII values. [SICStus Prolog](https://sicstus.sics.se/sicstus/docs/latest4/html/sicstus.html/ref_002dsyn_002dcpt_002dsli.html#ref_002dsyn_002dcpt_002dsli) and B-Prolog both do this:*
 
 ```
 B-Prolog Version 8.1, All rights reserved, (C) Afany Software 1994-2014.
@@ -4023,7 +4023,18 @@ B-Prolog Version 8.1, All rights reserved, (C) Afany Software 1994-2014.
 X = [80,105,99,97,116]
 ```
 
-*More Rabbit Hole: There's also GNU Prolog, YAP Prolog, Strawberry Prolog,..."
+*More Rabbit Hole: In most Prolog systems, the meaning of double-quoted strings depends on the value of the flag double_quotes. The value of this flag is `codes` in SICStus and several other systems, and it is `chars` in all of the newest Prolog systems, including Scryer, Trealla, Tau and ichiban Prolog. (There's also GNU, YAP, and Strawberry Prolog versions.)
+
+In all the `chars` systems, such as Picat, we have:
+
+Picat> Cs = "Picat".
+   Cs = ['P',i,c,a,t]
+Picat> "Picat" = ['P','i','c','a','t'].
+   yes.
+Picat "" == [].
+   yes.
+
+This detailed string information was provided by [Markus Triska](https://github.com/triska). Thanks Markus!
 
 ## Predicate vs Function (sort of a type error)
 
