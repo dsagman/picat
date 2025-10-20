@@ -17,8 +17,9 @@ main =>
     S + W #= V,
     X - Y #= D,
     Sols = solve_all([A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z]),
+    FD = open("alphabet.txt",write),
     foreach (Sol in Sols)
-        println(sol=Sol)
+        println(FD, sol=Sol)
     end,
+    close(FD),
     println(nsols=len(Sols)).
-
