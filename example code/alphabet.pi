@@ -1,0 +1,25 @@
+% https://www.youtube.com/watch?v=LZGdrdprU-Q
+
+import cp.
+
+main =>
+    [A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z] :: 1..26,
+    all_different([A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z]),
+    A * B #= C,
+    F / D #= E,
+    G * H #= I,
+    K / J #= J,
+    L / M #= A,
+    N - O #= F,
+    Q + T #= P,
+    R - S #= M,
+    T - U #= H,
+    S + W #= V,
+    X - Y #= D,
+    Sols = solve_all([A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z]),
+    % Sols = solve_all([A]),
+    foreach (Sol in Sols)
+        println(sol=Sol)
+    end,
+    println(nsols=len(Sols)).
+
